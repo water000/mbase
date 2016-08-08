@@ -195,8 +195,13 @@ class CUniqRowOfTable
  		$values = array();
  		foreach ($keyval as $key => $val){
  			if(is_array($val)){
- 				$sql .= sprintf(' AND %s>=? AND %s<?', $key, $key);
- 				array_push($values, $val[0], $val[1]);
+ 				if(1 == count($val)){
+ 				    $sql .= sprintf(' AND %s>=?', $key);
+ 				    array_push($values, $val[0]);
+ 				}else{
+ 				    $sql .= sprintf(' AND %s>=? AND %s<?', $key, $key);
+ 				    array_push($values, $val[0], $val[1]);
+ 				}
  			}
  			else{
  				if(is_string($val) && 
@@ -231,8 +236,13 @@ class CUniqRowOfTable
  		$values = array();
  		foreach ($keyval as $key => $val){
  			if(is_array($val)){
- 				$sql .= sprintf(' AND %s>=? AND %s<?', $key, $key);
- 				array_push($values, $val[0], $val[1]);
+ 			    if(1 == count($val)){
+ 			        $sql .= sprintf(' AND %s>=?', $key);
+ 			        array_push($values, $val[0]);
+ 			    }else{
+ 				   $sql .= sprintf(' AND %s>=? AND %s<?', $key, $key);
+ 				   array_push($values, $val[0], $val[1]);
+ 			    }
  			}
  			else{
  				if(is_string($val) &&

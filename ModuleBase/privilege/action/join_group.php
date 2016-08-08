@@ -1,7 +1,7 @@
 <?php
 
 mbs_import('privilege', 'CPrivGroupControl', 'CPrivUserControl');
-mbs_import('user', 'CUserControl');
+mbs_import('user', 'CUserInfoCtr');
 
 $error = $mbs_cur_moddef->checkargs($mbs_appenv->item('cur_action'));
 $priv_info = null;
@@ -31,12 +31,13 @@ if(empty($error)){
 			$us = new CUserSession();
 			list($user_id, ) = $us->get();
 			foreach($_REQUEST['join'] as $uid){
-				$ret = $pu->addNode(array(
+			    $arr = array(
 					'priv_group_id' => $_REQUEST['group_id'],
 					'user_id'       => $uid,
 					'creator_id'    => $user_id,
 					'join_ts'       => time()
-				));
+				);
+				$ret = $pu->addNode($arr);
 				if(!$ret){
 					$error[] = sprintf($mbs_appenv->lang('user_exsits'), $uid);
 				}
@@ -46,7 +47,7 @@ if(empty($error)){
 		
 		$pu_list = $pu->get();
 		
-		$usr = CUserControl::getInstance($mbs_appenv,
+		$usr = CUserInfoCtr::getInstance($mbs_appenv,
 				CDbPool::getInstance(), CMemcachedPool::getInstance());
 	} catch (Exception $e) {
 		$error[] = $e->getMessage();

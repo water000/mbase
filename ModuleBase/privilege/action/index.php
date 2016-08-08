@@ -11,14 +11,11 @@ if(empty($user_id)){
 mbs_import('privilege', 'CPrivUserControl', 'CPrivGroupControl');
 
 $priv_info = null;
-try {
-	$pu = CPrivUserControl::getInstance($mbs_appenv,
-			CDbPool::getInstance(), CMemcachedPool::getInstance());
-	$priv_info = $pu->getDB()->search(array('user_id' => $user_id));
-} catch (Exception $e) {
-	echo $mbs_appenv->lang('db_exception', 'common');
-	exit();
-}
+
+$pu = CPrivUserControl::getInstance($mbs_appenv,
+		CDbPool::getInstance(), CMemcachedPool::getInstance());
+$priv_info = $pu->getDB()->search(array('user_id' => $user_id));
+
 if(empty($priv_info) || !($priv_info = $priv_info->fetchAll(PDO::FETCH_ASSOC))){
 	echo 'access denied(1)';
 	exit(0);
@@ -34,7 +31,6 @@ if(empty($priv_list)){
 }
 
 $priv_group = CPrivGroupControl::decodePrivList($priv_list['priv_list']);
-
 
 function _fn_icon($mod, $ac){
 	static $icon_map = array(
@@ -74,6 +70,8 @@ function _fn_icon($mod, $ac){
 	</script>
 	<![endif]-->
 	<link rel="stylesheet" href="<?php echo $mbs_appenv->sURL('zebra-dialog/zebra_dialog.css')?>" />
+	<link rel="stylesheet" href="<?php echo $mbs_appenv->sURL('global.css')?>" />
+	<link rel="stylesheet" href="<?php echo $mbs_appenv->sURL('reset.css')?>" />
 	<style type="text/css">
 	iframe{width:100%;border:0;}
 	.myclass td.col1{font-size:12px;font-weight:bold;}
@@ -102,6 +100,7 @@ foreach($mod_list as $mod){
 	$moddef=mbs_moddef($mod);
 	if(empty($moddef)) continue;
 	$actions = $moddef->filterActions(CModDef::P_MGR);
+	
 	if(empty($actions)) continue;
 	if(isset($priv_group[$mod])){
 		foreach($priv_group[$mod] as $ac){

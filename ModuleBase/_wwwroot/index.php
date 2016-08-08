@@ -2,49 +2,51 @@
 
 date_default_timezone_set('Asia/Shanghai');
 
-
 define('RTM_DEBUG', 1);
-error_reporting(RTM_DEBUG ? E_ALL : 0);	
-define('IN_INDEX', 1); //ref file: CAppEnvironment.php
+define('RTM_INDEX', 1); //ref file: CAppEnv.php
+if(RTM_DEBUG){
+    error_reporting(E_ALL);
+    ini_set('display_startup_errors', '1');
+}else{
+    ini_set('display_errors', '0');// do not display errors on genaration env. HIGH recommend that the errors put in logs
+}
 
 //env and conf init;there are two kinds of const in the system.
 //one start with 'RTM_' what means 'run-time' defined;the other start
 //with 'CFG_' what means 'configuration(installing)' defined
-require 'CAppEnvironment.php';
-$mbs_appenv     = CAppEnvironment::getInstance();
+require 'CAppEnv.php';
+$mbs_appenv     = CAppEnv::getInstance();
 $mbs_cur_moddef = $mbs_cur_actiondef = null;
 
-//exception, database error, ...
-//mbs_error_log('some errors', __FILE__, __LINE__);
-function mbs_error_log($msg, $file, $lineno){
+//DO not call the function directly, instead of using the trigger_error function.
+//mbs_error_log('[int]error type/no', 'some errors', __FILE__, __LINE__);
+function mbs_error_log($errno, $msg, $file, $lineno){
 	global $mbs_appenv;
-	//U: marking as user level
-	$error = sprintf("U[%s]%s.%s(%s:%d)\n%s\n",
-			date('Y/m/d H:i:s'),
+	static $map = array(E_WARNING=>'PHP WARN', E_NOTICE=>'PHP NOTICE', 
+	    E_USER_ERROR=>'USER ERROR', E_USER_WARNING=>'USER WARN', E_USER_NOTICE=>'USER NOTICE');
+	
+	$error = sprintf("%s: %s.%s: %s(%s:%d)\n",
+	        isset($map[$errno]) ? $map[$errno] : 'UNDEF('.$errno.')',
 			$mbs_appenv->item('cur_mod'),
 			$mbs_appenv->item('cur_action'),
-			$file,
-			$lineno,
-			$msg
+			$msg,
+	        $file,
+	        $lineno
 	);
-	if(RTM_DEBUG)
-		$mbs_appenv->echoex($error, 'SYS_ERROR');
+	$mbs_appenv->echoex(RTM_DEBUG ? '['.date('Y/m/d H:i:s e').']'.$error 
+	    : $mbs_appenv->lang('db_exception'), 'SYS_ERROR');
 	error_log($error, 0);
+	if(E_USER_ERROR == $errno)
+	    exit(1);
 }
-
-set_exception_handler(function($e){// handle some exceptions that do not catch
-	mbs_error_log($e->getMessage()."\n".$e->getTraceAsString(), 'UNCAUGHT', 0);
-	if(!RTM_DEBUG)
-		$mbs_appenv->echoex($mbs_appenv->lang('db_exception'), 'SYS_EXCEPTION');
+set_error_handler('mbs_error_log');// php.ini (log_errors=ture, error_log=path)
+set_exception_handler(function($e){// handle some uncaught exceptions
+	mbs_error_log(E_USER_ERROR, 
+	    $e->getMessage()."\n".$e->getTraceAsString(), 
+	    $e->getFile(), 
+	    $e->getLine());
 });
-
-/* php.ini (log_errors=ture, error_log=path)
- * if(!RTM_DEBUG){
-	set_error_handler(function($eno, $err, $file, $line){
-		mbs_error_log($err.'('.$eno.')', $file, $line);
-	});
-}*/
-
+    
 // import class only
 function mbs_import($mod, $class){
 	global $mbs_appenv;
@@ -61,7 +63,7 @@ function mbs_import($mod, $class){
 }
 
 mbs_import('core', 'CModDef', 'CModTag');
-mbs_import('common', 'CDbPool', 'CMemcachedPool', 'CUniqRowControl', 'CStrTools');
+mbs_import('common', 'CDbPool', 'CMemcachedPool', 'CUniqRowControl', 'CStrTools', 'CSessionDBCache');
 if(!class_exists('Memcached', false))
 	mbs_import('common', 'Memcached');
 
@@ -122,26 +124,17 @@ function mbs_runtime_close_debug(){ // call the function before the echoex invok
 	$mbs_appenv->setLogAPI(null);  // do NOT record log
 }
 
-function _main($mbs_appenv){
-	global $mbs_cur_moddef, $mbs_cur_actiondef;
+function _main(){
+	global $mbs_appenv, $mbs_cur_moddef, $mbs_cur_actiondef, $argc;
 	
 	if(false !== strpos(PHP_SAPI, 'cli')){
 		if($argc < 3){
-			trigger_error('param is missing', E_USER_ERROR);
+			trigger_error('BIN/php index.php module action', E_USER_ERROR);
 		}
-		$mod = $argv[1];
-		$action = $argv[2];
-		$argv = array_slice($argv, 0, 3);
+		list($mod, $action, $args) = $mbs_appenv->fromCLI();
 	}else{
 		if(false === stripos(ini_get('request_order'), 'GP'))
 			$_REQUEST = array_merge($_GET, $_POST);
-	
-		if(ini_get('register_globals')){
-			$GLOBALS = array_intersect_key($GLOBALS, array(
-					'GLOBALS'=>'', '_GET'=>'', '_POST'=>'', '_COOKIE'=>''
-					,'_REQUEST'=>'', '_SERVER'=>'', '_ENV'=>'', '_FILES'=>'')
-			);
-		}
 	
 		//check on installing first
 		if((get_magic_quotes_gpc() || ini_get('magic_quotes_runtime')) && ini_get('magic_quotes_sybase'))
@@ -165,6 +158,19 @@ function _main($mbs_appenv){
 			$mbs_appenv->config('default_module', 'common'),
 			$mbs_appenv->config('default_action', 'common')
 		);
+		
+
+		if(isset($_SERVER['HTTP_X_LOGIN_TOKEN']) && !empty($_SERVER['HTTP_X_LOGIN_TOKEN'])){ // only for app request
+		    $_COOKIE[session_name()] = $_SERVER['HTTP_X_LOGIN_TOKEN'];
+		}
+		else if(isset($_REQUEST['X-LOGIN-TOKEN'])){
+		    $_COOKIE[session_name()] = $_REQUEST['X-LOGIN-TOKEN'];
+		}
+		
+		if(isset($_SERVER['HTTP_X_POST_JSON_FIELD']) 
+		    && isset($_REQUEST[$_SERVER['HTTP_X_POST_JSON_FIELD']])){
+		    $_REQUEST = array_merge($_REQUEST, json_decode($_REQUEST[$_SERVER['HTTP_X_POST_JSON_FIELD']], true));
+		}
 	}
 	
 	if(!CStrTools::isModifier($mod) || !CStrTools::isModifier($action)){
@@ -188,8 +194,9 @@ function _main($mbs_appenv){
 	if(!empty($mem)){
 		CMemcachedPool::setConf($mem);
 	}
-
-	$mbs_appenv->config('', 'common');
+	
+	session_set_save_handler(new CSessionDBCache(
+	    CDbPool::getInstance(), CMemcachedPool::getInstance()), true);
 	
 	if(RTM_DEBUG && !isset($mbs_cur_actiondef[CModDef::P_DOF])){
 		CDbPool::getInstance()->setClass(CDbPool::CLASS_PDODEBUG);
@@ -200,6 +207,7 @@ function _main($mbs_appenv){
 				if(false !== strpos(PHP_SAPI, 'cli')){
 					CDbPool::getInstance()->cli();
 					CMemcachedPool::getInstance()->cli();
+					echo "\n";
 				}else if('html' == $mbs_appenv->item('client_accept')){
 					echo '<div><a href="javascript:;" style="font-size:12px;color:#888;display:block;text-align:right;" onclick="open(null, null, \'width=800,height=600\').document.write(this.parentNode.nextSibling.innerHTML)">debug-info</a></div><div style="display:none">';
 					CDbPool::getInstance()->html();
@@ -212,29 +220,33 @@ function _main($mbs_appenv){
 		mbs_import('core', 'CLogAPI');
 		$mbs_appenv->setLogAPI(new CDBLogAPI(CDbPool::getInstance()->getDefaultConnection()));
 	}
-	
-	if(CModDef::isReservedAction($action)){
+
+	if(false !== strpos(PHP_SAPI, 'cli') && CModDef::isReservedAction($action)){
 		$err = '';
 		try {
-			$err = $mbs_cur_moddef->install(CDbPool::getInstance(), CMemcachedPool::getInstance());
+			$err = $mbs_cur_moddef->$action(CDbPool::getInstance(), CMemcachedPool::getInstance());
 		} catch (Exception $e) {
-			//echo $mbs_appenv->lang('db_exception', 'common');
 			echo $e->getMessage(), "\n<br/>", $e->getTraceAsString();
 		}
-		echo empty($err)? 'install complete, successed' : "error: \n". implode("\n<br/>", $err);
+		echo $action, empty($err)? ' successed!' : " error: \n". implode("\n<br/>", $err);
 	}else{
-		
+
+	    $path = $mbs_appenv->getActionPath($action, $mod);
+	    if(!file_exists($path)){
+	        header('HTTP/1.1 404');
+	        trigger_error('Invalid request: '.$mod.'.'.$action, E_USER_ERROR);
+	    }
 		//do filter checking
 		if(!$mbs_cur_moddef->loadFilters($action)){
 			exit(1);
 		}
 		
 		$filters = $mbs_appenv->config('action_filters', 'common');
-		if(!empty($filters)){
+		if(!empty($filters) && !empty($mbs_cur_actiondef)){
 			foreach($filters as $ftr){
 				if(count($ftr) >=3 && $ftr[0]($mbs_cur_actiondef)){
 					$mdef = mbs_moddef($ftr[1]);
-					if(!$mdef->filter($ftr[2], null, $err)){
+					if(!$mdef->filter($ftr[2], isset($ftr[3])?$ftr[3]:null, $err)){
 						$mbs_appenv->echoex($err, 'AC_FTR_ERROR');
 						exit(1);
 					}
@@ -242,11 +254,6 @@ function _main($mbs_appenv){
 			}
 		}
 		
-		$path = $mbs_appenv->getActionPath($action, $mod);
-		if(!file_exists($path)){
-			header('HTTP/1.1 404');
-			trigger_error('Invalid request: '.$mod.'.'.$action, E_USER_ERROR);
-		}
 		require $path;
 	}
 
@@ -254,7 +261,6 @@ function _main($mbs_appenv){
 		call_user_func('fastcgi_finish_request');	
 }
 
-_main($mbs_appenv);
-
+_main();
 exit(0);
 ?>

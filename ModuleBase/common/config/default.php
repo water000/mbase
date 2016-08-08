@@ -2,17 +2,21 @@
 
 //do not add any constant in the file.
 
+/* php.ini
+session.use_only_cookies = 1
+session.gc_maxlifetime = 86400*7
+log_errors = On
+error_log = path
+post_max_size = 10M
+upload_max_filesize = 10M
+max_file_uploads = 20
+*/
+
 
 //ini_set('session.save_handler', 'memcache');
 //ini_set('session.save_path',    'tcp://127.0.0.1:11211');
-ini_set('session.use_only_cookies', 1);
-
-if(isset($_SERVER['HTTP_X_LOGIN_TOKEN']) && !empty($_SERVER['HTTP_X_LOGIN_TOKEN'])){ // only for app request
-	$_COOKIE[session_name()] = $_SERVER['HTTP_X_LOGIN_TOKEN'];
-}
-else if(isset($_REQUEST['X-LOGIN-TOKEN'])){
-	$_COOKIE[session_name()] = $_REQUEST['X-LOGIN-TOKEN'];
-}
+//ini_set('session.use_only_cookies', 1);
+ini_set('session.gc_maxlifetime', 86400*7);
 
 $default = array(
 	'default_module'       => 'user',
@@ -20,7 +24,7 @@ $default = array(
 	'table_prefix'         => 'mbs_',
 	'database'             => array(
 		// format: host_port_dbname, the 'dbname' is a database name that should be created by yourself
-		'localhost_3306_task' => array('username'=>'root', 'pwd'=>''),
+		'localhost_3306_module_base' => array('username'=>'root', 'pwd'=>''),
 		//... more
 	),
 	'PDO_ER_DUP_ENTRY'     => '23000', 
@@ -37,7 +41,8 @@ $default = array(
 		array(function($action_def){return !empty($action_def) && isset($action_def[CModDef::P_MGR]); }, 
 			'privilege', 'privFtr'),
 		
-		//array(function($action_def){return !empty($action_def) && isset($action_def[CModDef::P_OUT]); }, '', ''),
+		array(function($action_def){global $mbs_appenv;return !empty($action_def) && isset($action_def[CModDef::P_OUT]) && $mbs_appenv->item('client_accept') != 'html'; }, 
+		    'common', 'ApiSignFtr'),
 		
 		//.... more
 	), 
@@ -47,9 +52,7 @@ $default = array(
 	),
 	
 	'events'     => array(
-		'product.attr_list.map_changed' => array('merchant.CMctEvent'),
-		'product.attr_edit.attr_changed' => array('merchant.CMctEvent'),
-		'product.edit.en_name_changed' => array('merchant.CMctEvent'),
+	    //'mod.action.event'=>array('mod.classEventListener'),
 	),
 	
 	

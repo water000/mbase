@@ -12,7 +12,7 @@
  * if CFileTypeDef::CLASS_FILE_SUFFIX not present, the FILE_NAME was treated as class_name, 
  * then the CFileTypeDef::CLASS_FILE_SUFFIX was appended to class_name to get the FILE_NAME
  * @author Administrator
- * @dependent: CAppEnvironment.php, index.php:mbs_moddef(), index.php:mbs_tbname()
+ * @dependent: CAppEnv.php, index.php:mbs_moddef(), index.php:mbs_tbname()
  *
  */
 abstract class CModDef {
@@ -38,8 +38,8 @@ abstract class CModDef {
 	CONST P_NCD  = 'p_no_click_direct_on_mgr';
 	CONST P_MGNF = 'p_mgr_notification';// P_MGNF=>[true(system default interval)/integer(interval in second)], include(P_MGR,P_NCD)
 	//CONST P_LGC  = 'p_logo_class'; // <a href="..."><i class=P_LGC></i>P_TLE</a>
-	CONST PA_TYP = 'pa_type';    // the arg's type what appears in gettype(). default is 'string'
-	CONST PA_REQ = 'pa_required';// the arg MUST be required in the page. default is 1
+	CONST PA_TYP = 'pa_type';    // the arg's type what appears in gettype() and include 'file', 'files'. default is 'string'
+	CONST PA_REQ = 'pa_required';// the arg MUST be required in the page. default is 0
 	CONST PA_DEP = 'pa_depend'; // the arg which appears in the same page. default is null
 	CONST PA_EMP = 'pa_empty';  // allow empty on the arg(default is 0). NOTICE: the empty validation only check the length of the trimed arg
 	CONST PA_TRI = 'pa_trim';   // ignore triming on the arg if set to 0. default is 1(trim).
@@ -54,7 +54,7 @@ abstract class CModDef {
 	
 	protected static $appenv = null;
 	private $desc = null;
-	private static $reserve_actions = array('install', 'upgrade', 'uninstall');
+	private static $reserve_actions = array('init', 'install', 'upgrade', 'uninstall');
 	
 	/**
 	 * @return array(
@@ -95,6 +95,7 @@ abstract class CModDef {
 	 *   	array(mod, ftr_name, isExitOnFilterUndefined, array('arg1'=>v1, 'arg2'=>v2, ...)),
 	 *   	...
 	 *   ),
+	 *   self::DEPEXT=>array('mysql', 'memcache', ...),
 	 * ) 
 	 */
 	abstract protected function desc();
@@ -105,6 +106,207 @@ abstract class CModDef {
 	function __construct($appenv){
 		self::$appenv = $appenv;
 		$this->desc = $this->desc();
+	}
+	
+	static function tbname2class($tbn){
+	    $class = 'C';
+	    foreach(explode('_', $tbn) as $p){
+	        $class .= ucfirst($p);
+	    }
+	    return $class.'Ctr';
+	}
+	
+	static function _createClass($class, $tbname, $tbdef, $path){
+	    static $uniq = 
+'class #classname# extends CUniqRowControl{
+
+	private static $instance = null;
+	
+	protected function __construct($db, $cache, $primarykey = null){
+		parent::__construct($db, $cache, $primarykey);
+	}
+
+	/**
+	 *
+	 * @param CAppEnv $mbs_appenv
+	 * @param CDbPool $dbpool
+	 * @param CMemcachePool $mempool
+	 * @param string $primarykey
+	 */
+	static function getInstance($mbs_appenv, $dbpool, $mempool, $primarykey = null){
+		if(empty(self::$instance)){
+			try {
+				$memconn = $mempool->getConnection();
+				self::$instance = new #classname#(
+						new CUniqRowOfTable($dbpool->getDefaultConnection(),
+								mbs_tbname(\'#tbname#\'), \'#keyname#\', $primarykey),
+						$memconn ? new CUniqRowOfCache($memconn, $primarykey, \'#classname#\') : null,
+						$primarykey
+				);
+			} catch (Exception $e) {
+				throw $e;
+			}
+		}else {
+			self::$instance->setPrimaryKey($primarykey);
+		}
+		return self::$instance;
+	}
+}';
+	    static $multi = 
+'mbs_import(\'common\', \'CMultiRowControl\');
+
+class #classname# extends CMultiRowControl {
+	private static $instance = null;
+	
+	protected function __construct($db, $cache, $primarykey = null, $secondKey = null){
+		parent::__construct($db, $cache, $primarykey, $secondKey);
+	}
+	
+	/**
+	 *
+	 * @param CAppEnv $mbs_appenv
+	 * @param CDbPool $dbpool
+	 * @param CMemcachePool $mempool
+	 * @param string $primarykey
+	 */
+	static function getInstance($mbs_appenv, $dbpool, $mempool, $primarykey = null){
+		if(empty(self::$instance)){
+			try {
+				$memconn = $mempool->getConnection();
+				self::$instance = new #classname#(
+						new CMultiRowOfTable($dbpool->getDefaultConnection(),
+								mbs_tbname(\'#tbname#\'), \'#keyname#\', $primarykey, \'#secondkeyname#\'),
+						$memconn ? new CMultiRowOfCache($memconn, $primarykey, \'#classname#\') : null
+				);
+			} catch (Exception $e) {
+				throw $e;
+			}
+		}
+		self::$instance->setPrimaryKey($primarykey);
+		
+		return self::$instance;
+	}
+} ';
+	    
+	    static $mix =
+	    'mbs_import(\'common\', \'CMixRowControl\');
+	    
+class #classname# extends CMixRowControl {
+	private static $instance = null;
+	        
+    protected $pkey  = \'#keyname#\';
+	protected $mpkey = \'#mkeyname#\';
+	
+	protected function __construct($db, $cache, $primarykey = null, $secondKey = null){
+		parent::__construct($db, $cache, $primarykey, $secondKey);
+	}
+	    
+	/**
+	 *
+	 * @param CAppEnv $mbs_appenv
+	 * @param CDbPool $dbpool
+	 * @param CMemcachePool $mempool
+	 * @param string $primarykey
+	 */
+	static function getInstance($mbs_appenv, $dbpool, $mempool, $primarykey = null, $switch_key=false){
+		if(empty(self::$instance)){
+			try {
+				$memconn = $mempool->getConnection();
+				self::$instance = new #classname#(
+						new CMultiRowOfTable($dbpool->getDefaultConnection(),
+								mbs_tbname(\'#tbname#\'), $switch_key?\'#mkeyname#\':\'#keyname#\', $primarykey, \'#secondkeyname#\'),
+						$memconn ? new CMultiRowOfCache($memconn, $primarykey, \'#classname#\') : null
+				);
+			} catch (Exception $e) {
+				throw $e;
+			}
+		}
+		self::$instance->setPrimaryKey($primarykey);
+	    
+		return self::$instance;
+	}
+} ';
+	    
+	    $pos = strpos($tbdef, "\n");
+	    if($pos > 0){
+	        $def = substr($tbdef, 0, $pos);
+	        if(preg_match('/--\s+(U|M)\(([^\)]+)\)/', $def, $matches) > 0){
+	            $keys = explode(',', trim($matches[2]));
+	            if('U' == $matches[1]){
+	                file_put_contents($path, "<?php\r\n".
+	                    str_replace(array('#classname#', '#tbname#', '#keyname#'),
+	                        array($class, $tbname, trim($keys[0])), $uniq).
+	                    "\r\n?>");
+	            }else{
+	                $two = explode('|', trim($keys[0]));
+	                if(2 == count($two)){
+	                    file_put_contents($path, "<?php\r\n".
+	                        str_replace(array('#classname#', '#tbname#', '#keyname#', '#mkeyname#', '#secondkeyname#'),
+	                            array($class, $tbname, trim($two[0]), trim($two[1]), trim($keys[1])), $mix).
+	                        "\r\n?>");
+	                }else{
+	                    file_put_contents($path, "<?php\r\n".
+	                        str_replace(array('#classname#', '#tbname#', '#keyname#', '#secondkeyname#'),
+	                            array($class, $tbname, trim($keys[0]), trim($keys[1])), $multi).
+	                        "\r\n?>");
+	                }
+	            }
+	        }else if(preg_match('/primary key\(([^\)]+)\)/i', $tbdef, $matches) > 0){
+	            $keys = explode(',', trim($matches[1]));
+	            if(1 == count($keys)){
+	                file_put_contents($path, "<?php\r\n".
+	                    str_replace(array('#classname#', '#tbname#', '#keyname#'), 
+	                        array($class, $tbname, trim($keys[0])), $uniq).
+	                    "\r\n?>");
+	            }else{
+	                file_put_contents($path, "<?php\r\n".
+	                    str_replace(array('#classname#', '#tbname#', '#keyname#', '#secondkeyname#'),
+	                        array($class, $tbname, trim($keys[0]), trim($keys[1])), $multi).
+	                    "\r\n?>");
+	            }
+	        }
+	    }
+	}
+	function init(){
+	    if(isset($this->desc[self::TBDEF])){
+	        $dir = self::$appenv->getDir($this->desc[self::MOD][self::G_NM], CAppEnv::FT_CLASS);
+	        if(!file_exists($dir) && !mkdir($dir)){
+	            trigger_error(sprintf('[error]mkdir "%s" failed on "%s:%d".'), $dir, __FILE__, __LINE__);
+	        }else{
+    	        foreach($this->desc[self::TBDEF] as $tbn => $tbdef){
+    	            $class = self::tbname2class($tbn);
+    	            $classpath = self::$appenv->getClassPath($class, $this->desc[self::MOD][self::G_NM]);
+    	            
+    	            if(!file_exists($classpath)){
+    	                self::_createClass($class, $tbn, $tbdef, $classpath);
+    	            }
+    	        }
+	        }
+	    }
+	    if(isset($this->desc[self::PAGES])){
+	        $dir = self::$appenv->getDir($this->desc[self::MOD][self::G_NM], CAppEnv::FT_ACTION);
+	        if(!file_exists($dir) && !mkdir($dir)){
+	             trigger_error(sprintf('[error]mkdir "%s" failed on "%s:%d".'), $dir, __FILE__, __LINE__);
+	        }else{
+    	        foreach($this->desc[self::PAGES] as $name => $def){
+    	            $path = self::$appenv->getActionPath($name, $this->desc[self::MOD][self::G_NM]);
+    	            if(!file_exists($path) && !touch($path)){
+    	                trigger_error(sprintf('[error]touch "%s" failed on "%s:%d".'), $path, __FILE__, __LINE__);
+    	            }
+    	        }
+	        }
+	    }
+	    $config_dir = self::$appenv->getDir($this->desc[self::MOD][self::G_NM], CAppEnv::FT_CONFIG);
+	    if(!file_exists($config_dir) && !mkdir($config_dir)){
+	        trigger_error(sprintf('[error]mkdir "%s" failed on "%s:%d".'), $config_dir, __FILE__, __LINE__);
+	    }else{
+	        $path = $config_dir.'/default.php';
+	        if(!file_exists($path))
+	           file_put_contents($path, "<?php\n\$default=array(\n);\n?>");
+	        $path = $config_dir.'lang_'.self::$appenv->item('lang').'.php';
+	        if(!file_exists($path))
+	           file_put_contents($path, sprintf("<?php\n\$lang_%s=array(\n);\n?>", self::$appenv->item('lang')));
+	    }
 	}
 	
 	function item($key, $subkey=''){
@@ -226,7 +428,7 @@ abstract class CModDef {
 					$error[] = sprintf('invalid identifier "%s" on "%s" in "%s"', 
 						$mod[self::G_NM], self::G_NM, self::MOD);
 				else if(self::$appenv->item('cur_mod') != $mod[self::G_NM])
-					$error[] = sprintf('submited "%s" missmatch "%s" in G_NM mod def', $mod[self::G_NM], self::$appenv->item('cur_mod'));
+					$error[] = sprintf('submitted "%s" missmatch "%s" in G_NM mod def', $mod[self::G_NM], self::$appenv->item('cur_mod'));
 				else $modname = $mod[self::G_NM];
 			}else $error[] = sprintf('"%s" not def in "%s"', self::G_NM, self::MOD);
 			
@@ -298,7 +500,7 @@ abstract class CModDef {
 							$error[] = sprintf('need ARRAY, "%s" was given at arg "%s" on page "%s" in "%s" def', 
 								gettype($opt), $arg, $script, self::P_ARGS);
 						else {
-							if(isset($opt[self::PA_TYP]) && 'file' != strtolower($opt[self::PA_TYP]) 
+							if(isset($opt[self::PA_TYP]) && strncmp(strtolower($opt[self::PA_TYP]), 'file', 4)!=0 
 								&& !settype($var, $opt[self::PA_TYP]))
 								$error[] = sprintf('unsupported type "%s" on arg "%s" in page "%s" of "%s" def', 
 									$opt[self::PA_TYP], $arg, $script, self::P_ARGS);
@@ -478,7 +680,7 @@ abstract class CModDef {
  					$_REQUEST[$name] = trim($_REQUEST[$name]);
  				
  				if($opts[CModDef::PA_REQ]){
- 					if('file' == strtolower($opts[self::PA_TYP])){
+ 					if(strncmp(strtolower($opts[self::PA_TYP]), 'file', 4)==0){
  						if(!isset($_FILES[$name]) ){
 	 						$error[$name] = sprintf($error_desc['no_such_arg_appeared'], 
 	 								(isset($opts[self::G_DC]) ? $opts[self::G_DC].'/-' : '').$name);
@@ -497,8 +699,9 @@ abstract class CModDef {
  						$error[$name] = sprintf($error_desc['no_such_arg_appeared'], 
  								(isset($opts[self::G_DC]) ? $opts[self::G_DC].'/' : '').$name);
  						continue;
- 					}else{
- 						if(!$opts[CModDef::PA_EMP] && 0==strlen($_REQUEST[$name])){
+ 					}else if(!$opts[CModDef::PA_EMP]){
+ 						if((is_string($_REQUEST[$name]) && 0==strlen($_REQUEST[$name])) 
+ 						    || empty($_REQUEST[$name]) ){
  							$error[$name] = sprintf($error_desc['arg_cannot_be_empty'], $name);
  							continue;
  						}
@@ -506,7 +709,7 @@ abstract class CModDef {
  				}
  				 				
 				if(!empty($opts[CModDef::PA_TYP]) 
-					&& strtolower($opts[CModDef::PA_TYP]) != 'file'
+					&& strncmp(strtolower($opts[self::PA_TYP]), 'file', 4)!=0
 					&& isset($_REQUEST[$name])
 					&& !settype($_REQUEST[$name], $opts[CModDef::PA_TYP]))
 				{
