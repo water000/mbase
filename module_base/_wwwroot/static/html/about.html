@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="Description" content="" />
+		<meta name="Keywords" content="" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>Document</title>
+		<link rel="stylesheet" href="../css/reset.css" />
+		<link rel="stylesheet" href="../css/mobile_style.css" />
+		<script type="text/javascript">
+			(function(doc, win) {
+				var docEl = doc.documentElement,
+					resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
+					recalc = function() {
+						var clientWidth = docEl.clientWidth;
+						if(!clientWidth) return;
+						docEl.style.fontSize = 20 * (clientWidth / 320) + 'px';
+					};
+				if(!doc.addEventListener) return;
+				win.addEventListener(resizeEvt, recalc, false);
+				doc.addEventListener('DOMContentLoaded', recalc, false);
+			})(document, window);
+		</script>
+	</head>
+
+	<body>
+		<header>
+			<h2>功能介绍</h2>
+		</header>
+		<article class="art1">
+			<h3 class="icon1"></h3>
+			<p>守望者APP是由江苏省安全厅研发的一款面向广大公民开发的一个提供信息来源的应用，是以广大人民群众为使用对象，可以查看国家安全机构所公布的任务信息，根据自己个人能力并且在能力范围之内协助国家安全部门提供有价值的情报和线索，对任务发布方审核通过并采纳以后会有一定数额现金奖励。此外该平台还提供资讯类信息和服务，内容涵盖法律法规、安全教育、新闻动态和视频点播等多个资讯类别，其内容更加专业、全面和精致。</p>
+		</article>
+		<h3 class="icon2"><img src="../images/icon2.png" width="100%" height="100%" alt="" /></h3>
+		<h4 class="tit">任务列表</h4>
+		<p class="info">查看国家安全部门发布的任务和奖励信息</p>
+		
+		<h3 class="icon2"><img src="../images/icon3.png" width="100%" height="100%" alt="" /></h3>
+		<h4 class="tit">我的任务</h4>
+		<p class="info">参与并响应国家安全部门发布的任务，并积极提供有价值的情报和线索</p>
+		
+		<h3 class="icon2"><img src="../images/icon4.png" width="100%" height="100%" alt="" /></h3>
+		<h4 class="tit">安全资讯</h4>
+		<p class="info">提供资讯类信息和服务，内容涵盖法律法规、安全教育、新闻动态和视频点播等多个资讯类别，其内容更加专业、全面和精致。</p>
+		
+		<h3 class="icon2"><img src="../images/icon5.png" width="100%" height="100%" alt="" /></h3>
+		<h4 class="tit">在线举报</h4>
+		<p class="info">欢迎广大公民提供有关间谍嫌疑的线索，为国家安全提供必要的信息和帮助，共同筑牢国家安全的人民防线。</p>
+		<footer>
+			<p>* 该项目由江苏省安全厅主办 *</p>
+		</footer>
+	</body>
+
+</html>
