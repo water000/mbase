@@ -79,11 +79,7 @@ class CAppEnv{
 	function getDir($mod, $file_type=''){
 		return $this->env['app_root'].$mod.'/'.(empty($file_type) ? '' : $file_type.'/');
 	}
-	
-	function setLogAPI($log){
-		$this->log_api = $log;
-	}
-	
+
 	function getPath($filename, $mod=''){
 		return $this->getDir(empty($mod) ? $this->env['cur_mod'] : $mod).$filename;
 	}

@@ -163,7 +163,6 @@ function mbs_runtime_close_debug(){ // call the function before the echoex invok
 	global $mbs_cur_moddef, $mbs_appenv;
 	
 	$mbs_cur_actiondef[CModDef::P_DOF] = ''; // set the key to close the output when app terminated
-	$mbs_appenv->setLogAPI(null);  // do NOT record log
 }
 
 function _main(){
@@ -277,7 +276,6 @@ function _main(){
     	    if(!empty($listeners)){
     	        foreach($listeners as $k => $v){
     	            list($mod, $class, $func) = explode('.', $k);
-    	            mbs_import($mod, $class);
     	            $ins = $class::getInstance($mbs_appenv,
     	                CDbPool::getInstance(), CMemcachedPool::getInstance());
     	            $ins->produce($func, $v, $k);
@@ -285,12 +283,7 @@ function _main(){
     	    }
 	    }
 	    
-		$err = '';
-		try {
-			$err = $mbs_cur_moddef->$action(CDbPool::getInstance(), CMemcachedPool::getInstance());
-		} catch (Exception $e) {
-			echo $e->getMessage(), "\n<br/>", $e->getTraceAsString();
-		}
+		$err = $mbs_cur_moddef->$action(CDbPool::getInstance(), CMemcachedPool::getInstance());
 		echo $action, empty($err)? ' successed!' : " error: \n". implode("\n<br/>", $err);
 	}else{
 
