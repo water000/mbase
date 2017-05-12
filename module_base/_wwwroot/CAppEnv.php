@@ -336,6 +336,8 @@ class CAppEnv{
 	}
 
 	function doecho(){
+	    if(null == $this->echo['code']) return;
+	    
 	    if(false !== strpos(PHP_SAPI, 'cli')){
 	        if($this->echo['code'])
 	           echo 'failed: '.$this->echo['code'], "\n";
