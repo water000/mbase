@@ -31,6 +31,28 @@ spl_autoload_register(function($class){
     }
 }, true);
 
+function mbs_moddef($mod){
+    global $mbs_appenv;
+    static $modbuf = array();
+
+    if(isset($modbuf[$mod])){
+        return $modbuf[$mod];
+    }
+
+    $obj = null;
+    list($class, $path) = $mbs_appenv->getModDefInfo($mod);
+    if(file_exists($path)){
+        require_once $path;
+        $class = 'modbase\\'.$mod.'\\'.$class;
+        $obj = new $class($mbs_appenv);
+    }else{
+        trigger_error($mod.' mod not exists', E_USER_WARNING);
+    }
+    $modbuf[$mod] = $obj;
+    return $obj;
+}
+    
+
 //DO not call the function directly, instead of using the trigger_error function.
 //mbs_error_log('[int]error type/no', 'some errors', __FILE__, __LINE__);
 define('RTM_LOG_TRACE_SEP', '@@@');
@@ -89,50 +111,6 @@ set_exception_handler(function($e){// handle some uncaught exceptions
 
 use modbase\common\CStrTools, modbase\common\CDbPool, modbase\common\CMemcachedPool;
 use modbase\core\CModDef;
-    
-// import class only
-/*function mbs_import($mod, $class){
-	global $mbs_appenv;
-	$args = func_get_args();
-	$numargs = func_num_args();
-	for($i=1; $i<$numargs; ++$i){
-		$c = $args[$i];
-		$path = $mbs_appenv->getClassPath($c, $mod);
-		require_once $path;
-		if(!class_exists($c, false) && !interface_exists($c, false)){
-			trigger_error('imported class or interface "'.$c.'" not exists in: '.$path, E_USER_ERROR);
-		}
-	}
-}
-use modbase\core\CModDef, modbase\core\CModTag;
-mbs_import('common', 'CDbPool', 'CMemcachedPool', 'CUniqRowControl', 'CStrTools', 'CSessionDBCache');
-if(!class_exists('Memcached', false))
-	mbs_import('common', 'Memcached');
-*/
- 
-function mbs_moddef($mod){
-	global $mbs_appenv;
-	static $modbuf = array();
-		
-	if(isset($modbuf[$mod])){
-		return $modbuf[$mod];
-	}
-	
-	$obj = null;
-	list($class, $path) = $mbs_appenv->getModDefInfo($mod);
-	if(file_exists($path)){
-		require_once $path;
-		$class = 'modbase\\'.$mod.'\\'.$class;
-		$mbs_cur_moddef = new $class($mbs_appenv);
-		$obj = new $class($mbs_appenv);
-	}else{
-		trigger_error($mod.' mod not exists', E_USER_WARNING);
-	}
-	
-	$modbuf[$mod] = $obj;
-	
-	return $obj;
-}
 
 
 function mbs_tbname($name){
@@ -199,19 +177,6 @@ function _main(){
 			$mbs_appenv->config('default_module', 'common'),
 			$mbs_appenv->config('default_action', 'common')
 		);
-		
-
-		if(isset($_SERVER['HTTP_X_LOGIN_TOKEN']) && !empty($_SERVER['HTTP_X_LOGIN_TOKEN'])){ // only for app request
-		    $_COOKIE[session_name()] = $_SERVER['HTTP_X_LOGIN_TOKEN'];
-		}
-		else if(isset($_REQUEST['X-LOGIN-TOKEN'])){
-		    $_COOKIE[session_name()] = $_REQUEST['X-LOGIN-TOKEN'];
-		}
-		
-		if(isset($_SERVER['HTTP_X_POST_JSON_FIELD']) 
-		    && isset($_REQUEST[$_SERVER['HTTP_X_POST_JSON_FIELD']])){
-		    $_REQUEST = array_merge($_REQUEST, json_decode($_REQUEST[$_SERVER['HTTP_X_POST_JSON_FIELD']], true));
-		}
 	}
 	
 	if(!CStrTools::isModifier($mod) || !CStrTools::isModifier($action)){
@@ -264,7 +229,7 @@ function _main(){
 				        $other = ob_get_clean();
 				    }
 				    (new modbase\core\CDBLogAPI(CDbPool::getInstance()))
-				        ->write($mbs_appenv->outarr(), $other);
+				        ->write($mbs_appenv->output(), $other);
 				}
 			}
 		}, $mbs_appenv, $mbs_cur_actiondef);	

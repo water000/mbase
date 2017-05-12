@@ -1,25 +1,9 @@
 <?php 
 
-$_notice_frame = <<<EOT
-<!doctype html>
-<html>
-<head>
-<title>消息提醒</title>
-<link href="{$mbs_appenv->sURL('core.css')}" rel="stylesheet">
-<style>table{padding:3px;width:100%%;text-align:left;}td{border-bottom:1px solid #bbb;}th{background-color:#EFEF9C;;}td div{padding:0 5px;font-size:12px;}</style>
-%s
-</head>
-<body>
-<div class=%s>%s<a href="#" class=close onclick="this.parentNode.parentNode.removeChild(this.parentNode)" >&times;</a></div>
-</body>
-</html>
-EOT;
-
 $lang_zh_CN = array(
 	'site_name'              => '守望者',
 	'db_exception'           => '系统繁忙，请稍后再试(dbe)',
 	'header_html'            => '',
-	'notice_page'            => $_notice_frame, //%s: meta tag or empty, %s: error/success, %s: msg content
 	'click_if_not_redirect'  => '如果没有跳转，请点击链接',
 		
 	'add'                    => '添加',
