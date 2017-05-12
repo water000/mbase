@@ -364,7 +364,7 @@ class CAppEnv{
 	            return ;
 	        }
 	        echo '<!doctype><html><head>',
-	           '<link href="', $mbs_appenv->sURL('core.css'), '" rel="stylesheet" /></head>',
+	           '<link href="', $this->sURL('core.css'), '" rel="stylesheet" /></head>',
 	           '<body><h2 class=', empty($this->echo['code']) ? 'success' : 'error', '>',
 	           empty($this->echo['code']), '</h2>';
 	        

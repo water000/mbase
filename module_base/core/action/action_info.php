@@ -143,6 +143,7 @@ td{word-wrap:break-word;word-break:break-all;}
 h2{text-align:center;}
 .bg-box{background-color:#fff;padding:5px;margin-top:10px;}
 .bg-box p{padding:3px 5px; margin:0;}
+.file-time{float:right;color:#999;}
 </style>
 </head>
 <body style="background-color:#eee;">
@@ -215,6 +216,7 @@ for($i=count($all_actions)-1; $i>=0; --$i){
 				<div>
 					<span class=title><?php echo $all_actions[$i]['_mod']?>.<?php echo $all_actions[$i]['_name']?>
 						</span>
+					<span class=file-time><?php echo date(0 == $ago ? 'H:i' : 'm-d',  $fmtime) ?></span>
 				</div>
 				
 				<div class="action" style="display: none;">
