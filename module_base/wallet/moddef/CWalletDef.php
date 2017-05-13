@@ -5,7 +5,10 @@
 //银联代付 https://open.unionpay.com/ajweb/product/detail?id=67
 //银联批量代付文件标准 https://open.unionpay.com/ajweb/help?id=207#4.4.2
 //https://cschannel.alipay.com/newPortal.htm?scene=mt_zczx&token=&pointId=&enterurl=https%3A%2F%2Fsupport.open.alipay.com%2Falipay%2Fsupport%2Findex.htm
-class CWalletDef extends CModDef {
+
+namespace modbase\wallet;
+
+class CWalletDef extends \modbase\core\CModDef {
 	protected function desc() {
 		return array(
 			self::MOD => array(

@@ -26,7 +26,7 @@ $moddef = mbs_moddef($selected_mod);
 .right{float:left;width:720px;padding:8px 13px;margin:20px;background-color:#fff;box-shadow:0 2px 6px #313131}
 .right h2{color:#555;margin:0;text-align:center;}
 .right table , .right ul{background-color:#fff;}
-.right ul{float:left;width:110px;word-wrap:break-word;padding:0;margin:0;}
+.right ul{float:left;word-wrap:break-word;padding:0;margin:0;max-height:300px;overflow:auto;}
 
 .right li.head{}
 .right .even{background-color:#eee}
@@ -100,13 +100,14 @@ $moddef = mbs_moddef($selected_mod);
 			<?php 
 			$dir = $mbs_appenv->getDir($selected_mod);
 			$types = scandir($dir);
+			if($types !== false){
+			    array_splice($types, 0, 2); //splice '.', '..';
 			$n = 1;
+			$width = 0 == count($types) ? 100 : 100/count($types);
 			foreach($types as $t){
-				if('.' == $t[0])
-					continue;
 				$sub = array($t);
 			?>
-			<ul <?php echo 0 == $n++%2 ? 'class=even':''?>>
+			<ul <?php echo 0 == $n++%2 ? 'class=even':''?> style='width: <?php echo $width?>%;'>
 				<li class=head><?php echo $t?></li>
 				<?php 
 				//foreach($sub as $st){
@@ -125,7 +126,7 @@ $moddef = mbs_moddef($selected_mod);
 				?>
 			</ul>
 			<?php 
-			}
+			}}
 			?>
 		</div>
 		<div style="clear: both"></div>

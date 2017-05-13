@@ -233,7 +233,6 @@ class CAppEnv{
 	
 	function getModList(){
 		$list = array();
-		
 		if ($dh = opendir($this->env['app_root'])) {
 			while (($file = readdir($dh)) !== false) {
 				if($file[0] != '.' && is_dir($this->env['app_root'].$file) 
@@ -309,58 +308,7 @@ class CAppEnv{
 		}
 		return $str;
 	}
-	
-	static function _print_array($arr){
-	    $ret = '';
-	    if(isset($arr[1]) && is_array($arr[1])){
-	        $ret .= '<tr>';
-	        foreach(array_keys($arr[0]) as $k)
-	            $ret .= '<th>'.$k.'</th>';
-	        $ret .= '</tr>';
-	        foreach($arr as $row){
-	            $ret .= '<tr>';
-	            foreach($row as $item)
-	                $ret .= '<td>'.htmlspecialchars(is_array($item)?json_encode($item):$item).'</td>';
-	            $ret .= '</tr>';
-	        }
-	    }else{
-	        if(isset($arr[0]) && is_array($arr[0]))
-	            $arr = $arr[0];
-	        foreach ($arr as $k => $v){
-	            if(is_array($v) && !(isset($v[0]) && is_array($v[0]))){
-	                foreach($v as $subk =>$subv){
-	                    $ret .= '<tr><th>'.$k.'/'.$subk.'</th><td>'.htmlspecialchars(is_array($subv)?json_encode($subv):$subv).'</td></tr>';
-	                }
-	            }else
-	               $ret .= '<tr><th>'.$k.'</th><td>'.htmlspecialchars(is_array($v)?json_encode($v):$v).'</td></tr>';
-	        }
-	    }
-	    return $ret;
-	}
-	
-	static function _print_data($data){
-	    $tb = '';
-	    switch (gettype($data)){
-	        case 'string':
-	            $data = str_replace(RTM_LOG_TRACE_SEP, '<br/>', htmlspecialchars($data));
-	        case 'boolean':
-	        case 'integer':
-	        case 'double':
-	        case 'NULL':
-	            $tb .= $data;
-	            break;
-	        case 'array':
-	            $tb = '<table>';
-	            $tb .= self::_print_array($data);
-	            $tb .= '</table>';
-	            break;
-	        default:
-	            $tb .= 'Error: unsupport data format';
-	            break;
-	    }
-	    return $tb;
-	}
-	
+
 	static function _echo_as_xml($arr){
 		foreach ($arr as $k => $val){
 			$item = (is_numeric($k) ? 'item-':'').$k;
@@ -374,7 +322,7 @@ class CAppEnv{
 		}
 	}
 	
-	function outarr(){
+	function output(){
 	    $out = null;
 	    if(empty($this->echo['code'])){
 	        $out = array('retcode'=>'SUCCESS', 'data'=>$this->echo['data']);
@@ -388,6 +336,8 @@ class CAppEnv{
 	}
 
 	function doecho(){
+	    if(null == $this->echo['code']) return;
+	    
 	    if(false !== strpos(PHP_SAPI, 'cli')){
 	        if($this->echo['code'])
 	           echo 'failed: '.$this->echo['code'], "\n";
@@ -402,14 +352,7 @@ class CAppEnv{
 	    if('json' == $this->env['client_accept']
 	        || 'xml' == $this->env['client_accept'])
 	    {
-	        if(empty($this->echo['code'])){
-	            $out = array('retcode'=>'SUCCESS', 'data'=>$this->echo['data']);
-	        }else{
-	            $out = array('retcode'=>$this->echo['code'], 'error'=>$this->echo['data'], 'data'=>null);
-	        }
-	        if(RTM_DEBUG){
-	           $out['extra'] = $this->echo['extra'];
-	        }
+	        $out = $this->output();
 	        if('json' == $this->env['client_accept'])
 	            echo json_encode($out);
 	        else{
@@ -418,60 +361,28 @@ class CAppEnv{
 	            echo '</response>';
 	        }
 	    }else{
-	        if(empty($this->echo['data']) && empty($this->echo['code']) 
-	            && empty($this->echo['url']) && empty($this->echo['extra']))
-	            return;
-	        $meta = '';
-	        $style = empty($this->echo['code']) ? 'success' : 'error';
-	        if(RTM_DEBUG){
-	           $msg = empty($this->echo['data']) ? '' : '<p name=data>'.self::_print_data($this->echo['data']).'</p>';
-	           $msg .= empty($this->echo['extra']) ? '' : '<p name=extra>'.self::_print_data($this->echo['extra']).'</p>';
-	        }else{
-	            $msg = $this->echo['code'] ? $this->lang('operation_success') : $this->echo['data'];
-	        }
-	        
 	        if(empty($msg) && !empty($this->echo['url'])){
 	            header('Location: '.$this->echo['url']);
 	            return ;
 	        }
-	        else if(!empty($this->echo['url'])){
-	            $meta = '<meta http-equiv="Refresh" content="'.(empty($this->echo['code'])? 3 : 8).';'.$this->echo['url'].'">';
-	            $msg = sprintf('<p style="font-size: 12px;padding: 0 10px;">%s&nbsp;<a href="%s">%s</a></p>',
-	                $this->lang('click_if_not_redirect', 'common'), $this->echo['url'], $this->echo['url']).$msg;
-	        }
-	        echo sprintf($this->lang('notice_page', 'common'), $meta, $style, str_replace("\n", '<br/>', $msg));
-	    }
-	}
-	
-	function htmlBacktrace($trace){
-	    echo '<div class=error style="width:96%;"><table><tr><th>#</th><th>Function and Args</th><th>Location</th></tr>';
-	    foreach($trace as $k => $arr){
-	        echo '<tr><td>', $k, '</td><td>', 
-	           isset($arr['class']) ? $arr['class']:'', 
-	           isset($arr['type']) ? $arr['type'] : '', 
-	           isset($arr['function']) ? $arr['function'] : '',
-	           '()<br/>';
-	        if(isset($arr['args'])){
-    	        foreach($arr['args'] as $n => $a){
-    	            echo '<div>$', $n, ')';
-    	            if(is_array($a))
-    	                echo 'array';
-    	            else if(is_object($a))
-    	                echo 'object&lt;',get_class($a),'&gt;';
-    	            else if(is_resource($a))
-    	                echo 'resource&lt;',get_resource_type($a),'&gt;';
-    	            else 
-    	                echo gettype($a),'&lt;',htmlspecialchars($a),'&gt;';
-    	            echo '</div>';
-    	        }
-	        }
-	        echo '</td><td>', 
-	           isset($arr['file']) ? $arr['file']:'',
-	           isset($arr['line']) ? ':'.$arr['line'] : '',
-	           '</td></tr>';
+	        echo '<!doctype><html><head>',
+	           '<link href="', $this->sURL('core.css'), '" rel="stylesheet" /></head>',
+	           '<body><h2 class=', empty($this->echo['code']) ? 'success' : 'error', '>',
+	           empty($this->echo['code']), '</h2>';
 	        
+	        if(RTM_DEBUG){
+	            echo empty($this->echo['data']) ? 
+	               '' : '<p name=data>'.var_export($this->echo['data']).'</p>';
+	            echo empty($this->echo['extra']) ? 
+	               '' : '<p name=extra>'.var_export($this->echo['extra']).'</p>';
+	        }else{
+	            echo '<p>', $this->echo['code'] ? $this->lang('operation_success') : $this->echo['data'], '</p>';
+	        }
+	        if(!empty($this->echo['url'])){
+	            echo sprintf('<p style="font-size: 12px;padding: 0 10px;">%s&nbsp;<a href="%s">%s</a></p>',
+	                $this->lang('click_if_not_redirect', 'common'), $this->echo['url'], $this->echo['url']);
+	        }
 	    }
-	    echo '</table></div>';
 	}
 	
 	function echoex($data, $errcode='', $redirect_url=''){
@@ -481,11 +392,6 @@ class CAppEnv{
     	    $this->echo['data'] = $data;
     	    $this->echo['code'] = $errcode;
     	    $this->echo['url']  = $redirect_url;
-    	    if(!empty($errcode) && RTM_DEBUG && 'html' == $this->item('client_accept')){
-    	        $trace = debug_backtrace(); // exclude the current function
-    	        array_shift($trace);
-    	        $this->htmlBacktrace($trace);
-    	    }
 	    }
 	}
 	
