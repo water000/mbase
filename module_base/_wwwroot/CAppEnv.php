@@ -361,7 +361,7 @@ class CAppEnv{
 	            echo '</response>';
 	        }
 	    }else{
-	        if(empty($msg) && !empty($this->echo['url'])){
+	        if(empty($this->echo['data']) && !empty($this->echo['url'])){
 	            header('Location: '.$this->echo['url']);
 	            return ;
 	        }
