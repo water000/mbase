@@ -399,6 +399,94 @@ class CAppEnv{
 		return $this->toURL($this->item('cur_action'), 
 				$this->item('cur_mod'), array_merge($_GET, $new_args));
 	}
+	
+	//get or set the $_SESSION with the module prefix by system.
+	//Warning: the method MUST called before any echo/output appeared 
+	//because session_start() will auto called if no $_SESSION register.
+	//@key: string or array(key, module)
+	//@val: optional that means only get the value of key.
+	//If the type of @key is string that means the module prefix is the system current module.
+	//If the number of arguments is equal to 1, that means only get operation expected; else the set matched.
+	function session($key, $val=null){
+	    $type = gettype($key);
+	    if('array' == $type){
+	        $key = $key[1].'.'.$key[0];
+	    }else if('string' == $type){
+	        $key = $this->item('cur_mod').'.'.$key;
+	    }else{
+	        trigger_error('unsupported session key type: '.$type, E_USER_WARNING);
+	        return;
+	    }
+	    
+	    if(!isset($_SESSION))
+	        session_start();
+	    
+	    if(2 == func_num_args())
+	        $_SESSION[$key] = $val;
+	    else 
+	        return $_SESSION[$key];
+	}
+	
+	function route(){
+	    
+	}
+}
+
+class CResponse{
+    private $clientAccept = '';
+    private $appenv;
+    
+    function __construct($appenv){
+        $this->appenv = $appenv;
+    }
+    
+    function error($msg, $httpcode=''){
+        $httpcode = empty($httpcode) ? 400 : $httpcode;
+        http_response_code($httpcode);
+    }
+    
+    function acceptHTML(){
+        return 'html' == $this->clientAccept;
+    }
+    
+    //@var, gettype($var)
+    function output($var){
+        if('json' == $this->clientAccept)
+            echo json_encode($var);
+        else if('xml' == $this->clientAccept)
+            self::_echo_as_xml($var);
+        else{
+            $type = gettype($var);
+            if('string' == $type)
+                include $this->appenv->getPath($var);
+            else 
+                trigger_error('unsupported var type: '.$type);
+        }
+    }
+
+    static function _echo_as_xml($arr){
+        foreach ($arr as $k => $val){
+            $item = (is_numeric($k) ? 'item-':'').$k;
+            echo '<', $item, '>';
+            if(is_array($val)){
+                self::_echo_as_xml($val);
+            }else{
+                echo '<![CDATA[',$val,']]>';
+            }
+            echo '</', $item, '>';
+        }
+    }
+    
+}
+
+class CBaseController{
+    function __construct(){
+        
+    }
+    
+    function serve(){
+        
+    }
 }
 
 ?>

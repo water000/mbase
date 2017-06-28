@@ -1,7 +1,7 @@
 <?php 
 
 $lang_zh_CN = array(
-	'site_name'              => '守望者',
+	'site_name'              => '',
 	'db_exception'           => '系统繁忙，请稍后再试(dbe)',
 	'header_html'            => '',
 	'click_if_not_redirect'  => '如果没有跳转，请点击链接',
@@ -114,7 +114,7 @@ $lang_zh_CN = array(
     'of'                   => '的',
     'wallet'               => '钱包',
     'batch'                => '批量',
-    'foot'                 => 'Copyright © 2016  江苏省国家安全厅    All Rights Reserved  版权所有',
+    'foot'                 => '',
 );
 
 
