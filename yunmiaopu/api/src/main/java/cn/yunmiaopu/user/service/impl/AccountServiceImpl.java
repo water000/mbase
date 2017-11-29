@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by macbookpro on 2017/10/18.
@@ -27,7 +28,8 @@ public class AccountServiceImpl implements IAccountService {
     }
 
     public Account get(long id) throws Exception{
-        return iAccountDao.findOne(id);
+        Optional<Account> ret = iAccountDao.findById(id);
+        return ret.isPresent() ? ret.get() : null;
     }
 
     public List<Account> find(Account ac){

@@ -5,7 +5,8 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:p="http://www.springframework.org/schema/p"
-       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                         http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
                         http://www.springframework.org/schema/mvc
@@ -26,8 +27,6 @@
         </mvc:argument-resolvers>
     </mvc:annotation-driven>
 
-    <jpa:repositories base-package="cn.yunmiaopu.**.dao" />
-
     <!--mvc:cors>
         <mvc:mapping path="/**" />
     </mvc:cors -->
@@ -37,7 +36,7 @@
         <property name="driverClass" value="com.mysql.jdbc.Driver"/>
         <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/cn_yunmiaopu"/>
         <property name="user" value="root"/>
-        <property name="password" value="123456"/>
+        <property name="password" value=""/>
     </bean>
     <bean id="namingStrategy" class="cn.yunmiaopu.common.ImprovedPhysicalNamingStrategy"></bean>
 
@@ -74,27 +73,43 @@
           p:host-name="127.0.0.1" p:port="6379"/>
     <bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration"/>
 
+    <bean id="persistenceProvider" class="org.hibernate.jpa.HibernatePersistenceProvider"/>
+
     <bean id="entityManagerFactory"
           class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
         <property name="dataSource" ref="dataSource" />
         <property name="jpaVendorAdapter" ref="hibernateJpaVendorAdapter" />
+        <property name="persistenceProvider" ref="persistenceProvider" />
+        <property name="packagesToScan" >
+             <array>
+                 <value>cn.yunmiaopu.*.entity</value>
+             </array>
+         </property>
+        <property name="jpaPropertyMap">
+             <map>
+                 <entry key="hibernate.query.substitutions" value="true 1, false 0" />
+                 <entry key="hibernate.default_batch_fetch_size" value="16" />
+                 <entry key="hibernate.max_fetch_depth" value="2" />
+                 <entry key="hibernate.generate_statistics" value="false" />
+                 <entry key="hibernate.bytecode.use_reflection_optimizer" value="true" />
 
-        <property name="jpaProperties">
-            <props>
-                <prop key="hibernate.current_session_context_class">thread</prop>
-                <prop key="hibernate.hbm2ddl.auto">update</prop><!-- validate/update/create -->
-                <prop key="hibernate.show_sql">false</prop>
-                <prop key="hibernate.format_sql">false</prop>
+                 <entry key="hibernate.cache.use_query_cache" value="false" />
+                 <entry key="hibernate.cache.use_second_level_cache" value="false" />
 
-                <!-- 建表的命名规则 -->
-                <prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
-
-            </props>
-        </property>
+                 <entry key="hibernate.enable_lazy_load_no_trans" value="true"/>
+                 <!--数据库字段名称映射规则 acb_id自动转abcId-->
+                 <entry key="hibernate.physical_naming_strategy" value="cn.yunmiaopu.common.ImprovedPhysicalNamingStrategy" />
+                 <entry key="hibernate.show_sql" value="true" />
+                 <!--<entry key="hibernate.hbm2ddl.auto" value="validate"/>-->
+             </map>
+         </property>
     </bean>
 
     <bean id="hibernateJpaVendorAdapter"
           class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
     </bean>
+
+    <jpa:repositories base-package="cn.yunmiaopu.**.dao" entity-manager-factory-ref="entityManagerFactory" />
+
 
 </beans>

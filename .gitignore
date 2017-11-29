@@ -35,6 +35,8 @@ hs_err_pid*
 .idea/**/tasks.xml
 .idea/dictionaries
 *.iml
+**/target/MANIFEST.MF
+**/yunmiaopu/api/target/*
 
 # Sensitive or high-churn files:
 .idea/**/dataSources/

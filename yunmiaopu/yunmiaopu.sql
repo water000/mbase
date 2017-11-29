@@ -1,5 +1,7 @@
 
-create database IF NOT EXSITS cn_yunmiaopu charset=utf8;
+create database IF NOT EXISTS cn_yunmiaopu charset=utf8;
+
+use cn_yunmiaopu;
 
 CREATE TABLE IF NOT EXISTS user_account(
 	id int unsigned not null auto_increment,
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS unit_item(
 	fid int unsigned not null,
 	name varchar(16) default null,
 	short varchar(16) default null,
-	alias varhcar(16) not null,
+	alias varchar(16) not null,
 	sub_id int unsigned not null,
 	increment int not null,
 	primary key(id)
@@ -104,7 +106,7 @@ CREATE TABLE IF NOT EXISTS shop_basic(
 	edit_ts int unsigned not null,
 	image_num tinyint unsigned not null,
 	primary key(id),
-	key(owner_id),
+	key(owner_uid),
 	unique key(name)
 );
 

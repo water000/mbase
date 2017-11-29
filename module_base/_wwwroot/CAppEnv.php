@@ -484,7 +484,33 @@ class CBaseController{
         
     }
     
-    function serve(){
+    function save(){
+        
+    }
+
+    function get(){
+    
+    }
+    
+    function set(){
+        
+    }
+    
+    function remove(){
+        
+    }
+}
+
+class CDispatch{
+    
+    const PATH_SEP = '/';
+    
+    //@return: [controller-name, function-name] or null
+    static function parse($path){
+        
+    }
+    
+    static function url($controller, $func, $param){
         
     }
 }

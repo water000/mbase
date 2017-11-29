@@ -11,7 +11,7 @@ import org.springframework.data.repository.CrudRepository;
  */
 public interface IAccountDao extends CrudRepository<Account, Long>{
 
-    List<Account> findByMobilePhone(String mobilePhone);
+    List<Account> findByMobilePhone(String mobile_phone);
     /*Account save(Account a) throws Exception;
 
     void update(Account a)  throws Exception;
