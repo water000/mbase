@@ -1,4 +1,4 @@
-package cn.yunmiaopu.common;
+package cn.yunmiaopu.common.util;
 
 import java.util.LinkedList;
 import java.util.List;

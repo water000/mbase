@@ -4,6 +4,7 @@ import cn.yunmiaopu.common.util.Response;
 import cn.yunmiaopu.user.entity.Account;
 import cn.yunmiaopu.user.entity.UserSession;
 import cn.yunmiaopu.user.service.IAccountService;
+import cn.yunmiaopu.user.util.ErrorCode;
 import cn.yunmiaopu.user.util.Users;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by macbookpro on 2017/9/27.
@@ -54,19 +56,19 @@ public class AccountController {
     }
 
     @RequestMapping(value="/reg", method = RequestMethod.GET)
-    public Object reg(UserSession.Optional usess, String phone, String pwd){
+    public Object reg(Optional<UserSession> usess, String phone, String pwd, HttpServletRequest req){
 
         HashMap<String, String> error = new HashMap<String, String>();
 
-        if(usess != null){
-            return Response.error("user session already exists, logout first");
+        if(usess.isPresent()){
+            return Response.error(ErrorCode.SESSION_ALREADY_EXISTS);
         }
 
         if(!Users.isValidPhone(phone)){
-            error.put("phone", "invalid phone: "+phone);
+            error.put("phone", phone);
         }
         if(null == pwd || 0 == (pwd = pwd.trim()).length() ){
-            error.put("pwd", "empty pwd");
+            error.put("pwd", "");
         }
 
         if(error.size() > 0){
@@ -76,28 +78,31 @@ public class AccountController {
         Account ac = new Account();
         ac.setMobilePhone(phone);
         ac.setPassword(Users.genPassword(pwd.getBytes()));
-        ac.setRegTs((new Date().getTime())/1000);
+        ac.setRegTs((new Date().getTime()) / 1000);
+        ac.setRegIp(req.getRemoteAddr());
         try{
             accountService.save(ac);
         }catch (Exception e){
             logger.error(e);
-            e.printStackTrace();
-            error.put("phone", "phone already exists");
-           return Response.error(error);
+           return Response.error(ErrorCode.PHONE_ALREADY_EXISTS);
         }
 
-        return Response.ok("reg success");
+        return Response.ok();
     }
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public Object login(String phone, String pwd, HttpServletRequest req) throws Exception{
+    public Object login(Optional<UserSession> usess, String phone, String pwd, HttpServletRequest req) throws Exception{
         HashMap<String, String> error = new HashMap<String, String>();
 
+        if(usess.isPresent()){
+            return Response.error(ErrorCode.SESSION_ALREADY_EXISTS);
+        }
+
         if(!Users.isValidPhone(phone)){
-            error.put("phone", "invalid phone: "+phone);
+            error.put("phone", phone);
         }
         if(null == pwd || 0 == (pwd = pwd.trim()).length() ){
-            error.put("pwd", "empty pwd");
+            error.put("pwd", "");
         }
 
         if(error.size() > 0){
@@ -109,8 +114,8 @@ public class AccountController {
         List<Account> found = accountService.find(ac);
         if(found != null && found.size() > 0){
            if(!Users.comparePassword(pwd.getBytes(), found.get(0).getPassword())){
-               error.put("pwd", "incorrect pwd");
-               return Response.error(error);
+               error.put("pwd", pwd);
+               return Response.error(error, ErrorCode.PASSWORD_INCORRECT.toString());
            }
            UserSession us = new UserSession(ac.getId());
            us.setUserSession(req.getSession());
@@ -128,13 +133,13 @@ public class AccountController {
 
     }
 
-
     public void modify(Account info){
 
     }
 
-    public void logout(){
-
+    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    public void logout(UserSession sess, HttpServletRequest req){
+        sess.remove(req.getSession());
     }
 
 }

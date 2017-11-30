@@ -1,44 +1,60 @@
 package cn.yunmiaopu.common.util;
 
+
 /**
  * Created by macbookpro on 2017/10/18.
  */
 public class Response {
-    private int status = 1;
-    private Object error = null;
+
+    private String code = Code.OK.toString();
     private Object data = null;
 
     public static Response error(Object err){
+        return error(err, Code.INVALID_INPUT_VARS.toString());
+    }
+
+    public static Response error(String code){
+        return error(null, code);
+    }
+
+    public static Response error(Object err, String code){
         Response rsp = new Response();
-        rsp.setError(err);
+        rsp.code = code.toString();
+        rsp.data = err;
         return rsp;
     }
 
     public static Response ok(Object data){
         Response rsp = new Response();
-        rsp.setOk(data);
+        rsp.data = data;
         return rsp;
     }
 
-    public void setError(Object err){
-        this.status = 0;
-        this.error = err;
+    public static Response ok(){
+        Response rsp = new Response();
+        rsp.data = null;
+        return rsp;
     }
 
-    public void setOk(Object data){
-        this.status = 1;
-        this.data = data;
+
+    public String getCode() {
+        return code;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public Object getError() {
-        return error;
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public Object getData() {
         return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public enum Code{
+        OK,
+        INVALID_INPUT_VARS,
     }
 }

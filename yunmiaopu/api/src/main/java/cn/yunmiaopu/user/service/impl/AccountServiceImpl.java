@@ -5,6 +5,7 @@ import cn.yunmiaopu.user.entity.Account;
 import cn.yunmiaopu.user.service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import java.util.Optional;
  * Created by macbookpro on 2017/10/18.
  */
 @Service
+@Transactional
 public class AccountServiceImpl implements IAccountService {
 
     @Autowired

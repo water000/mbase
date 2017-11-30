@@ -26,17 +26,17 @@ public class Users {
 
         byte[] res = new byte[pwd.length*2];
         int i = 0;
-        for(byte b:pwd){
-            res[i] = (byte)(b >> 4);
+        for(byte b:pwd){// convert dec to hex
+            res[i] = (byte)((short)(b&0xff) >> 4); // convert signed(negative) to unsigned
             res[i] += res[i] > 9 ? 55 : 48;
 
-            res[i+1] = (byte)(b & 0x7F);
+            res[i+1] = (byte)(b & 0x0F);
             res[i+1] += res[i+1] > 9 ? 55 : 48;
 
             i+=2;
         }
 
-        return new String(pwd);
+        return new String(res);
     }
 
     public static boolean comparePassword(byte[] txt, String password){

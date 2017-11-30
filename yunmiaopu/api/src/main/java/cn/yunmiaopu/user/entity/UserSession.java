@@ -1,15 +1,16 @@
 package cn.yunmiaopu.user.entity;
 
 import javax.servlet.http.HttpSession;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by macbookpro on 2017/10/17.
  */
-public class UserSession {
+public class UserSession implements Serializable {
+    private static final long serialVersionUID = -8865323105913151247L;
     private long accountId;
     private long loginTs;
-    private long lastAccessTs;
 
     private static final String SESS_KEY = "User.SessionObject";
 
@@ -30,7 +31,7 @@ public class UserSession {
         return (UserSession)sess.getAttribute(SESS_KEY);
     }
 
-    public static class Optional extends UserSession{
-
+    public void remove(HttpSession sess){
+        sess.removeAttribute(SESS_KEY);
     }
 }
