@@ -2,19 +2,21 @@
 
 export default class RestFetch{
 	
-	construct(opts){
+	constructor(opts){
 		this.opts = {
 			url : '',
 			accept:'application/json',
 			mode:''	
 		};
 		this.setOpt(opts);
+		this.authFilter = null;
 	}
 
 	//setOpt("url", "/index")
 	//setOpt({url:"/index"})
 	setOpt(key, value){
 		this.opts = Object.assign(this.opts, 1 == arguments.length ? key : {key : value});
+		console.log(this.opts);
 		if(!this.opts.url){
 			throw new Error("The url is required but not specified");
 		}
@@ -27,49 +29,66 @@ export default class RestFetch{
 				this.opts.mode = "cors";
 			}
 		}
+
 	}
 
-	_fetch(body, method, url){
-		fetch(url || this.opts.url, {
-			method : method || "GET",
-			mode : this.opts.mode
-			headers : {
-				"Accept" : this.opts.accept
-			},
-			body
-		})
-		.then(rsp =>{
-			switch(rsp.status){
-				case 200:
-					let ct = rsp.headers.get("Content-Type");
-					Promise.resolve(ct!=null && ct.toLowerCase().indexOf("/json") != -1 ? rsp.json() : rsp.text());
-					break;
-				case 401: // login required
-					break;
-				default:
-					Promise.reject(rsp);
-					break;
-			}
-		})
-		.catch(err=>{
-			console.log(err);
+	setAuthFetch(filter){
+		this.authFetch = filter;
+	}
+
+	_fetch(body, headers, method, url){
+		return new Promise((resolve, reject) => {
+			fetch(url || this.opts.url, {
+				method : method || "GET",
+				mode : this.opts.mode,
+				headers : Object.assign({"Accept" : this.opts.accept}, headers || {}),
+				body
+			})
+			.then(rsp =>{
+				return 200 == rsp.status ? resolve(rsp) : reject(rsp);
+			})
+			.catch(err=>{
+				reject(err);
+			});
 		});
 	}
 
-	create(params, url){
-		return this._fetch(params, "POST", url);
+	authFetch(body, headers, method, url){
+		return new Promise((resolve, reject) => {
+			this._fetch(body, headers, method, url).then(rsp=>rsp)
+			.catch(rsp=>{
+				if(! rsp instanceof Response || rsp.status != 401){
+					console.error(rsp);
+					reject(rsp);
+				}
+				else{
+					if(this.authFetch)
+						this.authFetch(rsp, user=>{
+							this._fetch(body, headers, method, url).then(rsp=>resolve(rsp));// retry on auth success
+						});
+					else{
+						console.error('Auth required.');
+						reject('Auth required.');
+					}
+				}
+			});
+		});
 	}
 
-	select(params, url){
-		return this._fetch(params, "GET", url);
+	create(params, headers, url){
+		return this.authFetch(params, headers, "POST", url);
 	}
 
-	update(params, url){
-		return this._fetch(params, "PUT", url);
+	select(params, headers, url){
+		return this.authFetch(params, headers, "GET", url);
 	}
 
-	delete(params, url){
-		return this._fetch(params, "DELETE", url);
+	update(params, headers, url){
+		return this.authFetch(params, headers, "PUT", url);
+	}
+
+	delete(params, headers, url){
+		return this.authFetch(params, headers, "DELETE", url);
 	}
 
 }

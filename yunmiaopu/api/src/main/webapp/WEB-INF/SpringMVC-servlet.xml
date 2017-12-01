@@ -34,8 +34,6 @@
         <mvc:mapping path="/**" />
     </mvc:cors -->
 
-    <bean id="exceptionHandler" class="cn.yunmiaopu.common.util.HandlerExceptionResolverImpl"/>
-
     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
           destroy-method="close">
         <property name="driverClass" value="com.mysql.jdbc.Driver"/>

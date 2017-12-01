@@ -32,7 +32,6 @@ public class Response {
 
     public static Response ok(){
         Response rsp = new Response();
-        rsp.data = null;
         return rsp;
     }
 
