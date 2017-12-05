@@ -30,9 +30,9 @@
 
     <tx:annotation-driven/>
 
-    <!--mvc:cors>
-        <mvc:mapping path="/**" />
-    </mvc:cors -->
+    <mvc:cors>
+        <mvc:mapping path="/**" allowed-origins="*" allow-credentials="true" max-age="1800" allowed-methods="GET,POST,OPTIONS"/>
+    </mvc:cors>
 
     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
           destroy-method="close">
@@ -76,7 +76,6 @@
                  <entry key="hibernate.cache.use_second_level_cache" value="false" />
 
                  <entry key="hibernate.enable_lazy_load_no_trans" value="true"/>
-                 <!--数据库字段名称映射规则 acb_id自动转abcId-->
                  <entry key="hibernate.physical_naming_strategy" value="cn.yunmiaopu.common.util.ImprovedPhysicalNamingStrategy" />
                  <entry key="hibernate.show_sql" value="true" />
                  <!--<entry key="hibernate.hbm2ddl.auto" value="validate"/>-->
