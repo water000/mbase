@@ -1,5 +1,6 @@
-import { Modal, Form, Icon, Input, Button, Checkbox } from 'antd';
+import { Modal, Form, Icon, Input, Button, Checkbox, InputNumber  } from 'antd';
 import React from 'react';
+import RestFetch from '../RestFetch';
 
 const FormItem = Form.Item;
 
@@ -8,7 +9,16 @@ class NormalLoginForm extends React.Component {
     e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
-        console.log('Received values of form: ', values);
+        var param = "";
+        for(var k in values)
+          param += k + "=" + encodeURIComponent(values[k]) + "&";
+        new RestFetch({path:"/user/account/login?"+param}).select()
+          .then(rsp=>{
+            this.props.onAuthOk();
+          })
+          .catch(err=>{
+            console.log("login err: ", err);
+          });
       }
     });
   }
@@ -17,14 +27,14 @@ class NormalLoginForm extends React.Component {
     return (
       <Form onSubmit={this.handleSubmit} className="login-form">
         <FormItem>
-          {getFieldDecorator('userName', {
-            rules: [{ required: true, message: 'Please input your username!' }],
+          {getFieldDecorator('phone', {
+            rules: [{ required: true, message: 'Please input your phone!' }],
           })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Username" />
+            <InputNumber prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Phone" />
           )}
         </FormItem>
         <FormItem>
-          {getFieldDecorator('password', {
+          {getFieldDecorator('pwd', {
             rules: [{ required: true, message: 'Please input your Password!' }],
           })(
             <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Password" />
@@ -48,29 +58,19 @@ class NormalLoginForm extends React.Component {
 
 const WrappedNormalLoginForm = Form.create()(NormalLoginForm);
 
+
 export default class Auth extends React.Component {
-  state = { visible: true }
   constructor(props){
     super(props);
-  }
-  show = () => {
-    this.setState({
-      visible: true,
-    });
-  }
-  close = () => {
-    this.setState({
-      visible: false,
-    });
   }
   render() {
     return (
       <Modal 
         title="Login"
         width="400"
-        visible={this.state.visible}
+        visible={this.props.visible}
         footer={null} >
-        <WrappedNormalLoginForm />
+        <WrappedNormalLoginForm onAuthOk={this.props.onAuthOk} />
       </Modal>
     );
   }

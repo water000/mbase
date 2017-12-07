@@ -4,7 +4,6 @@ import {Link, BrowserRouter as Router, Route } from 'react-router-dom';
 import './App.css';
 import { Layout, Menu, Breadcrumb, Icon } from 'antd';
 import createBrowserHistory from 'history/createBrowserHistory';
-import Auth from './components/Auth'
 
 const { Header, Content, Footer, Sider } = Layout;
 const SubMenu = Menu.SubMenu;
@@ -93,7 +92,6 @@ class App extends React.Component{
     return (
       <Router history={history}>
       <Layout style={{height:'100%'}}>
-        <Auth />
         <Sider
           collapsible
           collapsed={this.state.collapsed}

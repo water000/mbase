@@ -2,6 +2,7 @@ package cn.yunmiaopu.permission.controller;
 
 import cn.yunmiaopu.permission.entity.Action;
 import cn.yunmiaopu.permission.service.IActionService;
+import cn.yunmiaopu.user.entity.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.HandlerMethod;
@@ -41,7 +42,7 @@ public class ActionController {
     }
 
     @RequestMapping(name="scan", value="/scan")
-    public List<Action> scan(){
+    public List<Action> scan(UserSession sess){
         return allActions;
     }
 

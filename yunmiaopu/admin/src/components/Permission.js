@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table, Icon, Switch, Radio, Form, Button, Input , Alert} from 'antd';
+import RestFetch from "../RestFetch"
 
 const WEB_ROOT = 'http://localhost:8080';
 
@@ -21,6 +22,7 @@ export default class Permission extends React.Component{
 	}
 
 	setResponse(code, msg){
+		console.log(msg);
 		this.setState({response:{code, msg}});
 	}
 
@@ -29,20 +31,28 @@ export default class Permission extends React.Component{
 	}
 
 	scan(){
-		fetch(WEB_ROOT + '/permission/action/scan',{mode:"cors"})
+		new RestFetch({path:"/permission/action/scan"})
+			.select()
 			.then(res => res.json())
 			.then(json=>{
 				this.setState({data:json, tableLoading:false});
 				this.selected();
 			})
-			.catch(e=>this.setResponse('FETCH_EXCEPTION', e));
+			.catch(e=>{this.setResponse('FETCH_EXCEPTION', 'Unknown Exception');console.error(e);});
+		/*fetch(WEB_ROOT + '/permission/action/scan',{mode:"cors"})
+			.then(res => res.json())
+			.then(json=>{
+				this.setState({data:json, tableLoading:false});
+				this.selected();
+			})
+			.catch(e=>this.setResponse('FETCH_EXCEPTION', e));*/
 	}
 
 	save = ()=>{
 		let ret = false, that = this;
 		this.state.selectedData.map(function(item, i){
 			item.name = (item.name||"").trim();
-			if(0 == item.name){
+			if(0 == item.name.length){
 				that.setResponse('INVALID_PARAM', 'name can not be null');
 				ret = true;
 				return;

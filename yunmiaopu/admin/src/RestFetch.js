@@ -1,27 +1,36 @@
 
+let _DOMAIN = "/";
+let _AUTH_FILTER = null;
+
+export function RestFetch_setDomain(d){
+	_DOMAIN = d;
+}
+export function RestFetch_setAuthFilter(filter){
+	_AUTH_FILTER = filter;
+}
 
 export default class RestFetch{
 	
 	constructor(opts){
 		this.opts = {
 			url : '',
+			path: '',
+			domain:_DOMAIN,
 			accept:'application/json',
 			mode:''	
 		};
 		this.setOpt(opts);
-		this.authFilter = null;
+		this.setAuthFilter(_AUTH_FILTER);
+		this.callbackPayload = null;
 	}
 
-	//setOpt("url", "/index")
-	//setOpt({url:"/index"})
+	//setOpt("path", "/index")
+	//setOpt({path:"/index"})
 	setOpt(key, value){
 		this.opts = Object.assign(this.opts, 1 == arguments.length ? key : {key : value});
 		console.log(this.opts);
-		if(!this.opts.url){
-			throw new Error("The url is required but not specified");
-		}
-		if(!this.opts.mode){
-			var a = new URL(this.opts.url);
+		if(this.opts.domain != '' && this.opts.domain != '/'){
+			var a = new URL(this.opts.domain);
 			if(a.protocol != document.location.protocol 
 				|| a.hostname != document.location.hostname
 				|| a.port != document.location.port)
@@ -29,19 +38,21 @@ export default class RestFetch{
 				this.opts.mode = "cors";
 			}
 		}
-
 	}
 
-	setAuthFetch(filter){
-		this.authFetch = filter;
+	setAuthFilter(filter){
+		this.authFilter = filter;
+		this.handle = filter != null ? this.authFetch : this._fetch;
 	}
 
 	_fetch(body, headers, method, url){
+		console.log(body);
 		return new Promise((resolve, reject) => {
-			fetch(url || this.opts.url, {
+			fetch(url || this.opts.domain+this.opts.path, {
 				method : method || "GET",
 				mode : this.opts.mode,
 				headers : Object.assign({"Accept" : this.opts.accept}, headers || {}),
+				credentials:"include",
 				body
 			})
 			.then(rsp =>{
@@ -53,23 +64,26 @@ export default class RestFetch{
 		});
 	}
 
+	onAuthOk(){
+		if(this.callbackPayload)
+			this._fetch(this.callbackPayload.body, this.callbackPayload.headers, this.callbackPayload.method, this.callbackPayload.url)
+				.then(rsp=>this.callbackPayload.resolve(rsp))
+				.catch(err=>this.callbackPayload.reject(err));
+	}
+
 	authFetch(body, headers, method, url){
 		return new Promise((resolve, reject) => {
-			this._fetch(body, headers, method, url).then(rsp=>rsp)
+			this._fetch(body, headers, method, url)
+			.then(rsp=>resolve(rsp))
 			.catch(rsp=>{
-				if(! rsp instanceof Response || rsp.status != 401){
-					console.error(rsp);
-					reject(rsp);
+				if(rsp instanceof Response && 401 == rsp.status ){
+					this.callbackPayload = { body, headers, method, url, resolve, reject};
+					this.authFilter.onAuth(this);
+					console.error('Auth required.');
 				}
 				else{
-					if(this.authFetch)
-						this.authFetch(rsp, user=>{
-							this._fetch(body, headers, method, url).then(rsp=>resolve(rsp));// retry on auth success
-						});
-					else{
-						console.error('Auth required.');
-						reject('Auth required.');
-					}
+					console.error(rsp);
+					reject(rsp);
 				}
 			});
 		});
@@ -77,7 +91,7 @@ export default class RestFetch{
 
 	create(params, headers, url){
 		return new Promise((resolve, reject) => {
-			this.authFetch(params, headers, "POST", url)
+			this.handle(params, headers, "POST", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -85,7 +99,7 @@ export default class RestFetch{
 
 	select(params, headers, url){
 		return new Promise((resolve, reject) => {
-			this.authFetch(params, headers, "GET", url)
+			this.handle(params, headers, "GET", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -93,7 +107,7 @@ export default class RestFetch{
 
 	update(params, headers, url){
 		return new Promise((resolve, reject) => {
-			this.authFetch(params, headers, "PUT", url)
+			this.handle(params, headers, "PUT", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -101,10 +115,9 @@ export default class RestFetch{
 
 	delete(params, headers, url){
 		return new Promise((resolve, reject) => {
-			this.authFetch(params, headers, "DELETE", url)
+			this.handle(params, headers, "DELETE", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
 	}
-
 }
