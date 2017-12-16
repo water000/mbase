@@ -49,7 +49,7 @@ class App extends React.Component{
   onCollapse = (collapsed) => {
     this.setState({collapsed});
   }
-
+ 
   getBreadcrumb = (menuindex) => {
     let arr = [];
     arr.push(this.props.menu[menuindex[0]].title);

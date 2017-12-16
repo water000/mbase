@@ -13,13 +13,15 @@ export default class RestFetch{
 	
 	constructor(opts){
 		this.opts = {
-			url : '',
 			path: '',
 			domain:_DOMAIN,
 			accept:'application/json',
 			mode:''	
 		};
-		this.setOpt(opts);
+		if("String" === typeof opts)
+			this.setOpt({path:opts});
+		else
+			this.setOpt(opts);
 		this.setAuthFilter(_AUTH_FILTER);
 		this.callbackPayload = null;
 	}
@@ -28,7 +30,17 @@ export default class RestFetch{
 	//setOpt({path:"/index"})
 	setOpt(key, value){
 		this.opts = Object.assign(this.opts, 1 == arguments.length ? key : {key : value});
-		console.log(this.opts);
+		if((var idx=this.opts.path.indexOf("://")) != -1){
+			let pathidx = this.opts.path.indexOf("/", idx+3);
+			this.opts.domain = pathidx > 0 ? this.opts.path.substr(0, pathidx) : this.opts.path;
+			if(pathidx > 0){
+				this.opts.domain = this.opts.path.substr(0, pathidx);
+				this.opts.path   = this.opts.path.substr(pathidx);
+			}else{
+				this.opts.domain = this.opts.path;
+				this.opts.path   = "/";
+			}
+		}
 		if(this.opts.domain != '' && this.opts.domain != '/'){
 			var a = new URL(this.opts.domain);
 			if(a.protocol != document.location.protocol 
@@ -46,7 +58,6 @@ export default class RestFetch{
 	}
 
 	_fetch(body, headers, method, url){
-		console.log(body);
 		return new Promise((resolve, reject) => {
 			fetch(url || this.opts.domain+this.opts.path, {
 				method : method || "GET",
@@ -65,10 +76,12 @@ export default class RestFetch{
 	}
 
 	onAuthOk(){
-		if(this.callbackPayload)
+		if(this.callbackPayload){
 			this._fetch(this.callbackPayload.body, this.callbackPayload.headers, this.callbackPayload.method, this.callbackPayload.url)
 				.then(rsp=>this.callbackPayload.resolve(rsp))
 				.catch(err=>this.callbackPayload.reject(err));
+			this.callbackPayload = null;
+		}
 	}
 
 	authFetch(body, headers, method, url){
@@ -91,6 +104,7 @@ export default class RestFetch{
 
 	create(params, headers, url){
 		return new Promise((resolve, reject) => {
+			reject = reject || console.error;
 			this.handle(params, headers, "POST", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
@@ -99,6 +113,7 @@ export default class RestFetch{
 
 	select(params, headers, url){
 		return new Promise((resolve, reject) => {
+			reject = reject || console.error;
 			this.handle(params, headers, "GET", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
@@ -107,6 +122,7 @@ export default class RestFetch{
 
 	update(params, headers, url){
 		return new Promise((resolve, reject) => {
+			reject = reject || console.error;
 			this.handle(params, headers, "PUT", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
@@ -115,6 +131,7 @@ export default class RestFetch{
 
 	delete(params, headers, url){
 		return new Promise((resolve, reject) => {
+			reject = reject || console.error;
 			this.handle(params, headers, "DELETE", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
