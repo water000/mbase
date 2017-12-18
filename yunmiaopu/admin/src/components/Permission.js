@@ -218,7 +218,7 @@ class Role extends React.Component{
 		          </FormItem>}
 		          <FormItem label=" " {...formItemLayout}>
 		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>
-		            <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button>
+		            {this.props.basicProps && <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button> }
 		          </FormItem>
 		        </Form>
 		    </div>
