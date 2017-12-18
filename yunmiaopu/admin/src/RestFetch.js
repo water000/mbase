@@ -18,7 +18,7 @@ export default class RestFetch{
 			accept:'application/json',
 			mode:''	
 		};
-		if("String" === typeof opts)
+		if("string" === typeof opts)
 			this.setOpt({path:opts});
 		else
 			this.setOpt(opts);
@@ -30,7 +30,8 @@ export default class RestFetch{
 	//setOpt({path:"/index"})
 	setOpt(key, value){
 		this.opts = Object.assign(this.opts, 1 == arguments.length ? key : {key : value});
-		if((var idx=this.opts.path.indexOf("://")) != -1){
+		let idx;
+		if((idx=this.opts.path.indexOf("://")) != -1){
 			let pathidx = this.opts.path.indexOf("/", idx+3);
 			this.opts.domain = pathidx > 0 ? this.opts.path.substr(0, pathidx) : this.opts.path;
 			if(pathidx > 0){
@@ -78,9 +79,8 @@ export default class RestFetch{
 	onAuthOk(){
 		if(this.callbackPayload){
 			this._fetch(this.callbackPayload.body, this.callbackPayload.headers, this.callbackPayload.method, this.callbackPayload.url)
-				.then(rsp=>this.callbackPayload.resolve(rsp))
-				.catch(err=>this.callbackPayload.reject(err));
-			this.callbackPayload = null;
+				.then(rsp=>{this.callbackPayload.resolve(rsp);this.callbackPayload = null;})
+				.catch(err=>{this.callbackPayload.reject(err);this.callbackPayload = null;});
 		}
 	}
 
@@ -90,6 +90,8 @@ export default class RestFetch{
 			.then(rsp=>resolve(rsp))
 			.catch(rsp=>{
 				if(rsp instanceof Response && 401 == rsp.status ){
+					resolve = resolve || console.log;
+					reject  = reject || console.error;
 					this.callbackPayload = { body, headers, method, url, resolve, reject};
 					this.authFilter.onAuth(this);
 					console.error('Auth required.');

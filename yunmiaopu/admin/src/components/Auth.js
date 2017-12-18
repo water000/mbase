@@ -30,7 +30,7 @@ class NormalLoginForm extends React.Component {
           {getFieldDecorator('phone', {
             rules: [{ required: true, message: 'Please input your phone!' }],
           })(
-            <InputNumber prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Phone" />
+            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Phone" />
           )}
         </FormItem>
         <FormItem>

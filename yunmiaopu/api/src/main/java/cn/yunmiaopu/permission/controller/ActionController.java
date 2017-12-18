@@ -77,7 +77,7 @@ public class ActionController {
             }
         }
         if(neu.size() > 0)
-            pas.save(neu);
+            pas.saveAll(neu);
 
         return 1;
     }

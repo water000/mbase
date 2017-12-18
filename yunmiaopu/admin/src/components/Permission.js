@@ -1,6 +1,9 @@
 import React from 'react';
-import { Table, Icon, Switch, Radio, Form, Button, Input , Alert} from 'antd';
+import { Table, Icon, Switch, Radio, Form, Button, Checkbox, Input , Alert, Tabs} from 'antd';
 import RestFetch from "../RestFetch"
+import UserRemoteSelect from "./UserRemoteSelect"
+const FormItem = Form.Item;
+const TabPane = Tabs.TabPane;
 
 const WEB_ROOT = 'http://localhost:8080';
 
@@ -36,8 +39,8 @@ class MarkAction extends React.Component{
 			.then(res => res.json())
 			.then(json=>{
 				json.sort((a, b)=>{
-					return a.url < b.url ? -1 :
-						(a.url > b.url ? 1 : 0);
+					return a.urlPath < b.urlPath ? -1 :
+						(a.urlPath > b.urlPath ? 1 : 0);
 				});
 				this.setState({data:json, tableLoading:false});
 				this.selected();
@@ -57,11 +60,10 @@ class MarkAction extends React.Component{
 		});
 		if(ret) return;
 		this.setState({saveLoading:true});
-		fetch(WEB_ROOT + '/permission/action', 
-			{mode:"cors", method:'post', headers:{'Content-Type':'application/json'}, body:JSON.stringify(this.state.selectedData)})
+		new RestFetch('/permission/action').create(JSON.stringify(this.state.selectedData), {'Content-Type':'application/json'}) 
 			.then(res => res.text())
 			.then(updated=>{this.setResponse('OK', 'save successed');this.setState({saveLoading:false});this.props.onMarked(this.state.selectedData);})
-			.catch(e=>{this.setResponse('FETCH_EXCEPTION', e);this.setState({saveLoading:true});});
+			.catch(e=>{this.setResponse('FETCH_EXCEPTION', `"${e.statusText}"(${e.status})`);this.setState({saveLoading:true});});
 	}
 
 	selected(){
@@ -184,10 +186,21 @@ class Role extends React.Component{
 	      labelCol: { span: 4 },
 	      wrapperCol: { span: 14 },
 	    };
-	    var i=0, prev_group = null, group, idx, arr=[];
-	    const macs = this.props.markedActions;
+	    let i=0, prev_group = null, group, idx, arr=[], elem;
+	    const acs = this.props.markedActions || [];
+	    for(i=0; i<acs.length; i++){
+      		elem = acs[i];
+      		group = (idx = elem.urlPath.indexOf('/', 2)) > 0 ? // urlPath:"[/path/...]"
+				elem.urlPath.substr(0, idx) : elem.urlPath;
+			if(prev_group != group){
+				prev_group = group;
+				arr.push(<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>);
+			}
+			arr.push(<Checkbox value={elem.id} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
+        }
 		return (
 			<div>
+				<h4 style={{marginBottom:'15px'}} >Role Info</h4>
 		        <Form layout="horizontal">
 		          <FormItem label="Name: " {...formItemLayout} >
 			            <Input placeholder="input name" value={this.state.name} name="name" 
@@ -197,24 +210,15 @@ class Role extends React.Component{
 		            <UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value})} value={this.state.members} />
 		          </FormItem>
 		          <FormItem label="Actions: " {...formItemLayout} >
-		          {
-					macs.map((i, elem)=>{
-						group = (idx = elem.url.indexOf('/', 1)) > 0 ? 
-							elem.url.substr(0, idx) : elem.url;
-						if(prev_group != group){
-							prev_group = group;
-							<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>
-						}
-						<Checkbox value={elem.id} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>
-					});
-		          }
+		          	{arr}
+		          	<div style={{textAlign:"right",paddingRight:"5px"}}><a href="javascript:;" onClick={(e)=>this.props.onRemark()}>Expected not found? Go to Mark !</a></div>
 		          </FormItem>
-		          <FormItem label="Props: " {...formItemLayout}>
+		          {this.props.basicProps && <FormItem label="Props: " {...formItemLayout}>
 		            <Input placeholder="input placeholder" />
-		          </FormItem>
-		          <FormItem {...buttonItemLayout}>
-		            <Button type="primary" onClick={this.handleSubmit}>Submit</Button>
-		            <Button type="danger" onClick={this.handleDelete}>Delete</Button>
+		          </FormItem>}
+		          <FormItem label=" " {...formItemLayout}>
+		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>
+		            <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button>
 		          </FormItem>
 		        </Form>
 		    </div>
@@ -236,7 +240,7 @@ class RoleList extends React.Component{
 			reject = reject || console.error;
 			this.fetch.create(role)
 				.then(rsp=>rsp.json())
-				.then(json=>{this.setState({list:this.state.list.push(json)});resolve(json);})
+				.then(json=>{this.state.list.push(json);this.setState({list:this.state.list});resolve(json);})
 				.catch(e=>reject(e));
 		});
 	}
@@ -252,7 +256,7 @@ class RoleList extends React.Component{
 			if(i >= this.state.list.length || i< 0)
 				reject("role not found");
 			else
-				this.fetch.delete({id:role.id})
+				this.fetch.delete({id:this.state.list[i].id})
 					.then(rsp=>{this.setState({list:this.state.list.splice(i, 1)});resolve(rsp);})
 					.catch(e=>reject(e));
 		});
@@ -285,10 +289,13 @@ class RoleList extends React.Component{
 			<div>
 				<Tabs activeKey={this.state.activeTabKey} 
 					onChange={this.handleTabChange} 
+					tabPosition="right"
 					>
-				    <TabPane tab="+" key="-1" ><Role basicProps={null} onRemark={this.props.onRemark} /></TabPane>
-				    {this.state.list.map((key, value)=>{
-				    	<TabPane tab="{value.name}" key="{key}"><Role basicProps={value} onRemark={this.props.onRemark} /></TabPane>
+				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" ><Role basicProps={null} markedActions={this.props.markedActions} onRemark={this.props.onRemark} /></TabPane>
+				    {this.state.list && this.state.list.map((key, value)=>{
+				    	<TabPane tab="{value.name}" key="{key}">
+				    		<Role basicProps={value} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
+				    	</TabPane>
 				    })}
 				</Tabs>
 			</div>
@@ -320,123 +327,3 @@ export default class Permission extends React.Component{
 	}
 }
 
-
-import { Select, Spin } from 'antd';
-import debounce from 'lodash.debounce';
-const Option = Select.Option;
-
-class UserRemoteSelect extends React.Component {
-  constructor(props) {
-    super(props);
-    this.props = Object.assign({value:[], onChange:(v)=>console.log(v)}, props);
-    this.lastFetchId = 0;
-    this.fetchUser = debounce(this.fetchUser, 800);
-  }
-  state = {
-    data: [],
-    value: [],
-    fetching: false,
-  }
-  isPhonePart = (str) => {
-  	if(11 == str.length || 14 == str.length)
-  		;
-  	else
-  		return false;
-  	let i = 0, c;
-  	for(; i<str.length; i++){
-  		c = str.charAt(i);
-  		if( c >= '0' && c <= '9' )
-  			;
-  		else
-  			return false;
-  	}
-  	if(11 == str.length)
-  		if('1' == str.charAt(0)){
-  			str = "086" + str;
-  		}else{
-  			return false;
-  		}
-
-  	}
-  	return str;
-  }
-  isEmail = (str)=>{
-  	return /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(str);
-  }
-  isComplete = (value) => {
-  	if( (value = isPhonePart(value))) {
-  		return {phone: value};
-  	}else if(isEmail(value)){
-  		return {email: value};
-  	}else{
-  		return null;
-  	}
-  }
-  fetchUser = (value) => {
-  	if(!(value = isComplete(value)))
-  		return;
-    console.log('fetching user', value);
-    this.lastFetchId += 1;
-    const fetchId = this.lastFetchId;
-    this.setState({ data: [], fetching: true });
-    new RestFetch('/user/account').select(value)
-      .then(response => response.json())
-      .then((body) => {
-        if (fetchId !== this.lastFetchId) { // for fetch callback order
-          return;
-        }
-        const data = body.results.map(user => ({
-          text: user.name + (user.name ? '':user.phone), 
-          value: user.id
-        }));
-        this.setState({ data, fetching: false });
-      });
-  }
-  handleChange = (value) => {
-    this.setState({
-      value,
-      data: [],
-      fetching: false,
-    });
-    this.props.onChange(value);
-  }
-  componentDidMount(){
-  	if(this.props.value.length > 0)
-	    this.setState({ data: [], fetching: true });
-  		new RestFetch("/user/account").select({id: this.props.value.join(',')})
-  			.then(rsp=>rsp.json())
-  			.then(json=>{
-  				let value = [], data = [];
-  				json.map(user=>{
-  					value.push(user.id);
-  					data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
-  				});
-  				this.setState({value, data, fetching:false});
-  			})
-  			.catch(e=>{
-  				console.error(e);
-  				this.setState({fetching:false});
-  			});
-
-  }
-  render() {
-    const { fetching, data, value } = this.state;
-    return (
-      <Select
-        mode="multiple"
-        labelInValue
-        value={value}
-        placeholder="phone or email"
-        notFoundContent={fetching ? <Spin size="small" /> : null}
-        filterOption={false}
-        onSearch={this.fetchUser}
-        onChange={this.handleChange}
-        style={{ width: '100%' }}
-      >
-        {data.map(d => <Option key={d.value}>{d.text}</Option>)}
-      </Select>
-    );
-  }
-}
-
-ReactDOM.render(<UserRemoteSelect />, mountNode);
