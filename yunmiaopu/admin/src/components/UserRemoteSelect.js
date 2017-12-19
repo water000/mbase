@@ -61,14 +61,16 @@ export default class UserRemoteSelect extends React.Component {
     this.setState({ data: [], fetching: true });
     new RestFetch('/user/account').select(value)
       .then(response => response.json())
-      .then((body) => {
+      .then((user) => {
         if (fetchId !== this.lastFetchId) { // for fetch callback order
           return;
         }
-        const data = body.results.map(user => ({
-          text: user.name + (user.name ? '':user.phone), 
-          value: user.id
-        }));
+        const data = [
+          {
+            text: user.name ? user.name : user.mobilePhone, 
+            value: user.id
+          }
+        ];
         this.setState({ data, fetching: false });
       });
   }

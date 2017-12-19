@@ -60,6 +60,14 @@ export default class RestFetch{
 
 	_fetch(body, headers, method, url){
 		return new Promise((resolve, reject) => {
+			let url = url || this.opts.domain+this.opts.path;
+			if(!method || method.toUpperCase() == "GET" && body != null){
+				let query = "?", k;
+				for(k in body){
+					query += encodeURIComponent(k) + '=' + encodeURIComponent(body[k]) + '&';
+				}
+				url += query;
+			}
 			fetch(url || this.opts.domain+this.opts.path, {
 				method : method || "GET",
 				mode : this.opts.mode,

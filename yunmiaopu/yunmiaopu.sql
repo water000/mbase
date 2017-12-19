@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS permission_action(
 	id int unsigned not null auto_increment,
 	name varchar(32) default null,  -- =detail
 	url_path varchar(64) default null, -- =/user/detail
-	handle_method varchar(128) default null, -- User.detail
+	handle_method varchar(512) default null, -- User.detail
 	is_menu_item tinyint not null default 0, -- 0: no, 1: yes
 	primary key(id)
 );

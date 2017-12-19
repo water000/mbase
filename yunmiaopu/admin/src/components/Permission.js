@@ -26,7 +26,7 @@ class MarkAction extends React.Component{
 	}
 
 	setResponse(code, msg){
-		this.setState({response:{code, msg}});
+		this.setState({response:{code, msg}, tableLoading:false, saveLoading:false});
 	}
 
 	resetResponse(){
@@ -62,8 +62,8 @@ class MarkAction extends React.Component{
 		this.setState({saveLoading:true});
 		new RestFetch('/permission/action').create(JSON.stringify(this.state.selectedData), {'Content-Type':'application/json'}) 
 			.then(res => res.text())
-			.then(updated=>{this.setResponse('OK', 'save successed');this.setState({saveLoading:false});this.props.onMarked(this.state.selectedData);})
-			.catch(e=>{this.setResponse('FETCH_EXCEPTION', `"${e.statusText}"(${e.status})`);this.setState({saveLoading:true});});
+			.then(updated=>{this.setResponse('OK', 'save successed');setTimeout(2000, ()=>this.props.onMarked(this.state.selectedData));})
+			.catch(e=>{this.setResponse('FETCH_EXCEPTION', `"${e.statusText}"(${e.status})`);});
 	}
 
 	selected(){
@@ -83,7 +83,7 @@ class MarkAction extends React.Component{
 				this.setState({data: this.state.data, selectedRowKeys:this.state.selectedRowKeys, selectedData:json, tableLoading:false});
 				this.props.onReady(json);
 			})
-			.catch(e=>console.log(e));
+			.catch(e=>{console.log(e);this.setResponse('SELECT_EXCEPTION', `"${e.responseText}"(${e.status})`);});
 	}
 
 	componentDidMount() {
@@ -139,7 +139,7 @@ class MarkAction extends React.Component{
 
 		return <div style={{display:this.props.display}}>
 			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.msg} showIcon /> }
-			<h4 style={{marginBottom:'15px'}} >Select action(s) for access control</h4>
+			<h4 style={{marginBottom:'15px'}} >Mark action(s) for access control<a style={{float:"right"}} href="javascript:;" onClick={(e)=>this.props.onBack(this.state.selectedData)}>&lt;Back</a></h4>
 			<Table
 			rowSelection={rowSelection}
 			pagination = {false}
@@ -191,7 +191,7 @@ class Role extends React.Component{
 	    for(i=0; i<acs.length; i++){
       		elem = acs[i];
       		group = (idx = elem.urlPath.indexOf('/', 2)) > 0 ? // urlPath:"[/path/...]"
-				elem.urlPath.substr(0, idx) : elem.urlPath;
+				elem.urlPath.substr(2, idx-2) : elem.urlPath;
 			if(prev_group != group){
 				prev_group = group;
 				arr.push(<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>);
@@ -218,7 +218,7 @@ class Role extends React.Component{
 		          </FormItem>}
 		          <FormItem label=" " {...formItemLayout}>
 		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>
-		            {this.props.basicProps && <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button> }
+		            {this.props.basicProps && <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button>}
 		          </FormItem>
 		        </Form>
 		    </div>
@@ -320,7 +320,7 @@ export default class Permission extends React.Component{
 	render(){
 		return (
 			<div>
-				<MarkAction display={this.state.markActionDisplay} onMarked={this.handleMarked} onReady={this.handleMarked} />
+				<MarkAction display={this.state.markActionDisplay} onBack={this.handleMarked} onMarked={this.handleMarked} onReady={this.handleMarked} />
 				{this.state.markedActions && <RoleList markedActions={this.state.markedActions} onRemark={this.handleRemark}  /> }
 			</div>	
 		);
