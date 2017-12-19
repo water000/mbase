@@ -15,7 +15,7 @@ import java.util.List;
  * Created by macbookpro on 2017/9/8.
  */
 @Service
-public class ActonServiceImpl<Action, Long> extends CrudServiceAdapter implements IActionService {
+public class ActonServiceImpl extends CrudServiceAdapter implements IActionService {
 
     @Autowired
     private IActionDao paDao;

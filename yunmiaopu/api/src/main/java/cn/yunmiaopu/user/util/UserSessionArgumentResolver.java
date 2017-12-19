@@ -1,10 +1,12 @@
 package cn.yunmiaopu.user.util;
 
+import cn.yunmiaopu.common.util.CommonResponseEntityExceptionHandler;
 import cn.yunmiaopu.user.entity.UserSession;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -61,16 +63,17 @@ public class UserSessionArgumentResolver extends ResponseEntityExceptionHandler 
 
     }
 
-    public static class UnauthorizedException extends MissingServletRequestParameterException {
+    public static class UnauthorizedException extends MissingServletRequestParameterException implements CommonResponseEntityExceptionHandler.Customized {
         public UnauthorizedException() {
             super("session", "Session[expired or lost]");
         }
+
+        public ResponseEntity<Object> handle(Exception ex, @Nullable Object body, HttpHeaders headers, HttpStatus status, WebRequest request){
+            if(ex instanceof UserSessionArgumentResolver.UnauthorizedException)
+                status = HttpStatus.UNAUTHORIZED;
+            return  new ResponseEntity(null, headers, status);
+        }
     }
 
-    @Override
-    protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        if(ex instanceof UserSessionArgumentResolver.UnauthorizedException)
-            status = HttpStatus.UNAUTHORIZED;
-        return this.handleExceptionInternal(ex, (Object)null, headers, status, request);
-    }
+
 }

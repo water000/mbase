@@ -109,19 +109,48 @@ public class AccountController {
             return Response.error(error);
         }
 
-        Account ac = new Account();
-        ac.setMobilePhone(phone);
-        List<Account> found = accountService.find(ac);
+        List<Account> found = accountService.findByMobilePhone(phone);
         if(found != null && found.size() > 0){
            if(!Users.comparePassword(pwd.getBytes(), found.get(0).getPassword())){
                error.put("pwd", pwd);
-               return Response.error(error, ErrorCode.PASSWORD_INCORRECT.toString());
+               return Response.error(error, ErrorCode.PASSWORD_INCORRECT);
            }
-           UserSession us = new UserSession(ac.getId());
+           UserSession us = new UserSession(found.get(0).getId());
            us.setUserSession(req.getSession());
            return true;
         }
         return false;
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
+    public Object search(HttpServletRequest req){
+        String phone, id, email;
+
+        if((phone = req.getParameter("phone")) != null){
+            if((phone = phone.trim()).length() > 0 && Users.isValidPhone(phone)){
+                List<Account> found = accountService.findByMobilePhone(phone);
+                if(null == found || 0 == found.size())
+                    return Response.error("no valid phone found");
+                found.get(0).setPassword("");
+                return found.get(0);
+            }
+        }else if(( id = req.getParameter("id")) != null){
+            try{
+                long idv = Long.parseLong(id);
+                Account ac = new Account();
+                ac.setId(idv);
+                Optional<Account> found = accountService.findById(idv);
+                if(found.isPresent()){
+                    found.get().setPassword("");
+                    return found.get();
+                }
+                return Response.error("no valid id found");
+            }catch (Exception e){
+
+            }
+        }
+
+        return Response.error("no valid param found");
     }
 
     /**

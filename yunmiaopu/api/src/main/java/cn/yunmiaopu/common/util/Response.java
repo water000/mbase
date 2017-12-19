@@ -10,14 +10,10 @@ public class Response {
     private Object data = null;
 
     public static Response error(Object err){
-        return error(err, Code.INVALID_INPUT_VARS.toString());
+        return err instanceof Enum ? error(null, (Enum)err) : error(err, Code.INVALID_INPUT_VARS);
     }
 
-    public static Response error(String code){
-        return error(null, code);
-    }
-
-    public static Response error(Object err, String code){
+    public static Response error(Object err, Enum code){
         Response rsp = new Response();
         rsp.code = code.toString();
         rsp.data = err;

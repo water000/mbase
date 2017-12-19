@@ -1,5 +1,8 @@
 package cn.yunmiaopu.user.service.impl;
 
+import cn.yunmiaopu.common.util.CrudServiceAdapter;
+import cn.yunmiaopu.common.util.CrudServiceTemplete;
+import cn.yunmiaopu.permission.service.IActionService;
 import cn.yunmiaopu.user.dao.IAccountDao;
 import cn.yunmiaopu.user.entity.Account;
 import cn.yunmiaopu.user.service.IAccountService;
@@ -7,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,26 +19,18 @@ import java.util.Optional;
  */
 @Service
 @Transactional
-public class AccountServiceImpl implements IAccountService {
+public class AccountServiceImpl extends CrudServiceAdapter implements IAccountService {
 
     @Autowired
-    private IAccountDao iAccountDao;
+    private IAccountDao dao;
 
-
-    public Account save(Account a) throws Exception{
-        return iAccountDao.save(a);
+    @PostConstruct
+    public void init(){
+        super.setRepository(dao);
     }
 
-    public void delete(Account a) throws Exception{
-        iAccountDao.delete(a);
+    public List<Account> findByMobilePhone(String mobile_phone){
+        return dao.findByMobilePhone(mobile_phone);
     }
 
-    public Account get(long id) throws Exception{
-        Optional<Account> ret = iAccountDao.findById(id);
-        return ret.isPresent() ? ret.get() : null;
-    }
-
-    public List<Account> find(Account ac){
-        return iAccountDao.findByMobilePhone(ac.getMobilePhone());
-    }
 }
