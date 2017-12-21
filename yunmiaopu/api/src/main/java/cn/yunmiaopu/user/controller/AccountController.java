@@ -131,23 +131,27 @@ public class AccountController {
                 List<Account> found = accountService.findByMobilePhone(phone);
                 if(null == found || 0 == found.size())
                     return Response.error("no valid phone found");
-                found.get(0).setPassword("");
-                return found.get(0);
+                Users.hidePartial(found);
+                return Response.ok(found);
             }
         }else if(( id = req.getParameter("id")) != null){
-            try{
-                long idv = Long.parseLong(id);
-                Account ac = new Account();
-                ac.setId(idv);
-                Optional<Account> found = accountService.findById(idv);
-                if(found.isPresent()){
-                    found.get().setPassword("");
-                    return found.get();
+            String[] ids = id.trim().split(",");
+            if(0 == ids.length)
+                return Response.error("no valid param(id) found");
+            if(ids.length > 50)
+                return Response.error("too much ids submitted, only expected less then 50");
+            Account[] ret = new Account[ids.length];
+            for(int i=0; i<ids.length; i++){
+                try{
+                    long idv = Long.parseLong(ids[i]);
+                    Optional<Account> found = accountService.findById(idv);
+                    ret[i] = found.orElse(null);
+                }catch (Exception e){
+                    ret[i] = null;
                 }
-                return Response.error("no valid id found");
-            }catch (Exception e){
-
             }
+            Users.hidePartial(ret);
+            return Response.ok(ret);
         }
 
         return Response.error("no valid param found");

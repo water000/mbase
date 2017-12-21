@@ -199,19 +199,18 @@ CREATE TABLE IF NOT EXISTS permission_role(
 	primary key(id)
 );
 
-CREATE TABLE IF NOT EXISTS permission_role_action(
+CREATE TABLE IF NOT EXISTS permission_role_action_map(
 	role_id int unsigned not null default 0,
 	action_id int unsigned not null default 0,
+	join_ts int unsigned not null default 0,
 	primary key(role_id, action_id)
 );
 
-CREATE TABLE IF NOT EXISTS permission_role_member(
+CREATE TABLE IF NOT EXISTS permission_role_member_map(
 	role_id int unsigned not null default 0,
-	member_uid int unsigned not null default 0,
-	expire_ts int unsigned not null default 0, -- 0 means forever
+	account_id int unsigned not null default 0,
 	join_ts int unsigned not null default 0,
 	primary key(role_id, member_uid),
-	key(member_uid)
 );
 
 -- /usr/local/mysql/support-files/mysql.server stop

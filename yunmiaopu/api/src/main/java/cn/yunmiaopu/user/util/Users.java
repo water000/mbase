@@ -1,7 +1,9 @@
 package cn.yunmiaopu.user.util;
 
+import cn.yunmiaopu.user.entity.Account;
 import org.apache.logging.log4j.LogManager;
 import java.security.MessageDigest;
+import java.util.List;
 
 /**
  * Created by macbookpro on 2017/9/26.
@@ -58,5 +60,26 @@ public class Users {
         return false;
     }
 
+    private static void _hide(Account ac){
+        if(ac != null){
+            ac.setPassword("");
+            ac.setMobilePhone(ac.getMobilePhone().substring(0, 6)
+                    + "*****" + ac.getMobilePhone().substring(11, 3));
+        }
+    }
+    public static void hidePartial(List<Account> list){
+        for(Account ac : list){
+            if(ac != null) {
+                _hide(ac);
+            }
+        }
+    }
+    public static void hidePartial(Account[] list){
+        for(Account ac : list){
+            if(ac != null) {
+                _hide(ac);
+            }
+        }
+    }
 
 }

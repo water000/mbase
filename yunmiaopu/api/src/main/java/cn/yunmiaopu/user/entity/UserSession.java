@@ -34,4 +34,20 @@ public class UserSession implements Serializable {
     public void remove(HttpSession sess){
         sess.removeAttribute(SESS_KEY);
     }
+
+    public long getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(long accountId) {
+        this.accountId = accountId;
+    }
+
+    public long getLoginTs() {
+        return loginTs;
+    }
+
+    public void setLoginTs(long loginTs) {
+        this.loginTs = loginTs;
+    }
 }

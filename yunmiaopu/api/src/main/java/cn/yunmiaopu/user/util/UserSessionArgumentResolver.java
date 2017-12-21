@@ -37,7 +37,6 @@ import java.util.Optional;
  *     <p>直接返回给客户端401：public int @RequestMapping("/test") test(UserSession sess){ [不会进入方法体] } </p>
  *     <p>继续执行：public int @RequestMapping("/test") test(Optional&lt;UserSession&gt;){ [正常运行] }</p>
  */
-@ControllerAdvice
 public class UserSessionArgumentResolver extends ResponseEntityExceptionHandler implements HandlerMethodArgumentResolver {
 
     public boolean supportsParameter(MethodParameter parameter) {

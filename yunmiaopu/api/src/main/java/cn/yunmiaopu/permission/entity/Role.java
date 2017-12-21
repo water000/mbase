@@ -10,18 +10,18 @@ public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  int id;
+    private  long id;
 
     private String name;
 
-    private int creatorUid;
+    private long creatorUid;
 
     private long createTs;
 
     private long updateTs;
 
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -33,11 +33,11 @@ public class Role {
         this.name = name;
     }
 
-    public int getCreatorUid() {
+    public long getCreatorUid() {
         return creatorUid;
     }
 
-    public void setCreatorUid(int creatorUid) {
+    public void setCreatorUid(long creatorUid) {
         this.creatorUid = creatorUid;
     }
 
