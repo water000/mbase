@@ -154,6 +154,7 @@ class MarkAction extends React.Component{
 	}
 }
 
+let gRoleMemberCache = {};
 class Role extends React.Component{
 	constructor(props){
 		super(props);
@@ -167,19 +168,45 @@ class Role extends React.Component{
 			members:[],
 			checkedActions:[],
 		};
-		this.extra = new RestFetch("/permission/role/extra");
+		this.membersRest = new RestFetch("/permission/role/members");
 	}
 	handleSubmit=()=>{
-
+		if(this.state.name.trim().length > 0 
+			&& this.state.members.length() > 0
+			&& this.state.checkedActions.length() > 0)
+		{
+			this.props.roleList.create(this.state.name,
+				this.state.members, this.state.checkedActions)
+				.then(role=>{
+					gRoleMemberCache[role.id] ={members:this.state.members, 
+						checkedActions:this.state.checkedActions};
+					this.state = {name:'', members:[], checkedActions:[]};
+				});
+		}
 	}
 	handleDelete=()=>{
-
+		delete gRoleMemberCache[this.props.basicProps.id];
+		this.props.roleList.delete(this.props.basicProps.id);
+		delete this;
 	}
-	handleMemberChange=()=>{
-
+	handleCheckedActionChange=(checkbox)=>{
+		if(checkbox.checked)
+			this.state.checkedActions.push(checkbox.value);
+		else
+			this.state.checkedActions.splice(this.state.checkedActions.indexOf(checkbox.value), 1);
+		this.handleFormChange({checkedActions: this.state.checkedActions});
 	}
 	handleFormChange=(kv)=>{
 		this.setState(kv);
+	}
+	componentDidMount(){
+		this.setState({name:this.props.basicProps.name});
+		if(gRoleMemberCache[this.props.basicProps.id] != null){
+			this.setState(gRoleMemberCache[this.props.basicProps.id]);
+			return;
+		}
+		this.membersRest.select({id:this.props.basicProps.id})
+			.then(members=>{this.setState(members)});
 	}
 	render(){
 		const formItemLayout =  {
@@ -196,7 +223,8 @@ class Role extends React.Component{
 				prev_group = group;
 				arr.push(<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>);
 			}
-			arr.push(<Checkbox value={elem.id} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
+			arr.push(<Checkbox value={elem.id} checked={this.state.checkedActions.indexOf(elem.id) !=-1} 
+				onClick={(e)=>this.handleCheckedActionChange(e.target)} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
         }
 		return (
 			<div>
@@ -235,22 +263,21 @@ class RoleList extends React.Component{
 		list:null,
 		activeTabKey:"-1"
 	}
-	create(role){
-		return new Promise((resolve, reject)=>{
-			reject = reject || console.error;
-			this.fetch.create(role)
-				.then(rsp=>rsp.json())
-				.then(json=>{this.state.list.push(json);this.setState({list:this.state.list});resolve(json);})
-				.catch(e=>reject(e));
-		});
+	create(name, members, actions){
+		return this.update(0, name, members, actions);
 	}
-	select(id){
+	select(){
 		this.fetch.select().then(rsp=>rsp.json())
 			.then(json=>{
 				this.setState({list:json, activeTabKey:json!=null && json.length > 0 ? "0" : "-1"});
 			});
 	}
-	delete(i){
+	delete(roleId){
+		let i=0;
+		for(; i<this.state.list.length; i++){
+			if(this.state.list[i].id == roleId)
+				break;
+		}
 		return new Promise((resolve, reject)=>{
 			reject = reject || console.error;
 			if(i >= this.state.list.length || i< 0)
@@ -261,10 +288,10 @@ class RoleList extends React.Component{
 					.catch(e=>reject(e));
 		});
 	}
-	update(role){
+	update(roleId, name, members, actions){
 		let i=0;
 		for(; i<this.state.list.length; i++){
-			if(this.state.list[i].id == role.id)
+			if(this.state.list[i].id == roleId)
 				break;
 		}
 		return new Promise((resolve, reject)=>{
@@ -272,10 +299,18 @@ class RoleList extends React.Component{
 			if(i == this.state.list.length)
 				reject("role not found");
 			else
-				this.fetch.update(role)
+				this.fetch.save({id:roleId, name, members, actions})
 					.then(rsp=>rsp.json())
-					.then(json=>{this.setState({list:this.state.list.splice(i, 1, json)});resolve(json);})
-					.catch(e=>reject(e));
+					.then(json=>{
+						if(0 == roleId)
+							this.state.list.push(json);
+						else
+							this.state.list.splice(i, 1, json);
+						this.setState({list:this.state.list});
+						if(resolve)
+							resolve(json);
+					})
+					.catch(e=>(reject||console.error)(e));
 		});
 	}
 	componentDidMount(){
@@ -294,7 +329,7 @@ class RoleList extends React.Component{
 				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" ><Role basicProps={null} markedActions={this.props.markedActions} onRemark={this.props.onRemark} /></TabPane>
 				    {this.state.list && this.state.list.map((key, value)=>{
 				    	<TabPane tab="{value.name}" key="{key}">
-				    		<Role basicProps={value} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
+				    		<Role basicProps={value} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
 				    	</TabPane>
 				    })}
 				</Tabs>

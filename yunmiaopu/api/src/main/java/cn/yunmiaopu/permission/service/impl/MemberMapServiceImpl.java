@@ -23,4 +23,8 @@ public class MemberMapServiceImpl extends CrudServiceAdapter implements IMemberM
     public Iterable<MemberMap> findByRoleId(long roleId){
         return dao.findByRoleId(roleId);
     }
+
+    public void deleteByRoleId(long roleId){
+        dao.deleteByRoleId(roleId);
+    }
 }

@@ -9,4 +9,5 @@ import org.springframework.data.repository.CrudRepository;
  */
 public interface IActionMapDao extends CrudRepository<ActionMap, Long> {
     Iterable<ActionMap> findByRoleId(long roleId);
+    void deleteByRoleId(long roleId);
 }

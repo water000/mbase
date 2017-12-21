@@ -8,4 +8,5 @@ import cn.yunmiaopu.permission.entity.ActionMap;
  */
 public interface IActionMapService extends CrudServiceTemplete {
     Iterable<ActionMap> findByRoleId(long roleId);
+    void deleteByRoleId(long roleId);
 }

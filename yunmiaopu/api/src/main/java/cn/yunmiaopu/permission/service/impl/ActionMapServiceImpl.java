@@ -23,4 +23,8 @@ public class ActionMapServiceImpl extends CrudServiceAdapter implements IActionM
     public Iterable<ActionMap> findByRoleId(long roleId){
         return dao.findByRoleId(roleId);
     }
+
+    public void deleteByRoleId(long roleId){
+        dao.deleteByRoleId(roleId);
+    }
 }
