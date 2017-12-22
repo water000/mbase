@@ -64,7 +64,7 @@ public class Users {
         if(ac != null){
             ac.setPassword("");
             ac.setMobilePhone(ac.getMobilePhone().substring(0, 6)
-                    + "*****" + ac.getMobilePhone().substring(11, 3));
+                    + "*****" + ac.getMobilePhone().substring(11, 14));
         }
     }
     public static void hidePartial(List<Account> list){

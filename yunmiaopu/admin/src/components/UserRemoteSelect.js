@@ -55,7 +55,6 @@ export default class UserRemoteSelect extends React.Component {
   fetchUser = (value) => {
   	if(!(value = this.isComplete(value)))
   		return;
-    console.log('fetching user', value);
     this.lastFetchId += 1;
     const fetchId = this.lastFetchId;
     this.setState({ data: [], fetching: true });
@@ -65,12 +64,12 @@ export default class UserRemoteSelect extends React.Component {
         if (fetchId !== this.lastFetchId) { // for fetch callback order
           return;
         }
-        const data = [
-          {
-            text: user.name ? user.name : user.mobilePhone, 
-            value: user.id
-          }
-        ];
+        let data = [];
+        if("OK" == user.code){
+          user.data.map(u=>{
+            data.push({text:u.name?u.name:u.mobilePhone, value:u.id});
+          });
+        }
         this.setState({ data, fetching: false });
       });
   }
@@ -89,10 +88,15 @@ export default class UserRemoteSelect extends React.Component {
   			.then(rsp=>rsp.json())
   			.then(json=>{
   				let value = [], data = [];
-  				json.map(user=>{
-  					value.push(user.id);
-  					data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
-  				});
+          if("OK" == json.code){
+            json.data.map(user=>{
+              value.push(user.id);
+              data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
+            });
+          }else{
+
+          }
+  				
   				this.setState({value, data, fetching:false});
   			})
   			.catch(e=>{

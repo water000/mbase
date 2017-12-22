@@ -200,17 +200,22 @@ CREATE TABLE IF NOT EXISTS permission_role(
 );
 
 CREATE TABLE IF NOT EXISTS permission_role_action_map(
+	id int unsigned not null auto_increment,
 	role_id int unsigned not null default 0,
 	action_id int unsigned not null default 0,
 	join_ts int unsigned not null default 0,
-	primary key(role_id, action_id)
+	primary key(id),
+	unique key(role_id, action_id)
 );
 
 CREATE TABLE IF NOT EXISTS permission_role_member_map(
+	id int unsigned not null auto_increment,
 	role_id int unsigned not null default 0,
 	account_id int unsigned not null default 0,
 	join_ts int unsigned not null default 0,
-	primary key(role_id, member_uid),
+	primary key(id),
+	unique key(role_id, account_id),
+	key(account_id)
 );
 
 -- /usr/local/mysql/support-files/mysql.server stop

@@ -172,8 +172,8 @@ class Role extends React.Component{
 	}
 	handleSubmit=()=>{
 		if(this.state.name.trim().length > 0 
-			&& this.state.members.length() > 0
-			&& this.state.checkedActions.length() > 0)
+			&& this.state.members.length > 0
+			&& this.state.checkedActions.length > 0)
 		{
 			this.props.roleList.create(this.state.name,
 				this.state.members, this.state.checkedActions)
@@ -187,7 +187,7 @@ class Role extends React.Component{
 	handleDelete=()=>{
 		delete gRoleMemberCache[this.props.basicProps.id];
 		this.props.roleList.delete(this.props.basicProps.id);
-		delete this;
+		//delete this;
 	}
 	handleCheckedActionChange=(checkbox)=>{
 		if(checkbox.checked)
@@ -224,7 +224,7 @@ class Role extends React.Component{
 				arr.push(<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>);
 			}
 			arr.push(<Checkbox value={elem.id} checked={this.state.checkedActions.indexOf(elem.id) !=-1} 
-				onClick={(e)=>this.handleCheckedActionChange(e.target)} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
+				onChange={(e)=>this.handleCheckedActionChange(e.target)} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
         }
 		return (
 			<div>
@@ -260,7 +260,7 @@ class RoleList extends React.Component{
 		this.fetch = new RestFetch("/permission/role");
 	}
 	state = {
-		list:null,
+		list:[],
 		activeTabKey:"-1"
 	}
 	create(name, members, actions){
@@ -290,27 +290,31 @@ class RoleList extends React.Component{
 	}
 	update(roleId, name, members, actions){
 		let i=0;
-		for(; i<this.state.list.length; i++){
-			if(this.state.list[i].id == roleId)
-				break;
+		if(roleId > 0){
+			for(; i<this.state.list.length; i++){
+				if(this.state.list[i].id == roleId)
+					break;
+			}
+			if(i == this.state.list.length){
+				console.error("role not found");
+				return;
+			}
 		}
+		
 		return new Promise((resolve, reject)=>{
 			reject = reject || console.error;
-			if(i == this.state.list.length)
-				reject("role not found");
-			else
-				this.fetch.save({id:roleId, name, members, actions})
-					.then(rsp=>rsp.json())
-					.then(json=>{
-						if(0 == roleId)
-							this.state.list.push(json);
-						else
-							this.state.list.splice(i, 1, json);
-						this.setState({list:this.state.list});
-						if(resolve)
-							resolve(json);
-					})
-					.catch(e=>(reject||console.error)(e));
+			this.fetch.create({id:roleId, name, members, actions})
+				.then(rsp=>rsp.json())
+				.then(json=>{
+					if(0 == roleId)
+						this.state.list.push(json);
+					else
+						this.state.list.splice(i, 1, json);
+					this.setState({list:this.state.list});
+					if(resolve)
+						resolve(json);
+				})
+				.catch(e=>(reject||console.error)(e));
 		});
 	}
 	componentDidMount(){
@@ -326,7 +330,7 @@ class RoleList extends React.Component{
 					onChange={this.handleTabChange} 
 					tabPosition="right"
 					>
-				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" ><Role basicProps={null} markedActions={this.props.markedActions} onRemark={this.props.onRemark} /></TabPane>
+				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" ><Role basicProps={null} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} /></TabPane>
 				    {this.state.list && this.state.list.map((key, value)=>{
 				    	<TabPane tab="{value.name}" key="{key}">
 				    		<Role basicProps={value} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
