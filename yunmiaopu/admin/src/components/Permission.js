@@ -34,18 +34,20 @@ class MarkAction extends React.Component{
 	}
 
 	scan(){
-		new RestFetch({path:"/permission/action/scan"})
-			.select()
-			.then(res => res.json())
-			.then(json=>{
-				json.sort((a, b)=>{
-					return a.urlPath < b.urlPath ? -1 :
-						(a.urlPath > b.urlPath ? 1 : 0);
-				});
-				this.setState({data:json, tableLoading:false});
-				this.selected();
-			})
-			.catch(e=>{this.setResponse('FETCH_EXCEPTION', 'Unknown Exception');console.error(e);});
+		return new Promise((resolve, reject)=>{
+			new RestFetch({path:"/permission/action/scan"})
+				.select()
+				.then(res => res.json())
+				.then(json=>{
+					json.sort((a, b)=>{
+						return a.urlPath < b.urlPath ? -1 :
+							(a.urlPath > b.urlPath ? 1 : 0);
+					});
+					this.setState({data:json, tableLoading:false});
+					resolve(json);
+				})
+				.catch(e=>{this.setResponse('FETCH_EXCEPTION', 'Unknown Exception');(reject||console.error)(e);});
+		});
 	}
 
 	save = ()=>{
@@ -83,11 +85,11 @@ class MarkAction extends React.Component{
 				this.setState({data: this.state.data, selectedRowKeys:this.state.selectedRowKeys, selectedData:json, tableLoading:false});
 				this.props.onReady(json);
 			})
-			.catch(e=>{console.log(e);this.setResponse('SELECT_EXCEPTION', `"${e.responseText}"(${e.status})`);});
+			.catch(e=>{console.error(e);this.setResponse('SELECT_EXCEPTION', `"${e.responseText}"(${e.status})`);});
 	}
 
 	componentDidMount() {
-		this.scan();
+		this.scan().then(json=>{this.selected();});
 	}
 
 	render(){
@@ -138,7 +140,7 @@ class MarkAction extends React.Component{
 		};
 
 		return <div style={{display:this.props.display}}>
-			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.msg} showIcon /> }
+			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.code + ';'+this.state.response.msg} showIcon /> }
 			<h4 style={{marginBottom:'15px'}} >Mark action(s) for access control<a style={{float:"right"}} href="javascript:;" onClick={(e)=>this.props.onBack(this.state.selectedData)}>&lt;Back</a></h4>
 			<Table
 			rowSelection={rowSelection}
@@ -159,7 +161,6 @@ class Role extends React.Component{
 	constructor(props){
 		super(props);
 		this.props = Object.assign({
-			init : false, // indicate whether to init the role from remote resource
 			markedActions:{}, // {user:[{Action1}, {Action2}, ...], model:[{Action1, ...}]}
 			basicProps:null,
 		}, props);
@@ -175,6 +176,7 @@ class Role extends React.Component{
 			&& this.state.members.length > 0
 			&& this.state.checkedActions.length > 0)
 		{
+			console.log(this.state.members, this.state.checkedActions);
 			this.props.roleList.create(this.state.name,
 				this.state.members, this.state.checkedActions)
 				.then(role=>{
@@ -200,13 +202,15 @@ class Role extends React.Component{
 		this.setState(kv);
 	}
 	componentDidMount(){
-		this.setState({name:this.props.basicProps.name});
-		if(gRoleMemberCache[this.props.basicProps.id] != null){
-			this.setState(gRoleMemberCache[this.props.basicProps.id]);
-			return;
+		if(this.props.basicProps){
+			this.setState({name:this.props.basicProps.name});
+			if(gRoleMemberCache[this.props.basicProps.id] != null){
+				this.setState(gRoleMemberCache[this.props.basicProps.id]);
+				return;
+			}
+			this.membersRest.select({id:this.props.basicProps.id})
+				.then(members=>{this.setState(members)});
 		}
-		this.membersRest.select({id:this.props.basicProps.id})
-			.then(members=>{this.setState(members)});
 	}
 	render(){
 		const formItemLayout =  {
@@ -235,7 +239,7 @@ class Role extends React.Component{
 			            	onChange={e=>this.handleFormChange({name:e.target.value})}  />
 		          </FormItem>
 		          <FormItem label="Members: " {...formItemLayout} >
-		            <UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value})} value={this.state.members} />
+		            <UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value.map(item=>item.key)})} value={this.state.members} />
 		          </FormItem>
 		          <FormItem label="Actions: " {...formItemLayout} >
 		          	{arr}

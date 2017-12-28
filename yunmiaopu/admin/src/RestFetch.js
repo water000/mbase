@@ -1,3 +1,4 @@
+import { notification } from 'antd';
 
 let _DOMAIN = "/";
 let _AUTH_FILTER = null;
@@ -60,16 +61,27 @@ export default class RestFetch{
 
 	_fetch(body, headers, method, url){
 		return new Promise((resolve, reject) => {
-			let url = url || this.opts.domain+this.opts.path;
-			if(!method || method.toUpperCase() == "GET" && body != null){
-				let query = "?", k;
-				for(k in body){
-					query += encodeURIComponent(k) + '=' + encodeURIComponent(body[k]) + '&';
+			url = url || this.opts.domain+this.opts.path;
+			headers = headers || {};
+			method = method || "GET";
+
+			if(null == body){}
+			else if(body instanceof HTMLFormElement){
+				body = new FormData(body);
+				headers["Content-Type"] = "multipart/form-data; boundary="+(new Date().getMilliseconds());
+			}else if(body instanceof String){}
+			else {
+				body = new URLSearchParams(body);
+				if("POST" == method.toUpperCase()){
+					headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
+				}else{
+					url += '?'+body.toString();
+					body = null; // GET can not have body
 				}
-				url += query;
 			}
-			fetch(url || this.opts.domain+this.opts.path, {
-				method : method || "GET",
+
+			fetch(url, {
+				method,
 				mode : this.opts.mode,
 				headers : Object.assign({"Accept" : this.opts.accept}, headers || {}),
 				credentials:"include",
@@ -105,7 +117,11 @@ export default class RestFetch{
 					console.error('Auth required.');
 				}
 				else{
-					console.error(rsp);
+					notification.error({
+						placement:"bottomRight",
+						message:rsp instanceof Response ? (rsp.status>=400 && rsp<500 ? "client error" : "server error") : "Notification",
+						description:"Unexpected error happend, status: "+(rsp instanceof Response ? rsp.status : rsp),
+					});
 					reject(rsp);
 				}
 			});

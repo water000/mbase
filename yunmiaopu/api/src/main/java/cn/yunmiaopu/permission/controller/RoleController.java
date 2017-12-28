@@ -10,6 +10,7 @@ import cn.yunmiaopu.user.entity.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 /**
@@ -31,10 +32,20 @@ public class RoleController {
     @RequestMapping(method = RequestMethod.POST)
     public Role save(UserSession sess,
                      Role r,
-                     @RequestParam(value="members[]")long[] members,
-                     @RequestParam(value="actions[]")long[] actions)
+                     String sMembers,
+                     String sActions,
+                     HttpServletResponse rsp)
             throws Exception
     {
+        if(null == sMembers || 0 == (sMembers=sMembers.trim()).length()
+                || null == sActions || 0 == (sActions=sActions.trim()).length()){
+            rsp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return null;
+        }
+        String[] members = sMembers.split(",");
+        String[] actions = sActions.split(",");
+
+
         int now = (int)(new Date().getTime()/1000);
 
         if(0 == r.getId()){
@@ -50,7 +61,7 @@ public class RoleController {
                 if(-1 == (idx = Arrays.binarySearch(members, mm.getAccountId())))
                     delete.add(mm.getAccountId());
                 else
-                    members[idx] = 0;
+                    members[idx] = null;
             }
             if(delete.size() > 0){
                 mmServ.deleteAll(delete);
@@ -63,7 +74,7 @@ public class RoleController {
                 if( -1 == (idx = Arrays.binarySearch(actions, ac.getActionId())))
                     delete.add(ac.getActionId());
                 else
-                    actions[idx] = 0;
+                    actions[idx] = null;
             }
             if(delete.size() > 0){
                 acmServ.deleteAll(delete);
@@ -76,9 +87,9 @@ public class RoleController {
         MemberMap mm = new MemberMap();
         mm.setRoleId(r.getId());
         mm.setJoinTs(now);
-        for(long m: members){
-            if(m > 0){
-                mm.setAccountId(m);
+        for(String m: members){
+            if(m != null){
+                mm.setAccountId(Long.parseLong(m));
                 mmServ.save(mm);
             }
         }
@@ -86,9 +97,9 @@ public class RoleController {
         ActionMap am = new ActionMap();
         am.setRoleId(r.getId());
         am.setJoinTs(now);
-        for(long ac : actions){
-            if(ac > 0){
-                am.setActionId(ac);
+        for(String ac : actions){
+            if(ac != null){
+                am.setActionId(Long.parseLong(ac));
                 acmServ.save(am);
             }
         }
