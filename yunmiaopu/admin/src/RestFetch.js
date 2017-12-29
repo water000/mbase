@@ -119,7 +119,7 @@ export default class RestFetch{
 				else{
 					notification.error({
 						placement:"bottomRight",
-						message:rsp instanceof Response ? (rsp.status>=400 && rsp<500 ? "client error" : "server error") : "Notification",
+						message:rsp instanceof Response ? (rsp.status>=400 && rsp.status<500 ? "client error" : "server error") : "Notification",
 						description:"Unexpected error happend, status: "+(rsp instanceof Response ? rsp.status : rsp),
 					});
 					reject(rsp);

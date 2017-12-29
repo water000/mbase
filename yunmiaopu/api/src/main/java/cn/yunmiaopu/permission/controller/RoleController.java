@@ -32,18 +32,18 @@ public class RoleController {
     @RequestMapping(method = RequestMethod.POST)
     public Role save(UserSession sess,
                      Role r,
-                     String sMembers,
-                     String sActions,
+                     String members,
+                     String actions,
                      HttpServletResponse rsp)
             throws Exception
     {
-        if(null == sMembers || 0 == (sMembers=sMembers.trim()).length()
-                || null == sActions || 0 == (sActions=sActions.trim()).length()){
+        if(null == members || 0 == (members=members.trim()).length()
+                || null == actions || 0 == (actions=actions.trim()).length()){
             rsp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return null;
         }
-        String[] members = sMembers.split(",");
-        String[] actions = sActions.split(",");
+        String[] arrMembers = members.split(",");
+        String[] arrActions = actions.split(",");
 
 
         int now = (int)(new Date().getTime()/1000);
@@ -55,26 +55,26 @@ public class RoleController {
             List<Long> delete = new ArrayList();
             int idx = 0;
 
-            Arrays.sort(members);
+            Arrays.sort(arrMembers);
             Iterable<MemberMap> mms = mmServ.findByRoleId(r.getId());
             for(MemberMap mm: mms){
-                if(-1 == (idx = Arrays.binarySearch(members, mm.getAccountId())))
+                if(-1 == (idx = Arrays.binarySearch(arrMembers, mm.getAccountId())))
                     delete.add(mm.getAccountId());
                 else
-                    members[idx] = null;
+                    arrMembers[idx] = null;
             }
             if(delete.size() > 0){
                 mmServ.deleteAll(delete);
                 delete.clear();
             }
 
-            Arrays.sort(actions);
+            Arrays.sort(arrActions);
             Iterable<ActionMap> ams = acmServ.findByRoleId(r.getId());
             for(ActionMap ac : ams){
-                if( -1 == (idx = Arrays.binarySearch(actions, ac.getActionId())))
+                if( -1 == (idx = Arrays.binarySearch(arrActions, ac.getActionId())))
                     delete.add(ac.getActionId());
                 else
-                    actions[idx] = null;
+                    arrActions[idx] = null;
             }
             if(delete.size() > 0){
                 acmServ.deleteAll(delete);
@@ -84,21 +84,21 @@ public class RoleController {
         r.setUpdateTs(now);
         r = (Role)serv.save(r);
 
-        MemberMap mm = new MemberMap();
-        mm.setRoleId(r.getId());
-        mm.setJoinTs(now);
-        for(String m: members){
+        for(String m: arrMembers){
             if(m != null){
+                MemberMap mm = new MemberMap();
+                mm.setRoleId(r.getId());
+                mm.setJoinTs(now);
                 mm.setAccountId(Long.parseLong(m));
                 mmServ.save(mm);
             }
         }
 
-        ActionMap am = new ActionMap();
-        am.setRoleId(r.getId());
-        am.setJoinTs(now);
-        for(String ac : actions){
+        for(String ac : arrActions){
             if(ac != null){
+                ActionMap am = new ActionMap();
+                am.setRoleId(r.getId());
+                am.setJoinTs(now);
                 am.setActionId(Long.parseLong(ac));
                 acmServ.save(am);
             }
