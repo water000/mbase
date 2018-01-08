@@ -25,4 +25,8 @@ public class ActonServiceImpl extends CrudServiceAdapter implements IActionServi
         super.setRepository(paDao);
     }
 
+    public Iterable<Action> findByHandleMethod(String hm){
+        return paDao.findByHandleMethod(hm);
+    }
+
 }

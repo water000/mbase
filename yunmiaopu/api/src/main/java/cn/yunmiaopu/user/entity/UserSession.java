@@ -31,6 +31,10 @@ public class UserSession implements Serializable {
         return (UserSession)sess.getAttribute(SESS_KEY);
     }
 
+    public static UserSession current(HttpSession sess){
+        return (UserSession)sess.getAttribute(SESS_KEY);
+    }
+
     public void remove(HttpSession sess){
         sess.removeAttribute(SESS_KEY);
     }

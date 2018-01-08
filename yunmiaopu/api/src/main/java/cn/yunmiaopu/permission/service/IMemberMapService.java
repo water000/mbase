@@ -8,5 +8,6 @@ import cn.yunmiaopu.permission.entity.MemberMap;
  */
 public interface IMemberMapService extends CrudServiceTemplete {
     Iterable<MemberMap> findByRoleId(long roleId);
+    Iterable<MemberMap> findByAccountId(long accountId);
     void deleteByRoleId(long roleId);
 }

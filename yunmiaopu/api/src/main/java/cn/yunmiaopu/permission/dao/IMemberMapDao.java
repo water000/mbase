@@ -9,5 +9,7 @@ import org.springframework.data.repository.CrudRepository;
 public interface IMemberMapDao extends CrudRepository<MemberMap, Long> {
     Iterable<MemberMap> findByRoleId(long roleId);
 
+    Iterable<MemberMap> findByAccountId(long accountId);
+
     void deleteByRoleId(long roleId);
 }

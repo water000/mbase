@@ -9,5 +9,5 @@ import java.util.List;
  * Created by macbookpro on 2017/9/7.
  */
 public interface IActionDao extends CrudRepository<Action, Long> {
-
+    Iterable<Action> findByHandleMethod(String hm);
 }
