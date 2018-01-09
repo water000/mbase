@@ -160,10 +160,10 @@ let gRoleMemberCache = {};
 class Role extends React.Component{
 	constructor(props){
 		super(props);
-		this.props = Object.assign({
+		/*this.props = Object.assign({
 			markedActions:{}, // {user:[{Action1}, {Action2}, ...], model:[{Action1, ...}]}
 			basicProps:null,
-		}, props);
+		}, props);*/
 		this.state = {
 			name: '',
 			members:[],
@@ -208,8 +208,11 @@ class Role extends React.Component{
 				this.setState(gRoleMemberCache[this.props.basicProps.id]);
 				return;
 			}
-			this.membersRest.select({id:this.props.basicProps.id})
-				.then(members=>{this.setState(members)});
+			this.membersRest.select({id:this.props.basicProps.id}).then(ret=>ret.json())
+				.then(members=>{
+					this.setState({members:members.members.map(v=>v.accountId), 
+						checkedActions:members.actions.map(v=>v.actionId)});
+				});
 		}
 	}
 	render(){
@@ -230,6 +233,9 @@ class Role extends React.Component{
 			arr.push(<Checkbox value={elem.id} checked={this.state.checkedActions.indexOf(elem.id) !=-1} 
 				onChange={(e)=>this.handleCheckedActionChange(e.target)} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
         }
+        const plabel = {fontSize:"12px", color:"gray", marginRight:"3px"}, 
+        	sep = {color:plabel.color, margin:"0 8px"},
+        	ptxt = {color:"#333", fontSize:"13px"};
 		return (
 			<div>
 				<h4 style={{marginBottom:'15px'}} >Role Info</h4>
@@ -245,8 +251,13 @@ class Role extends React.Component{
 		          	{arr}
 		          	<div style={{textAlign:"right",paddingRight:"5px"}}><a href="javascript:;" onClick={(e)=>this.props.onRemark()}>Expected not found? Go to Mark !</a></div>
 		          </FormItem>
-		          {this.props.basicProps && <FormItem label="Props: " {...formItemLayout}>
-		            <Input placeholder="input placeholder" />
+		          {this.props.basicProps && 
+		          	<FormItem label="Props: " {...formItemLayout}>
+		            <span style={plabel}>creator</span><span style={ptxt}>{this.props.basicProps.creatorUid}</span>
+		            <span style={sep}>|</span>
+		            <span style={plabel}>time</span><span style={ptxt}>{this.props.basicProps.createTs}</span>
+		            <span style={sep}>|</span>
+		            <span style={plabel}>update</span><span style={ptxt}>{this.props.basicProps.updateTs}</span>
 		          </FormItem>}
 		          <FormItem label=" " {...formItemLayout}>
 		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>
@@ -314,7 +325,7 @@ class RoleList extends React.Component{
 						this.state.list.push(json);
 					else
 						this.state.list.splice(i, 1, json);
-					this.setState({list:this.state.list});
+					this.setState({list:this.state.list, roleId:0==roleId ? 0 : i});
 					if(resolve)
 						resolve(json);
 				})
@@ -328,18 +339,21 @@ class RoleList extends React.Component{
 		this.setState({activeTabKey:key});
 	}
 	render(){
+		let list = this.state.list.map((value, key)=>{
+				    	return <TabPane tab={value.name} key={key}>
+				    		<Role basicProps={value} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
+				    	</TabPane>
+				    });
 		return (
 			<div>
 				<Tabs activeKey={this.state.activeTabKey} 
 					onChange={this.handleTabChange} 
 					tabPosition="right"
 					>
-				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" ><Role basicProps={null} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} /></TabPane>
-				    {this.state.list && this.state.list.map((key, value)=>{
-				    	<TabPane tab="{value.name}" key="{key}">
-				    		<Role basicProps={value} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
-				    	</TabPane>
-				    })}
+				    <TabPane tab={<span style={{color:"green"}}>+New</span>} key="-1" >
+				    	<Role basicProps={null} roleList={this} markedActions={this.props.markedActions} onRemark={this.props.onRemark} />
+				    </TabPane>
+				    {list}
 				</Tabs>
 			</div>
 		)

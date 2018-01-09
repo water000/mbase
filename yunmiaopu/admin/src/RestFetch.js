@@ -1,13 +1,13 @@
-import { notification } from 'antd';
 
 let _DOMAIN = "/";
 let _AUTH_FILTER = null;
+let _CATCHER = console.error;
 
 export function RestFetch_setDomain(d){
 	_DOMAIN = d;
 }
-export function RestFetch_setAuthFilter(filter){
-	_AUTH_FILTER = filter;
+export function RestFetch_setCatcher(c){
+	_CATCHER = c;
 }
 
 export default class RestFetch{
@@ -23,7 +23,6 @@ export default class RestFetch{
 			this.setOpt({path:opts});
 		else
 			this.setOpt(opts);
-		this.setAuthFilter(_AUTH_FILTER);
 		this.callbackPayload = null;
 	}
 
@@ -54,23 +53,17 @@ export default class RestFetch{
 		}
 	}
 
-	setAuthFilter(filter){
-		this.authFilter = filter;
-		this.handle = filter != null ? this.authFetch : this._fetch;
-	}
-
 	_fetch(body, headers, method, url){
 		return new Promise((resolve, reject) => {
 			url = url || this.opts.domain+this.opts.path;
 			headers = headers || {};
 			method = method || "GET";
 
-			if(null == body){}
+			if(null == body || body instanceof String){}
 			else if(body instanceof HTMLFormElement){
 				body = new FormData(body);
 				headers["Content-Type"] = "multipart/form-data; boundary="+(new Date().getMilliseconds());
-			}else if(body instanceof String){}
-			else {
+			}else {
 				body = new URLSearchParams(body);
 				if("POST" == method.toUpperCase()){
 					headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
@@ -88,15 +81,16 @@ export default class RestFetch{
 				body
 			})
 			.then(rsp =>{
-				return 200 == rsp.status ? resolve(rsp) : reject(rsp);
+				return 200 == rsp.status ? resolve(rsp) : _CATCHER.handle(rsp, this, { body, headers, method, url});
 			})
 			.catch(err=>{
-				reject(err);
+				this.callbackPayload = { body, headers, method, url, resolve, reject};
+				_CATCHER.handle(err, this, { body, headers, method, url});
 			});
 		});
 	}
 
-	onAuthOk(){
+	retry(){
 		if(this.callbackPayload){
 			this._fetch(this.callbackPayload.body, this.callbackPayload.headers, this.callbackPayload.method, this.callbackPayload.url)
 				.then(rsp=>{this.callbackPayload.resolve(rsp);this.callbackPayload = null;})
@@ -104,34 +98,10 @@ export default class RestFetch{
 		}
 	}
 
-	authFetch(body, headers, method, url){
-		return new Promise((resolve, reject) => {
-			this._fetch(body, headers, method, url)
-			.then(rsp=>resolve(rsp))
-			.catch(rsp=>{
-				if(rsp instanceof Response && 401 == rsp.status ){
-					resolve = resolve || console.log;
-					reject  = reject || console.error;
-					this.callbackPayload = { body, headers, method, url, resolve, reject};
-					this.authFilter.onAuth(this);
-					console.error('Auth required.');
-				}
-				else{
-					notification.error({
-						placement:"bottomRight",
-						message:rsp instanceof Response ? (rsp.status>=400 && rsp.status<500 ? "client error" : "server error") : "Notification",
-						description:"Unexpected error happend, status: "+(rsp instanceof Response ? rsp.status : rsp),
-					});
-					reject(rsp);
-				}
-			});
-		});
-	}
-
 	create(params, headers, url){
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
-			this.handle(params, headers, "POST", url)
+			this._fetch(params, headers, "POST", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -140,7 +110,7 @@ export default class RestFetch{
 	select(params, headers, url){
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
-			this.handle(params, headers, "GET", url)
+			this._fetch(params, headers, "GET", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -149,7 +119,7 @@ export default class RestFetch{
 	update(params, headers, url){
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
-			this.handle(params, headers, "PUT", url)
+			this._fetch(params, headers, "PUT", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});
@@ -158,7 +128,7 @@ export default class RestFetch{
 	delete(params, headers, url){
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
-			this.handle(params, headers, "DELETE", url)
+			this._fetch(params, headers, "DELETE", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
 		});

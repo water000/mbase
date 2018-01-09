@@ -8,8 +8,7 @@ import cn.yunmiaopu.permission.service.IActionService;
 import cn.yunmiaopu.permission.service.IMemberMapService;
 import cn.yunmiaopu.permission.service.IRoleService;
 import cn.yunmiaopu.user.entity.UserSession;
-import cn.yunmiaopu.user.service.IAccountService;
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
+import cn.yunmiaopu.user.util.UserSessionArgumentResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
@@ -34,17 +33,15 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
     private IActionMapService amsrv;
 
     @Override
-    public boolean perHandle(HttpServletRequest request, HttpServletResponse response, Object handler){
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
         Iterable<Action> foundActions = acsrv.findByHandleMethod(handler.toString());
         if(!foundActions.iterator().hasNext())
             return false;
         Action dest = foundActions.iterator().next();
 
-        UserSession us = UserSession.current(request.getSession());
-        if(null == us){
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        UserSession us = UserSessionArgumentResolver.filter(request, response);
+        if(null == us)
             return false;
-        }
 
         Iterable<MemberMap> mm = mbsrv.findByAccountId(us.getAccountId());
         if(!mm.iterator().hasNext()){
@@ -59,6 +56,7 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
                 return true;
         }
 
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         return false;
     }
 }

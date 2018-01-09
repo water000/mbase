@@ -1,5 +1,5 @@
 
-import { Select, Spin } from 'antd';
+import { Select, Spin,notification } from 'antd';
 import RestFetch from "../RestFetch"
 import debounce from 'lodash.debounce';
 import React from 'react';
@@ -8,7 +8,8 @@ const Option = Select.Option;
 export default class UserRemoteSelect extends React.Component {
   constructor(props) {
     super(props);
-    this.props = Object.assign({value:[], onChange:(v)=>console.log(v)}, props);
+    //this.props = Object.assign({value:[], onChange:(v)=>console.log(v)}, props);
+    console.log(this.props);
     this.lastFetchId = 0;
     this.fetchUser = debounce(this.fetchUser, 800);
   }
@@ -69,8 +70,38 @@ export default class UserRemoteSelect extends React.Component {
           user.data.map(u=>{
             data.push({text:u.name?u.name:u.mobilePhone, value:u.id});
           });
-        }
+        }else{
+            notification.error({
+              message:'fetching user error',
+              description:user.code
+            });
+          }
         this.setState({ data, fetching: false });
+      });
+  }
+  fetchUserId=(ids)=>{
+    this.setState({ data: [], fetching: true });
+    new RestFetch("/user/account").select({id: ids.join(',')})
+      .then(rsp=>rsp.json())
+      .then(json=>{
+        let value = [], data = [];
+        if("OK" == json.code){
+          json.data.map(user=>{
+            value.push(user.id);
+            data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
+          });
+        }else{
+          notification.error({
+            message:'fetching user id error',
+            description:json.code
+          });
+        }
+        
+        this.setState({value, data, fetching:false});
+      })
+      .catch(e=>{
+        console.error(e);
+        this.setState({fetching:false});
       });
   }
   handleChange = (value) => {
@@ -82,38 +113,20 @@ export default class UserRemoteSelect extends React.Component {
     this.props.onChange(value);
   }
   componentDidMount(){
-  	if(this.props.value.length > 0)
-	    this.setState({ data: [], fetching: true });
-  		new RestFetch("/user/account").select({id: this.props.value.join(',')})
-  			.then(rsp=>rsp.json())
-  			.then(json=>{
-  				let value = [], data = [];
-          if("OK" == json.code){
-            json.data.map(user=>{
-              value.push(user.id);
-              data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
-            });
-          }else{
-
-          }
-  				
-  				this.setState({value, data, fetching:false});
-  			})
-  			.catch(e=>{
-  				console.error(e);
-  				this.setState({fetching:false});
-  			});
-
+  	if(this.props.value.length > 0){
+      //this.fetchUserId(this.props.value);
+    }
   }
   render() {
     const { fetching, data, value } = this.state;
+    const defvalue = this.props.value ? this.props.value.map(v=>{return {key:v+"", label:"ID:"+v};}) : [];
     return (
       <Select
         mode="multiple"
         labelInValue
-        value={value}
+        value={value.length > 0 ? value : defvalue}
         placeholder="phone or email"
-        notFoundContent={fetching ? <Spin size="small" /> : null}
+        notFoundContent={fetching ? <Spin size="small" /> : "not found"}
         filterOption={false}
         onSearch={this.fetchUser}
         onChange={this.handleChange}

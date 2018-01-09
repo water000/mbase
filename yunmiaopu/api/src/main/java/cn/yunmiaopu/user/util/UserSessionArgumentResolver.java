@@ -17,6 +17,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
 /**
@@ -50,7 +51,7 @@ public class UserSessionArgumentResolver extends ResponseEntityExceptionHandler 
                                   WebDataBinderFactory binderFactory) throws Exception
     {
         HttpServletRequest req = webRequest.getNativeRequest(HttpServletRequest.class);
-        UserSession sess = UserSession.getUserSession(req.getSession());
+        UserSession sess = UserSession.current(req.getSession());
         if(parameter.getParameterType().equals(UserSession.class)){
             if(null == sess){
                 throw new UnauthorizedException();
@@ -60,6 +61,14 @@ public class UserSessionArgumentResolver extends ResponseEntityExceptionHandler 
             return Optional.ofNullable(sess);
         }
 
+    }
+
+    public static UserSession filter(HttpServletRequest req, HttpServletResponse rep){
+        UserSession sess = UserSession.current(req.getSession());
+        if(null == sess){
+            rep.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
+        return sess;
     }
 
     public static class UnauthorizedException extends MissingServletRequestParameterException implements CommonResponseEntityExceptionHandler.Customized {
