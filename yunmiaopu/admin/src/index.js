@@ -49,6 +49,7 @@ class AuthHandle extends React.Component{
     this.setState({
       authVisiable: false
     });
+    
     if(this.onAuthSuccess){
       this.onAuthSuccess();
       this.onAuthSuccess = null;

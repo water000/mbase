@@ -81,7 +81,10 @@ export default class RestFetch{
 				body
 			})
 			.then(rsp =>{
-				return 200 == rsp.status ? resolve(rsp) : _CATCHER.handle(rsp, this, { body, headers, method, url});
+				if(200 == rsp.status)
+					return resolve(rsp);
+				this.callbackPayload = { body, headers, method, url, resolve, reject};
+				_CATCHER.handle(rsp, this, { body, headers, method, url});
 			})
 			.catch(err=>{
 				this.callbackPayload = { body, headers, method, url, resolve, reject};

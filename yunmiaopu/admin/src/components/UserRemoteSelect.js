@@ -9,7 +9,6 @@ export default class UserRemoteSelect extends React.Component {
   constructor(props) {
     super(props);
     //this.props = Object.assign({value:[], onChange:(v)=>console.log(v)}, props);
-    console.log(this.props);
     this.lastFetchId = 0;
     this.fetchUser = debounce(this.fetchUser, 800);
   }
