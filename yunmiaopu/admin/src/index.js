@@ -49,7 +49,7 @@ class AuthHandle extends React.Component{
     this.setState({
       authVisiable: false
     });
-    
+
     if(this.onAuthSuccess){
       this.onAuthSuccess();
       this.onAuthSuccess = null;
@@ -83,13 +83,15 @@ class GlobalFetchCatcher{
         desc = 'clinet error('+rsp.status+')';
       else
         desc = 'server error('+rsp.status+')';
+    }else{
+      desc = rsp;
     }
     notification.error({
       placement:"bottomRight",
       message:'fetching error',
-      description:url + '<br/>' + desc,
+      description:<div><p>{url}</p><p>{desc}</p></div>,
     });
-    console.error(ctx);
+    console.error("fetching error", ctx);
   }
 }
 
