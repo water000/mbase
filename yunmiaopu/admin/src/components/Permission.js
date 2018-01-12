@@ -140,7 +140,7 @@ class MarkAction extends React.Component{
 		};
 
 		return <div style={{display:this.props.display}}>
-			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.code + ';'+this.state.response.msg} showIcon /> }
+			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.code + ', '+this.state.response.msg} showIcon /> }
 			<h4 style={{marginBottom:'15px'}} >Mark action(s) for access control<a style={{float:"right"}} href="javascript:;" onClick={(e)=>this.props.onBack(this.state.selectedData)}>&lt;Back</a></h4>
 			<Table
 			rowSelection={rowSelection}
@@ -365,20 +365,20 @@ export default class Permission extends React.Component{
 		super(props);
 	}
 	state = {
-		markedActions:null,
+		markedActions:[],
 		markActionDisplay:"none"
 	}
 	handleMarked=(markedActions)=>{
 		this.setState({markedActions, markActionDisplay: markedActions != null && markedActions.length>0 ? "none" : ""});
 	}
 	handleRemark=()=>{
-		this.setState({markedActions:null, markActionDisplay:""});//hide RoleList and show MarkAction
+		this.setState({markedActions:[], markActionDisplay:""});//hide RoleList and show MarkAction
 	}
 	render(){
 		return (
 			<div>
 				<MarkAction display={this.state.markActionDisplay} onBack={this.handleMarked} onMarked={this.handleMarked} onReady={this.handleMarked} />
-				{this.state.markedActions && <RoleList markedActions={this.state.markedActions} onRemark={this.handleRemark}  /> }
+				{this.state.markedActions.length>0 && <RoleList markedActions={this.state.markedActions} onRemark={this.handleRemark}  /> }
 			</div>	
 		);
 	}

@@ -1,5 +1,6 @@
 package cn.yunmiaopu.permission.util;
 
+import cn.yunmiaopu.permission.controller.ActionController;
 import cn.yunmiaopu.permission.entity.Action;
 import cn.yunmiaopu.permission.entity.ActionMap;
 import cn.yunmiaopu.permission.entity.MemberMap;
@@ -34,9 +35,9 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
-        Iterable<Action> foundActions = acsrv.findByHandleMethod(handler.toString());
+        Iterable<Action> foundActions = acsrv.findByHandleMethod(ActionController.handlerString(handler));
         if(!foundActions.iterator().hasNext())
-            return false;
+            return true;
         Action dest = foundActions.iterator().next();
 
         UserSession us = UserSessionArgumentResolver.filter(request, response);

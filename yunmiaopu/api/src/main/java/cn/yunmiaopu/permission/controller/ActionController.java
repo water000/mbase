@@ -33,12 +33,16 @@ public class ActionController {
         for(Map.Entry<RequestMappingInfo, HandlerMethod> entry: map.entrySet()){
             Action ac = new Action();
             ac.setName(  entry.getKey().getName() );
-            ac.setHandleMethod(entry.getValue().getMethod().toString());
+            ac.setHandleMethod(handlerString(entry.getValue()));// Warning: entry.getValue().toString() != entry.getMethod().value().toString()
             ac.setUrlPath(entry.getKey().getPatternsCondition().toString());
             ac.setMenuItem(false);
             allActions.add(ac);
         }
         Collections.sort(allActions);
+    }
+
+    public static String handlerString(Object handler){
+        return handler.toString();
     }
 
     @RequestMapping(name="scan", value="/scan")

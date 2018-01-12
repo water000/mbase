@@ -59,20 +59,6 @@ export default class RestFetch{
 			headers = headers || {};
 			method = method || "GET";
 
-			if(null == body || body instanceof String){}
-			else if(body instanceof HTMLFormElement){
-				body = new FormData(body);
-				headers["Content-Type"] = "multipart/form-data; boundary="+(new Date().getMilliseconds());
-			}else {
-				body = new URLSearchParams(body);
-				if("POST" == method.toUpperCase()){
-					headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
-				}else{
-					url += '?'+body.toString();
-					body = null; // GET can not have body
-				}
-			}
-
 			fetch(url, {
 				method,
 				mode : this.opts.mode,
@@ -104,6 +90,19 @@ export default class RestFetch{
 	create(params, headers, url){
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
+			if(params instanceof HTMLFormElement){
+				let hasFile = false, i=0;
+				for(; i<params.elements.length; i++){
+					if("file" == params.elements[i].type)
+						hasFile = true;
+				}
+				params = new FormData(params);
+				headers["Content-Type"] = hasFile ? "multipart/form-data; boundary=_____"+(new Date().getMilliseconds())
+					: "application/x-www-form-urlencoded;charset=UTF-8";
+			}else if("object" == typeof params){
+				params = new URLSearchParams(params).toString();
+				headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
+			}
 			this._fetch(params, headers, "POST", url)
 				.then(rsp=>resolve(rsp))
 				.catch(rsp=>reject(rsp));
@@ -111,6 +110,11 @@ export default class RestFetch{
 	}
 
 	select(params, headers, url){
+		if("object" == typeof params){
+			params = new URLSearchParams(params);
+			url = this.opts.domain+this.opts.path + '?' + params.toString();
+			params = null;
+		}
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
 			this._fetch(params, headers, "GET", url)

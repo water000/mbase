@@ -30,6 +30,15 @@
 
     <tx:annotation-driven/>
 
+    <mvc:interceptors>
+        <bean class="cn.yunmiaopu.permission.util.HandleInterceptor"/>
+        <!--mvc:interceptor>
+            <mvc:mapping path="/test/number.do"/ -->
+            <!-- 定义在mvc:interceptor下面的表示是对特定的请求才进行拦截的 -->
+            <!--bean class="com.host.app.web.interceptor.LoginInterceptor"/>
+        </mvc:interceptor-->
+    </mvc:interceptors>
+
     <mvc:cors>
         <mvc:mapping path="/**" allowed-origins="*" allow-credentials="true" max-age="1800" allowed-methods="GET,POST,OPTIONS"/>
     </mvc:cors>
