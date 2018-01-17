@@ -1,5 +1,6 @@
 package cn.yunmiaopu.permission.util;
 
+import cn.yunmiaopu.common.util.Cors;
 import cn.yunmiaopu.permission.controller.ActionController;
 import cn.yunmiaopu.permission.entity.Action;
 import cn.yunmiaopu.permission.entity.ActionMap;
@@ -11,6 +12,7 @@ import cn.yunmiaopu.permission.service.IRoleService;
 import cn.yunmiaopu.user.entity.UserSession;
 import cn.yunmiaopu.user.util.UserSessionArgumentResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,18 +37,25 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception{
+        if(handler instanceof HandlerMethod)
+            ;
+        else
+            return true;
         Iterable<Action> foundActions = acsrv.findByHandleMethod(ActionController.handlerString(handler));
         if(!foundActions.iterator().hasNext())
             return true;
         Action dest = foundActions.iterator().next();
 
         UserSession us = UserSessionArgumentResolver.filter(request, response);
-        if(null == us)
+        if(null == us) {
+            Cors.handle(request, response);
             return false;
+        }
 
         Iterable<MemberMap> mm = mbsrv.findByAccountId(us.getAccountId());
         if(!mm.iterator().hasNext()){
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            Cors.handle(request, response);
             return false;
         }
         MemberMap m = mm.iterator().next();
@@ -58,6 +67,7 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
         }
 
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        Cors.handle(request, response);
         return false;
     }
 }

@@ -90,6 +90,7 @@ class GlobalFetchCatcher{
       placement:"bottomRight",
       message:'fetching error',
       description:<div><p>{url}</p><p>{desc}</p></div>,
+      duration:null
     });
     console.error("fetching error", ctx);
   }
