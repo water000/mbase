@@ -2,11 +2,12 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import {Link, BrowserRouter as Router, Route } from 'react-router-dom';
 import './App.css';
-import { Layout, Menu, Breadcrumb, Icon } from 'antd';
+import { Layout, Menu, Breadcrumb, Icon, Badge, Avatar, Select, Dropdown } from 'antd';
 import createBrowserHistory from 'history/createBrowserHistory';
 
 const { Header, Content, Footer, Sider } = Layout;
 const SubMenu = Menu.SubMenu;
+const Option = Select.Option;
 const history = createBrowserHistory();
 
 class App extends React.Component{
@@ -88,17 +89,30 @@ class App extends React.Component{
       (r, j) =>
         <Route key={j} path={r.path} component={r.component} />
     );
-
+    const DropdownList = (
+      <Menu>
+        <Menu.Item>
+          <a target="_blank" rel="noopener noreferrer" href="http://www.alipay.com/">Profile</a>
+        </Menu.Item>
+        <Menu.Item>
+          <a target="_blank" rel="noopener noreferrer" href="http://www.taobao.com/">Settings</a>
+        </Menu.Item>
+        <Menu.Item>
+          <a target="_blank" rel="noopener noreferrer" href="http://www.tmall.com/">logout</a>
+        </Menu.Item>
+      </Menu>
+    );
     return (
       <Router history={history}>
-      <Layout style={{height:'100%'}}>
+      <Layout >
         <Sider
+          style={{height:'100%', position: 'fixed'}}
           collapsible
           collapsed={this.state.collapsed}
           onCollapse={this.onCollapse}
           breakpoint='xs'
         >
-          <div className="App-logo" ></div>
+          <div className="App-logo" >YMP</div>
           <Menu 
             theme="dark" 
             defaultSelectedKeys={defaultSelectedKeys} 
@@ -109,12 +123,24 @@ class App extends React.Component{
             {menu}
           </Menu>
         </Sider>
-        <Layout>
-          <Header style={{ background: '#fff', padding: 0, display: 'none' }} />
+        <Layout style={{paddingLeft:'200px'}}>
+          <Header style={{ background: '#fff' }} >
+            <ul className='header-ul'>
+              <li><Badge dot><Icon type="bell" style={{ fontSize: 20}} /></Badge></li>
+              <li>
+                <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" style={{verticalAlign:"middle", marginRight:'2px'}} />
+                <Dropdown overlay={DropdownList}>
+                  <a className="ant-dropdown-link" href="#">
+                    tiger <Icon type="down" />
+                  </a>
+                </Dropdown>
+              </li>
+            </ul>
+          </Header>
           <Content style={{ margin: '0 16px' }}>
             <Breadcrumb style={{ margin: '12px 0' }}>
               {this.state.selectedMenuIdx && this.getBreadcrumb(this.state.selectedMenuIdx).map((b, i)=>
-                <Breadcrumb.Item>{b}</Breadcrumb.Item>
+                <Breadcrumb.Item>/{b}</Breadcrumb.Item>
               )}
             </Breadcrumb>
             <div style={{ padding: 24, background: '#fff', minHeight: 360 }}>

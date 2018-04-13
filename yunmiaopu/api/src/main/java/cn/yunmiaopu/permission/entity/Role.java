@@ -20,6 +20,8 @@ public class Role {
 
     private long updateTs;
 
+    private static final int MAX_PREDEFINED_ROLEID = 10;
+
 
     public long getId() {
         return id;
@@ -55,6 +57,10 @@ public class Role {
 
     public void setUpdateTs(long updateTs) {
         this.updateTs = updateTs;
+    }
+
+    public static boolean isPredefinedRole(long id){
+        return id <= MAX_PREDEFINED_ROLEID;
     }
 
 }

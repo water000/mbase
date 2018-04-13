@@ -5,6 +5,7 @@ import cn.yunmiaopu.permission.controller.ActionController;
 import cn.yunmiaopu.permission.entity.Action;
 import cn.yunmiaopu.permission.entity.ActionMap;
 import cn.yunmiaopu.permission.entity.MemberMap;
+import cn.yunmiaopu.permission.entity.Role;
 import cn.yunmiaopu.permission.service.IActionMapService;
 import cn.yunmiaopu.permission.service.IActionService;
 import cn.yunmiaopu.permission.service.IMemberMapService;
@@ -59,6 +60,9 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
         MemberMap m = mm.iterator().next();
+
+        if(Role.isPredefinedRole(m.getRoleId()))
+            return true;
 
         Iterable<ActionMap> acmap = amsrv.findByRoleId(m.getRoleId());
         for(ActionMap am : acmap){

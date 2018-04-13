@@ -15,23 +15,27 @@ export default class RestFetch{
 	constructor(opts){
 		this.opts = {
 			path: '',
-			domain:_DOMAIN,
-			accept:'application/json',
-			mode:''	
+			domain:'',
+			accept:'',
+			mode:'',
+			catcher:null
 		};
 		if("string" === typeof opts)
-			this.setOpt({path:opts});
+			this.setOpt(Object.assign({domain:_DOMAIN,accept:'application/json'}, {path:opts}));
 		else
-			this.setOpt(opts);
+			this.setOpt(Object.assign({domain:_DOMAIN,accept:'application/json'}, opts));
 		this.callbackPayload = null;
+		console.log("constructor", opts);
 	}
 
 	//setOpt("path", "/index")
 	//setOpt({path:"/index"})
 	setOpt(key, value){
-		this.opts = Object.assign(this.opts, 1 == arguments.length ? key : {key : value});
-		let idx;
-		if((idx=this.opts.path.indexOf("://")) != -1){
+		let kv = 1 == arguments.length ? key : {key : value};
+		this.opts = Object.assign(this.opts, kv);
+
+		let idx = -1;
+		if("string" == typeof kv.path && kv.path.length > 0 && (idx=this.opts.path.indexOf("://")) != -1){
 			let pathidx = this.opts.path.indexOf("/", idx+3);
 			this.opts.domain = pathidx > 0 ? this.opts.path.substr(0, pathidx) : this.opts.path;
 			if(pathidx > 0){
@@ -42,7 +46,7 @@ export default class RestFetch{
 				this.opts.path   = "/";
 			}
 		}
-		if(this.opts.domain != '' && this.opts.domain != '/'){
+		if(idx != -1 || kv.domain && kv.domain != '/'){
 			var a = new URL(this.opts.domain);
 			if(a.protocol != document.location.protocol 
 				|| a.hostname != document.location.hostname
@@ -70,11 +74,11 @@ export default class RestFetch{
 				if(200 == rsp.status)
 					return resolve(rsp);
 				this.callbackPayload = { body, headers, method, url, resolve, reject};
-				_CATCHER.handle(rsp, this, { body, headers, method, url});
+				(this.opts.catcher||_CATCHER).handle(rsp, this, { body, headers, method, url});
 			})
 			.catch(err=>{
 				this.callbackPayload = { body, headers, method, url, resolve, reject};
-				_CATCHER.handle(err, this, { body, headers, method, url});
+				(this.opts.catcher||_CATCHER).handle(err, this, { body, headers, method, url});
 			});
 		});
 	}
@@ -110,6 +114,7 @@ export default class RestFetch{
 	}
 
 	select(params, headers, url){
+		//console.log("select", params, typeof params, this.opts);
 		if("object" == typeof params){
 			params = new URLSearchParams(params);
 			url = this.opts.domain+this.opts.path + '?' + params.toString();

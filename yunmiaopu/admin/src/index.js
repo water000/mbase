@@ -57,8 +57,8 @@ class AuthHandle extends React.Component{
   }
   render(){
     return(
-        <div style={{height:'100%'}}>
-          <div id='app' style={{height:'100%'}}></div>
+        <div>
+          <div id='app'></div>
           <Auth visible={this.state.authVisiable} onAuthOk={this.handleAuthOk} />
         </div>
     );
@@ -88,8 +88,8 @@ class GlobalFetchCatcher{
     }
     notification.error({
       placement:"bottomRight",
-      message:'fetching error',
-      description:<div><p>{url}</p><p>{desc}</p></div>,
+      message: desc,
+      description:<div><p>{url}</p></div>,
       duration:null
     });
     console.error("fetching error", ctx);

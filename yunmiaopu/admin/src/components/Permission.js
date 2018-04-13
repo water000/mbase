@@ -2,11 +2,10 @@ import React from 'react';
 import { Table, Icon, Switch, Radio, Form, Button, Checkbox, Input , Alert, Tabs} from 'antd';
 import RestFetch from "../RestFetch"
 import UserRemoteSelect from "./UserRemoteSelect"
+import User from "./AvatarProfile"
+
 const FormItem = Form.Item;
 const TabPane = Tabs.TabPane;
-
-const WEB_ROOT = 'http://localhost:8080';
-
 
 class MarkAction extends React.Component{
 
@@ -165,9 +164,10 @@ class Role extends React.Component{
 			basicProps:null,
 		}, props);*/
 		this.state = {
-			name: '',
+			name: this.props.basicProps ? this.props.basicProps.name : '',
 			members:[],
 			checkedActions:[],
+			request : false
 		};
 		this.membersRest = new RestFetch("/permission/role/members");
 	}
@@ -176,7 +176,6 @@ class Role extends React.Component{
 			&& this.state.members.length > 0
 			&& this.state.checkedActions.length > 0)
 		{
-			console.log(this.state.members, this.state.checkedActions);
 			this.props.roleList.create(this.state.name,
 				this.state.members, this.state.checkedActions)
 				.then(role=>{
@@ -203,15 +202,18 @@ class Role extends React.Component{
 	}
 	componentDidMount(){
 		if(this.props.basicProps){
-			this.setState({name:this.props.basicProps.name});
+			//this.setState({name:this.props.basicProps.name});
 			if(gRoleMemberCache[this.props.basicProps.id] != null){
 				this.setState(gRoleMemberCache[this.props.basicProps.id]);
 				return;
 			}
 			this.membersRest.select({id:this.props.basicProps.id}).then(ret=>ret.json())
 				.then(members=>{
-					this.setState({members:members.members.map(v=>v.accountId), 
-						checkedActions:members.actions.map(v=>v.actionId)});
+					this.setState({
+						members:members.members.map(v=>v.accountId), 
+						checkedActions:members.actions.map(v=>v.actionId),
+						request : true
+					});
 				});
 		}
 	}
@@ -228,13 +230,12 @@ class Role extends React.Component{
 				elem.urlPath.substr(2, idx-2) : elem.urlPath;
 			if(prev_group != group){
 				prev_group = group;
-				arr.push(<div style={{borderBottom:"1px solid #eee"}}><b>{prev_group}</b></div>);
+				arr.push({group:group, elems:[]});
 			}
-			arr.push(<Checkbox value={elem.id} checked={this.state.checkedActions.indexOf(elem.id) !=-1} 
-				onChange={(e)=>this.handleCheckedActionChange(e.target)} style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>);
+			arr[arr.length-1].elems.push(elem);
         }
         const plabel = {fontSize:"12px", color:"gray", marginRight:"3px"}, 
-        	sep = {color:plabel.color, margin:"0 8px"},
+        	sep = {color:plabel.color, margin:"0 15px"},
         	ptxt = {color:"#333", fontSize:"13px"};
 		return (
 			<div>
@@ -245,19 +246,32 @@ class Role extends React.Component{
 			            	onChange={e=>this.handleFormChange({name:e.target.value})}  />
 		          </FormItem>
 		          <FormItem label="Members: " {...formItemLayout} >
-		            <UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value.map(item=>item.key)})} value={this.state.members} />
+		          	{
+		          		this.props.basicProps ? 
+		          			(this.state.request ? <UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value.map(item=>item.key)})} value={this.state.members} /> : null):
+		          			(<UserRemoteSelect onChange={(value)=>this.handleFormChange({members:value.map(item=>item.key)})} value={[]} />)
+		          	}
 		          </FormItem>
 		          <FormItem label="Actions: " {...formItemLayout} >
-		          	{arr}
-		          	<div style={{textAlign:"right",paddingRight:"5px"}}><a href="javascript:;" onClick={(e)=>this.props.onRemark()}>Expected not found? Go to Mark !</a></div>
+		          	{ arr.map((val, key)=>
+		          		<div style={{padding:" 0 10px"}}><p><b>{val.group}</b></p>
+		          		<div style={{padding:" 0 20px"}} >
+		          			{val.elems.map((elem, i)=>
+		          				<Checkbox value={elem.id} checked={this.state.checkedActions.indexOf(elem.id) !=-1} 
+										onChange={(e)=>this.handleCheckedActionChange(e.target)} 
+										style={{display:"inline-block", width:"80px"}}>{elem.name}</Checkbox>)}
+		          		</div>
+		          		</div>
+		          	) }
+		          	<div style={{textAlign:"right",paddingRight:"5px", borderBottom:"1px solid #ddd"}}><a href="javascript:;" onClick={(e)=>this.props.onRemark()}>Expected not found? Go to Mark !</a></div>
 		          </FormItem>
 		          {this.props.basicProps && 
 		          	<FormItem label="Props: " {...formItemLayout}>
-		            <span style={plabel}>creator</span><span style={ptxt}>{this.props.basicProps.creatorUid}</span>
+		            <span style={plabel}>creator</span><span style={ptxt}><User.AvatarProfile id={this.props.basicProps.creatorUid} /></span>
 		            <span style={sep}>|</span>
-		            <span style={plabel}>time</span><span style={ptxt}>{this.props.basicProps.createTs}</span>
+		            <span style={plabel}>create</span><span style={ptxt}>{new Date(this.props.basicProps.createTs*1000).toLocaleString()}</span>
 		            <span style={sep}>|</span>
-		            <span style={plabel}>update</span><span style={ptxt}>{this.props.basicProps.updateTs}</span>
+		            <span style={plabel}>update</span><span style={ptxt}>{this.props.basicProps.updateTs > 0 ? new Date(this.props.basicProps.updateTs*1000).toLocaleString() : ''}</span>
 		          </FormItem>}
 		          <FormItem label=" " {...formItemLayout}>
 		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>

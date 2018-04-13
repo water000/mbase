@@ -36,7 +36,6 @@ export default class UserRemoteSelect extends React.Component {
   		}else{
   			return false;
   		}
-
   	}
   	return str;
   }
@@ -57,17 +56,18 @@ export default class UserRemoteSelect extends React.Component {
   		return;
     this.lastFetchId += 1;
     const fetchId = this.lastFetchId;
-    this.setState({ data: [], fetching: true });
+    this.setState({fetching: true });
     new RestFetch('/user/account').select(value)
       .then(response => response.json())
       .then((user) => {
         if (fetchId !== this.lastFetchId) { // for fetch callback order
           return;
         }
-        let data = [];
+        let data = this.state.data, value = this.state.value;
         if("OK" == user.code){
           user.data.map(u=>{
-            data.push({text:u.name?u.name:u.mobilePhone, value:u.id});
+            data.push({text:u.name||u.mobilePhone, value:u.id});
+            //value.push({key:u.id+"", label:u.name||u.mobilePhone});
           });
         }else{
             notification.error({
@@ -75,7 +75,7 @@ export default class UserRemoteSelect extends React.Component {
               description:user.code
             });
           }
-        this.setState({ data, fetching: false });
+        this.setState({ data, value, fetching: false });
       });
   }
   fetchUserId=(ids)=>{
@@ -85,9 +85,9 @@ export default class UserRemoteSelect extends React.Component {
       .then(json=>{
         let value = [], data = [];
         if("OK" == json.code){
-          json.data.map(user=>{
-            value.push(user.id);
-            data.push({value:user.id, text:user.name+(user.name?'':user.phone)});
+          json.data.map(u=>{
+            value.push({key:u.id+"", label:u.name||u.mobilePhone});
+            data.push({text:u.name||u.mobilePhone, value:u.id});
           });
         }else{
           notification.error({
@@ -106,14 +106,13 @@ export default class UserRemoteSelect extends React.Component {
   handleChange = (value) => {
     this.setState({
       value,
-      data: [],
       fetching: false,
     });
     this.props.onChange(value);
   }
   componentDidMount(){
-  	if(this.props.value.length > 0){
-      //this.fetchUserId(this.props.value);
+    if(this.props.value.length > 0){
+      this.fetchUserId(this.props.value);
     }
   }
   render() {

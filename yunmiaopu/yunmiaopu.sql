@@ -217,6 +217,8 @@ CREATE TABLE IF NOT EXISTS permission_role_member_map(
 	unique key(role_id, account_id),
 	key(account_id)
 );
+INSERT INTO permission_role values(10, 'admin', 1, unix_timestamp(), 0); -- init the topmost role as admin
+INSERT INTO permission_role_member_map values(1, 10, 1, unix_timestamp())
 
 -- /usr/local/mysql/support-files/mysql.server stop
 -- /usr/local/mysql/bin/mysqld_safe --skip-grant-tables
