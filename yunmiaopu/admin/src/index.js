@@ -10,9 +10,9 @@ import About from './components/About'
 import Index from './components/Index'
 import Permisson from './components/Permission'
 import Auth from './components/Auth'
-import {RestFetch_setDomain, RestFetch_setCatcher, RestFetch} from './RestFetch'
+import RestFetch from './RestFetch'
 
-RestFetch_setDomain("http://127.0.0.1:8080");
+RestFetch.setDomain("http://127.0.0.1:8080");
 
 const _router_list = [
   {
@@ -96,7 +96,7 @@ class GlobalFetchCatcher{
   }
 }
 
-RestFetch_setCatcher(new GlobalFetchCatcher());
+RestFetch.setCatcher(new GlobalFetchCatcher());
 
 //pop up an auth-box while 401 status code happened to fetching network request.
 //close the auth-box and retry the fetching which need to auth if auth successed.

@@ -3,6 +3,8 @@ import { Select, Spin,notification } from 'antd';
 import RestFetch from "../RestFetch"
 import debounce from 'lodash.debounce';
 import React from 'react';
+import User from "./AvatarProfile"
+
 const Option = Select.Option;
 
 export default class UserRemoteSelect extends React.Component {
@@ -57,7 +59,7 @@ export default class UserRemoteSelect extends React.Component {
     this.lastFetchId += 1;
     const fetchId = this.lastFetchId;
     this.setState({fetching: true });
-    new RestFetch('/user/account').select(value)
+    User.fetch(value)
       .then(response => response.json())
       .then((user) => {
         if (fetchId !== this.lastFetchId) { // for fetch callback order
@@ -71,7 +73,7 @@ export default class UserRemoteSelect extends React.Component {
           });
         }else{
             notification.error({
-              message:'fetching user error',
+              message:'Error while fetching user',
               description:user.code
             });
           }
@@ -80,7 +82,7 @@ export default class UserRemoteSelect extends React.Component {
   }
   fetchUserId=(ids)=>{
     this.setState({ data: [], fetching: true });
-    new RestFetch("/user/account").select({id: ids.join(',')})
+    User.fetch({id: ids.join(',')})
       .then(rsp=>rsp.json())
       .then(json=>{
         let value = [], data = [];
@@ -91,7 +93,7 @@ export default class UserRemoteSelect extends React.Component {
           });
         }else{
           notification.error({
-            message:'fetching user id error',
+            message:'Error while fetching user',
             description:json.code
           });
         }

@@ -1,15 +1,4 @@
 
-let _DOMAIN = "/";
-let _AUTH_FILTER = null;
-let _CATCHER = console.error;
-
-export function RestFetch_setDomain(d){
-	_DOMAIN = d;
-}
-export function RestFetch_setCatcher(c){
-	_CATCHER = c;
-}
-
 export default class RestFetch{
 	
 	constructor(opts){
@@ -21,11 +10,10 @@ export default class RestFetch{
 			catcher:null
 		};
 		if("string" === typeof opts)
-			this.setOpt(Object.assign({domain:_DOMAIN,accept:'application/json'}, {path:opts}));
+			this.setOpt(Object.assign({domain:RestFetch._DOMAIN,accept:'application/json'}, {path:opts}));
 		else
-			this.setOpt(Object.assign({domain:_DOMAIN,accept:'application/json'}, opts));
+			this.setOpt(Object.assign({domain:RestFetch._DOMAIN,accept:'application/json'}, opts));
 		this.callbackPayload = null;
-		console.log("constructor", opts);
 	}
 
 	//setOpt("path", "/index")
@@ -55,6 +43,8 @@ export default class RestFetch{
 				this.opts.mode = "cors";
 			}
 		}
+
+
 	}
 
 	_fetch(body, headers, method, url){
@@ -74,11 +64,11 @@ export default class RestFetch{
 				if(200 == rsp.status)
 					return resolve(rsp);
 				this.callbackPayload = { body, headers, method, url, resolve, reject};
-				(this.opts.catcher||_CATCHER).handle(rsp, this, { body, headers, method, url});
+				(this.opts.catcher||RestFetch._CATCHER).handle(rsp, this, { body, headers, method, url});
 			})
 			.catch(err=>{
 				this.callbackPayload = { body, headers, method, url, resolve, reject};
-				(this.opts.catcher||_CATCHER).handle(err, this, { body, headers, method, url});
+				(this.opts.catcher||RestFetch._CATCHER).handle(err, this, { body, headers, method, url});
 			});
 		});
 	}
@@ -92,6 +82,7 @@ export default class RestFetch{
 	}
 
 	create(params, headers, url){
+		headers = headers || {};
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
 			if(params instanceof HTMLFormElement){
@@ -146,3 +137,9 @@ export default class RestFetch{
 		});
 	}
 }
+
+RestFetch._DOMAIN = "/";
+RestFetch._CATCHER = console.log;
+
+RestFetch.setDomain = (d)=>{ RestFetch._DOMAIN = d; }
+RestFetch.setCatcher = (c)=>{ RestFetch._CATCHER = c; }

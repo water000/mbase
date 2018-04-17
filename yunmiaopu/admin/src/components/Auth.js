@@ -7,6 +7,7 @@ const FormItem = Form.Item;
 class NormalLoginForm extends React.Component {
   handleSubmit = (e) => {
     e.preventDefault();
+    this.setState((prevState)=>{loading:!prevState.loading});
     this.props.form.validateFields((err, values) => {
       if (!err) {
         var param = "";
@@ -14,13 +15,18 @@ class NormalLoginForm extends React.Component {
           param += k + "=" + encodeURIComponent(values[k]) + "&";
         new RestFetch({path:"/user/account/login?"+param}).select()
           .then(rsp=>{
+            this.setState((prevState)=>{loading:!prevState.loading});
             this.props.onAuthOk();
           })
           .catch(err=>{
+            this.setState((prevState)=>{loading:!prevState.loading});
             console.log("login err: ", err);
           });
       }
     });
+  }
+  state = {
+    loading : false
   }
   render() {
     const { getFieldDecorator } = this.props.form;
@@ -47,7 +53,7 @@ class NormalLoginForm extends React.Component {
           })(
             <Checkbox>Remember me</Checkbox>
           )}
-          <Button type="primary" htmlType="submit" style={{width: '100%'}} className="login-form-button">
+          <Button type="primary" htmlType="submit" style={{width: '100%'}} className="login-form-button" loading={this.state.loading}>
             Log in
           </Button>
         </FormItem>

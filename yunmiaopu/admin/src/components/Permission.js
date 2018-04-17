@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Icon, Switch, Radio, Form, Button, Checkbox, Input , Alert, Tabs} from 'antd';
+import { Table, Icon, Switch, Radio, Form, Button, Checkbox, Input , Alert, Tabs, message, Popconfirm} from 'antd';
 import RestFetch from "../RestFetch"
 import UserRemoteSelect from "./UserRemoteSelect"
 import User from "./AvatarProfile"
@@ -176,12 +176,20 @@ class Role extends React.Component{
 			&& this.state.members.length > 0
 			&& this.state.checkedActions.length > 0)
 		{
-			this.props.roleList.create(this.state.name,
-				this.state.members, this.state.checkedActions)
+			(this.props.basicProps ? 
+				this.props.roleList.update(this.props.basicProps.id, this.state.name, this.state.members, this.state.checkedActions) :
+				this.props.roleList.create(this.state.name, this.state.members, this.state.checkedActions))
 				.then(role=>{
-					gRoleMemberCache[role.id] ={members:this.state.members, 
+					gRoleMemberCache[role.id] = {name:this.state.name, 
+						members:this.state.members, 
 						checkedActions:this.state.checkedActions};
-					this.state = {name:'', members:[], checkedActions:[]};
+					if(this.props.basicProps != null){
+						this.setState(gRoleMemberCache[role.id]);
+						message.success('update successfull');
+					}else{
+						this.setState({name:'', members:[], checkedActions:[]});
+						message.success('create successfull');
+					}
 				});
 		}
 	}
@@ -202,7 +210,6 @@ class Role extends React.Component{
 	}
 	componentDidMount(){
 		if(this.props.basicProps){
-			//this.setState({name:this.props.basicProps.name});
 			if(gRoleMemberCache[this.props.basicProps.id] != null){
 				this.setState(gRoleMemberCache[this.props.basicProps.id]);
 				return;
@@ -275,7 +282,7 @@ class Role extends React.Component{
 		          </FormItem>}
 		          <FormItem label=" " {...formItemLayout}>
 		            <Button type="primary" onClick={this.handleSubmit} style={{marginRight:"5%"}}>Submit</Button>
-		            {this.props.basicProps && <Button type="danger" onClick={this.handleDelete} style={{border:"0px"}}>Delete</Button>}
+		            {this.props.basicProps && <Popconfirm placement="bottom" title="Are you sure delete this role??" onConfirm={this.handleDelete}><Button type="danger" >Delete</Button></Popconfirm>}
 		          </FormItem>
 		        </Form>
 		    </div>

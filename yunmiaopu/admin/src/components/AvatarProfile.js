@@ -23,8 +23,8 @@ class AvatarProfile extends React.Component{
 		if(this.props.id > 0){
 			User.fetch({id:this.props.id})
 				.then((user)=>{
-					console.log("user", user);
-					this.setState(user)
+					if("OK" == user.code)
+						this.setState(user.data[0] || {})
 				});
 		}
 	}
@@ -33,18 +33,18 @@ class AvatarProfile extends React.Component{
 		const DropdownList = (
 	      <Menu>
 	        <Menu.Item>
-	          <table>
-	          	<tr><th>Name:</th><td></td></tr>
-	          	<tr><th>Phone</th><td></td></tr>
-	          	<tr><th>ID</th><td></td></tr>
-	          	<tr><th>Email</th><td></td></tr>
+	          <table className="link-user-avatar-profile-tb">
+	          	<tr><th>ID</th><td>{this.state.id}</td></tr>
+	          	<tr><th>Name</th><td>{this.state.name}</td></tr>
+	          	<tr><th>Phone</th><td>{this.state.mobilePhone}</td></tr>
+	          	<tr><th>Email</th><td>{this.state.email}</td></tr>
 	          </table>
 	        </Menu.Item>
 	      </Menu>
 	    );
 		return (
 			<Dropdown overlay={DropdownList}>
-		      <a style={{ verticalAlign:'middle'}}>
+		      <a className="link-user-avatar-profile">
 		        <Avatar src={this.state.url}  {...this.props.avatarProps} />{this.props.fieldOfProfile && this.state[this.props.fieldOfProfile]}<Icon type="down" />
 		      </a>
 		    </Dropdown>
@@ -53,12 +53,14 @@ class AvatarProfile extends React.Component{
 }
 
 function _fetch(){
-	var rest = new RestFetch("/user/account"),
+	var rest = null,
 		idle = true,
 		timer = 0,
 		queue = [];
 	
 	function produce(attr, resolve, reject){
+		if(null == rest)
+			rest = new RestFetch("/user/account");
 		queue.push({attr, resolve, reject});
 		if(0 == timer){
 			timer = setInterval(()=>{
@@ -87,7 +89,9 @@ function _fetch(){
 			});
 	}
 
+	//attr = number | {[id|name|...]:value}
 	return function(attr){
+		attr = "object" == typeof attr ? attr : {id:attr};
 		return new Promise((resolve, reject)=>{
 			produce(attr, resolve, reject);
 		});

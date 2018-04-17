@@ -11,3 +11,10 @@ body {
 
 .header-ul{text-align:right;}
 .header-ul li{display: inline;margin-left:30px;}
+
+a.link-user-avatar-profile{display: inline-block;}
+a.link-user-avatar-profile .ant-avatar{vertical-align: middle;margin: 0 3px 3px 0;}
+.link-user-avatar-profile-tb{border-collapse: collapse;}
+.link-user-avatar-profile-tb tr{border-bottom: 1px solid #ddd;}
+.link-user-avatar-profile-tb th{font-size:12px;color:#888;}
+.link-user-avatar-profile-tb td{padding: 0 10px;font-size:13px;color:#333;}

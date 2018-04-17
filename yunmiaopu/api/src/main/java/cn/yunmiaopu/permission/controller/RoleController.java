@@ -10,6 +10,7 @@ import cn.yunmiaopu.user.entity.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
@@ -34,6 +35,7 @@ public class RoleController {
                      Role r,
                      String members,
                      String actions,
+                     HttpServletRequest req,
                      HttpServletResponse rsp)
             throws Exception
     {
@@ -51,6 +53,9 @@ public class RoleController {
         if(0 == r.getId()){
             r.setCreatorUid(sess.getAccountId());
             r.setCreateTs(now);
+        }else if(r.getId() < 0){
+            rsp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return null;
         }else{
             List<Long> delete = new ArrayList();
             int idx = 0;
@@ -58,7 +63,7 @@ public class RoleController {
             Arrays.sort(arrMembers);
             Iterable<MemberMap> mms = mmServ.findByRoleId(r.getId());
             for(MemberMap mm: mms){
-                if(-1 == (idx = Arrays.binarySearch(arrMembers, mm.getAccountId())))
+                if(-1 == (idx = Arrays.binarySearch(arrMembers, String.valueOf(mm.getAccountId()))))
                     delete.add(mm.getAccountId());
                 else
                     arrMembers[idx] = null;
@@ -71,7 +76,7 @@ public class RoleController {
             Arrays.sort(arrActions);
             Iterable<ActionMap> ams = acmServ.findByRoleId(r.getId());
             for(ActionMap ac : ams){
-                if( -1 == (idx = Arrays.binarySearch(arrActions, ac.getActionId())))
+                if( -1 == (idx = Arrays.binarySearch(arrActions, String.valueOf(ac.getActionId()))))
                     delete.add(ac.getActionId());
                 else
                     arrActions[idx] = null;
