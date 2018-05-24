@@ -1,4 +1,4 @@
-package cn.yunmiaopu.model.controller;
+package cn.yunmiaopu.category.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

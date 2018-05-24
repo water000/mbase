@@ -17,6 +17,42 @@ CREATE TABLE IF NOT EXISTS user_account(
 insert into user_member values(1, 'admin', '13888888888', '',  unix_timestamp(), '', 0);
 
 
+CREATE TABLE IF NOT EXISTS category_basic(
+	id int unsigned not null auto_increment,
+	en_name varchar(64) not null default '',
+	cn_name varchar(64) not null default '',
+	`desc` varchar(256) not null default '',
+	parent_id int unsigned not null auto_increment,
+	wiki_url varchar(512) not null default '',
+	create_ts int unsigned not null auto_increment,
+	primary key(id),
+	key(parent_id)
+);
+
+CREATE TABLE IF NOT EXISTS category_attribute(
+	id int unsigned not null auto_increment,
+	category_id int unsigned not null default 0,
+	name varchar(64) not null default '',
+	value varchar(255) not null default '',
+	value_type tinyint not null default 0, -- [string(max-length), text, short, int, long, float, double, timestamp(int), options,]
+	txt_max_length int not null default 0,
+	type tinyint not null default 0, -- normal, sale, important
+	options_exists tinyint not null default 0,
+	options_extendable tinyint not null default 0,
+	primary key(id),
+	key(category_id)
+);
+
+CREATE TABLE IF NOT EXISTS category_attribute_options(
+	id int unsigned not null auto_increment,
+	attribute_id int unsigned not null default 0,
+	`desc` varchar(64) not null default '',
+	image_token varchar(32) not null default '',
+	color varchar(16) not null default '',
+	primary key(id),
+	key(attribute_id)
+);
+
 
 -- (1, 'size')
 CREATE TABLE IF NOT EXISTS unit_family(
@@ -132,14 +168,45 @@ CREATE TABLE IF NOT EXISTS shop_image(
 	key(shop_id)
 );
 
-CREATE TABLE IF NOT EXISTS shop_product(
+CREATE TABLE IF NOT EXISTS shop_product_catalog(
+	id int unsigned not null auto_increment,
+	shop_id int unsigned not null,
+	category_id int unsigned not null default 0,
+	product_count int unsigned not null default 0,
+	update_ts int unsigned not null default 0,
+	primary key(id),
+	key(shop_id, update_ts)
+);
+
+CREATE TABLE IF NOT EXISTS shop_product_$category_en_name(
 	id int unsigned not null auto_increment,
 	shop_id int unsigned not null,
 	brand_id int unsigned not null default 0,
-	product_model_id int unsigned not null default 0,
+	
+	category_attribute_id1,
+	category_attribute_id2,
+	...,
+
+
+	qty int unsigned not null default 0,
+	available int unsigned not null default 0,
 	image_num tinyint unsigned not null,
+	price float not null default 0.0,
 	detail_url varchar(512) default null,
+	status tinyint not null default 0,	
+	primary key(id),
+	key(shop_id)
 );
+
+CREATE TABLE IF NOT EXISTS shop_product_attribute(
+	id int unsigned not null auto_increment,
+	shop_product_id int unsigned not null default 0,
+	category_attribute_id int unsigned not null default 0,
+	customize_attribute_id int unsigned not null default 0
+	primary key(id),
+	key(shop_product_id)
+);
+
 CREATE TABLE IF NOT EXISTS shop_product_image(
 	id int unsigned not null auto_increment,
 	shop_id int unsigned not null,
