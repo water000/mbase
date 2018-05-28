@@ -20,6 +20,7 @@ public class Category {
     private long parentId;
     private String wikiUrl;
     private long createTs;
+    private boolean closed;
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -29,6 +30,14 @@ public class Category {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public void setClosed(boolean closed) {
+        this.closed = closed;
     }
 
     public String getEnName() {

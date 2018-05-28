@@ -8,7 +8,7 @@ import java.util.Optional;
  * Created by a on 2017/12/5.
  */
 public class CrudServiceAdapter<T, ID> implements CrudServiceTemplete<T, ID> {
-    private CrudRepository repo;
+    protected CrudRepository repo;
 
     public void setRepository(CrudRepository repo){
         this.repo = repo;
