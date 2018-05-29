@@ -106,7 +106,10 @@ export default class RestFetch{
 
 	select(params, headers, url){
 		//console.log("select", params, typeof params, this.opts);
-		if("object" == typeof params){
+		if("string" == typeof params){
+			url = this.opts.domain+this.opts.path + '/' + params;
+		}
+		else if("object" == typeof params){
 			params = new URLSearchParams(params);
 			url = this.opts.domain+this.opts.path + '?' + params.toString();
 			params = null;
