@@ -1,5 +1,5 @@
 import React from 'react';
-import Tree from 'antd';
+import {Tree} from 'antd';
 import RestFetch from "../RestFetch"
 const TreeNode = Tree.TreeNode;
 
@@ -19,19 +19,17 @@ export default class CategoryTree extends React.Component{
   }
 
   onLoadData = (treeNode) => {
-  	
-
-
     return new Promise((resolve) => {
 		if (treeNode.props.children) {
 			resolve();
 			return;
 		}
 
+console.log(treeNode);
 
 		treeNode.props.dataRef.children = [];
 
-	  	this.restCgy.select(treeNode.props.key).then(rsp=>rsp.json())
+	  	this.restCgy.select(treeNode.props.dataRef.key).then(rsp=>rsp.json())
 	  		.then(list=>{
 	  			list.map(cgy=>{
 	  				treeNode.props.dataRef.children.push({title: cgy.cn_name+'('+cgy.en_name+')', key:cgy.id});
@@ -39,7 +37,7 @@ export default class CategoryTree extends React.Component{
 	  		});
 
 	  	if(treeNode.props.key != '0'){
-		  	this.restAttr.select(treeNode.props.key).then(rsp=>rsp.json())
+		  	this.restAttr.select(treeNode.props.dataRef.key).then(rsp=>rsp.json())
 		  		.then(list=>{
 		  			list.map(attr=>{
 		  				treeNode.props.dataRef.children.push({title: attr.cn_name+'('+attr.en_name+')', key:attr.id, isLeaf:true});

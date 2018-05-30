@@ -6,11 +6,12 @@ import registerServiceWorker from './registerServiceWorker';
 
 import { notification } from 'antd';
 
-import About from './components/About'
-import Index from './components/Index'
-import Permisson from './components/Permission'
-import Auth from './components/Auth'
-import RestFetch from './RestFetch'
+import About from './components/About';
+import Index from './components/Index';
+import Permisson from './components/Permission';
+import Auth from './components/Auth';
+import RestFetch from './RestFetch';
+import CategoryTree from './components/CategoryTree';
 
 RestFetch.setDomain("http://127.0.0.1:8080");
 
@@ -26,12 +27,17 @@ const _router_list = [
   {
     path : '/permission',
     component : Permisson
+  },
+  {
+    path : '/category',
+    component : CategoryTree
   }
 ];
 
 const _menu = [
   {title:'Home', items:[{title:'index', link:'/index'}, {title:'about', link:'/about'}]},
-  {title:'Permission', link:'/permission'}
+  {title:'Permission', link:'/permission'},
+  {title:'Category', link:'/category'}
 ]
 
 class AuthHandle extends React.Component{

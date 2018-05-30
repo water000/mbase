@@ -42,6 +42,7 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
             ;
         else
             return true;
+        Cors.handle(request, response);
         Iterable<Action> foundActions = acsrv.findByHandleMethod(ActionController.handlerString(handler));
         if(!foundActions.iterator().hasNext())
             return true;
@@ -49,14 +50,13 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
 
         UserSession us = UserSessionArgumentResolver.filter(request, response);
         if(null == us) {
-            Cors.handle(request, response);
+
             return false;
         }
 
         Iterable<MemberMap> mm = mbsrv.findByAccountId(us.getAccountId());
         if(!mm.iterator().hasNext()){
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            Cors.handle(request, response);
             return false;
         }
         MemberMap m = mm.iterator().next();
@@ -71,7 +71,6 @@ public class HandleInterceptor extends HandlerInterceptorAdapter {
         }
 
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        Cors.handle(request, response);
         return false;
     }
 }

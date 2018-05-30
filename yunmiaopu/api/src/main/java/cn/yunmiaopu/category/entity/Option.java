@@ -8,16 +8,16 @@ import javax.persistence.Id;
 /**
  * Created by macbookpro on 2018/5/24.
  */
-@Entity(name = "category_options")
+@Entity(name = "category_attribute_options")
 public class Option {
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private long id;
     private long attributeId;
     private String desc;
     private String image_token;
     private String color;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getId() {
         return id;
     }

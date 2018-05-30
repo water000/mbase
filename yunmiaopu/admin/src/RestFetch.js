@@ -52,6 +52,7 @@ export default class RestFetch{
 			url = url || this.opts.domain+this.opts.path;
 			headers = headers || {};
 			method = method || "GET";
+			reject = reject || console.error;
 
 			fetch(url, {
 				method,

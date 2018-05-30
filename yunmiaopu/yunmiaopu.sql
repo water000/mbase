@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS user_account(
 	primary key(id),
 	unique key(mobile_phone)
 );
-insert into user_member values(1, 'admin', '13888888888', '',  unix_timestamp(), '', 0);
+insert into user_account values(1, 'admin', '13888888888', '',  unix_timestamp(), '', 0);
 
 
 CREATE TABLE IF NOT EXISTS category_basic(
@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS category_basic(
 	en_name varchar(64) not null default '',
 	cn_name varchar(64) not null default '',
 	`desc` varchar(256) not null default '',
-	parent_id int unsigned not null auto_increment,
+	parent_id int unsigned not null,
 	wiki_url varchar(512) not null default '',
-	create_ts int unsigned not null auto_increment,
+	create_ts int unsigned not null,
 	primary key(id),
 	key(parent_id)
 );

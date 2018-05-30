@@ -13,6 +13,8 @@ import javax.persistence.Id;
  */
 @Entity(name = "category_basic")
 public class Category {
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private long id;
     private String enName;
     private String cnName;
@@ -22,8 +24,7 @@ public class Category {
     private long createTs;
     private boolean closed;
 
-    @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+
     public long getId() {
         return id;
     }
