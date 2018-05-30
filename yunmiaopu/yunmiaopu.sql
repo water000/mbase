@@ -181,21 +181,32 @@ CREATE TABLE IF NOT EXISTS shop_product_catalog(
 CREATE TABLE IF NOT EXISTS shop_product_$category_en_name(
 	id int unsigned not null auto_increment,
 	shop_id int unsigned not null,
+	category_id int unsigned not null default 0,
 	brand_id int unsigned not null default 0,
+	`desc` varchar(512) not null default '',
+
+	create_ts int unsigned not null default 0,
+	update_ts int unsigned not null default 0,
+
+	primary key(id),
+	key(shop_id)
+);
+
+CREATE TABLE IF NOT EXISTS shop_product_sku_$category_en_name(
+	id int unsigned not null default 0,
+	shop_product_id int unsigned not null default 0,
 	
-	category_attribute_id1,
-	category_attribute_id2,
-	...,
-
-
+	$category_attribute_id int unsigned not null default 0,
+	$category_attribute_value int unsigned not null default 0,
+	...
+	
 	qty int unsigned not null default 0,
 	available int unsigned not null default 0,
 	image_num tinyint unsigned not null,
 	price float not null default 0.0,
-	detail_url varchar(512) default null,
-	status tinyint not null default 0,	
+
 	primary key(id),
-	key(shop_id)
+	key(shop_product_id)
 );
 
 CREATE TABLE IF NOT EXISTS shop_product_attribute(
@@ -207,7 +218,7 @@ CREATE TABLE IF NOT EXISTS shop_product_attribute(
 	key(shop_product_id)
 );
 
-CREATE TABLE IF NOT EXISTS shop_product_image(
+CREATE TABLE IF NOT EXISTS shop_product_image_$category_en_name(
 	id int unsigned not null auto_increment,
 	shop_id int unsigned not null,
 	format tinyint not null, -- image, video, ...
