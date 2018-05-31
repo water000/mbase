@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch} from 'antd';
 import RestFetch from "../RestFetch"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
@@ -7,14 +7,41 @@ const FormItem = Form.Item;
 class CategoryForm extends React.Component{
 
   state = {
-    value : {
-      enName: '',
-      cnName: '',
-      desc:   '',
-      wikiUrl: '',
-      closed: false,
+    fields : [
+      {
+        name:'enName',
+        options:{},
+        control:<Input />
+        value:'',
+      },
+      {
+        name:'cnName',
+        options:{},
+        control:<Input />
+        value:'',
+      },
+      {
+        name:'desc',
+        options:{},
+        control:<Input />
+        value:'',
+      },
+      {
+        name:'wikiUrl',
+        options:{},
+        control:<Input />
+        value:'',
+      },
+      {
+        name:'closed',
+        options:{},
+        control:<Switch />
+        value:false,
+      },
     }
+
   }
+
 
   constructor(props){
     super(props);
@@ -22,7 +49,8 @@ class CategoryForm extends React.Component{
 
   setValue(input){
     this.setState(prevStates=>{
-      prevStates[input.name] = input.value;
+      prevStates.value[input.name] = input.value;
+      console.log(prevStates);
       return prevStates;
     });
   }
@@ -35,53 +63,20 @@ class CategoryForm extends React.Component{
       },
       wrapperCol: {
         xs: { span: 24 },
-        sm: { span: 12 },
+        sm: { span: 19 },
       },
     };
 
     return <div style={{display:this.props.display}}>
-      <h3>Category</h3>
-      <Form layout="vertical">
-
-        <FormItem
-         {...formItemLayout}
-          label="Parent"
-        >
-          <span className="ant-form-text">{this.props.parentData.title}</span>
-        </FormItem>
-
-        <FormItem
-         {...formItemLayout}
-          label="CN-Name"
-          hasFeedback
-        >
-          <Input placeholder="CN Name" name="cn_name" value={this.state.cnName} onChange={(e)=>this.setValue(e.target)} />
-        </FormItem>
-
-        <FormItem
-         {...formItemLayout}
-          label="EN-Name"
-          hasFeedback
-        >
-          <Input placeholder="EN Name" name="enName" value={this.state.enName} onChange={(e)=>this.setValue(e.target)} />
-        </FormItem>
-
-        <FormItem
-         {...formItemLayout}
-          label="Desc"
-          hasFeedback
-        >
-          <Input placeholder="Desc" name="desc" value={this.state.desc} onChange={(e)=>this.setValue(e.target)} multiline />
-        </FormItem>
-
-        <FormItem
-         {...formItemLayout}
-          label="wikiUrl"
-          hasFeedback
-        >
-          <Input placeholder="wiki url"  name="wikiUrl" value={this.state.wikiUrl} onChange={(e)=>this.setValue(e.target)} />
-        </FormItem>
-
+      <h4>Category within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
+      <Form layout="vertical" style={{margin:"12px 5px"}}>
+        {
+          this.state.fields.map(field=>{
+            return <FormItem>
+              {getFieldDecorator(field.name, field.options)(field.control)}
+              </FormItem>
+                });
+        }
       </Form>
     </div>
   }
@@ -95,8 +90,8 @@ class AttributeForm extends React.Component{
 
   render(){
     return <div style={{display:this.props.display}}>
-      <h3>Attribute</h3>
-      <Form layout="vertical">
+      <h4>Attribute within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
+      <Form layout="vertical" style={{margin:"8px 5px"}}>
       </Form>
     </div>
   }
@@ -108,8 +103,7 @@ export default class CategoryTree extends React.Component{
     curNodeData : null,
     treeData: [
       { title: 'All', key: '0' },
-      { title: 'Expand to load', key: '1' },
-      { title: 'Tree Node', key: '2', isLeaf: true },
+      //{ title: 'Tree Node', key: '2', isLeaf: true },
     ],
     form:{
       span:0,
@@ -150,7 +144,7 @@ export default class CategoryTree extends React.Component{
   }
 
   hideForm = ()=>{
-    this.setState({form:{span:0}});
+    this.setState(prevStates=>{prevStates.form.span=0;return prevStates;});
   }
 
   onLoadData = (treeNode) => {
@@ -209,21 +203,21 @@ export default class CategoryTree extends React.Component{
       </Menu>
     );
     return (
-      <Row gutter={8}>
-        <Col span={6} style={{borderRight:"1px solid #ccc"}}>
+      <Row gutter={12}>
+        <Col span={6} style={{borderRight:"1px solid #ccc", height:"100%"}}>
           <Dropdown overlay={menu}>
-            <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><b style={{fontSize:"18px"}}>+</b></a>
+            <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><Icon type="plus" /></a>
           </Dropdown>
           <Tree loadData={this.onLoadData} onSelect={this.onNodeSelect} onExpand={this.onNodeExpand}>
             {this.renderTreeNodes(this.state.treeData)}
           </Tree>
         </Col>
-        <Col span={this.state.form.span} style={{borderRight:"1px solid #ccc"}}>
-          <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon class="close" /></a>
-          <CategoryForm display={this.state.form.display.category} parentData={this.state.curNodeData} />
-          <AttributeForm display={this.state.form.display.attribute} parentData={this.state.curNodeData} />
+        <Col span={this.state.form.span} style={{borderRight:"1px solid #ccc", height:"100%"}}>
+          <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon type="close" /></a>
+          <CategoryForm display={this.state.form.display.category} parentData={this.state.curNodeData || this.state.treeData[0]} />
+          <AttributeForm display={this.state.form.display.attribute} parentData={this.state.curNodeData || this.state.treeData[0]} />
         </Col>
-        <Col span={18-this.state.form.span}>
+        <Col span={18-this.state.form.span} style={{height:"100%"}}>
           <h3>Detail</h3>
         </Col>
       </Row>
