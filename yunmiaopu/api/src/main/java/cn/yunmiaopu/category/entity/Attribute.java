@@ -8,11 +8,12 @@ import javax.persistence.Id;
 /**
  * Created by macbookpro on 2018/5/24.
  */
+
+enum ValueType{STRING, TEXT, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, OTHER_OPTIONS}
+enum Type{NORMAL, SALE, IMPORTANT}
+
 @Entity(name = "category_attribute")
 public class Attribute {
-    public enum ValueType{STRING, TEXT, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, OTHER_OPTIONS};
-    public enum Type{NORMAL, SALE, IMPORTANT}
-
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
