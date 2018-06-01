@@ -107,14 +107,14 @@ export default class RestFetch{
 
 	select(params, headers, url){
 		//console.log("select", params, typeof params, this.opts);
-		if("string" == typeof params){
-			url = this.opts.domain+this.opts.path + '/' + params;
-		}
-		else if("object" == typeof params){
+		if("object" == typeof params){
 			params = new URLSearchParams(params);
 			url = this.opts.domain+this.opts.path + '?' + params.toString();
-			params = null;
 		}
+		else{
+			url = this.opts.domain+this.opts.path + '/' + params;
+		}
+		params = null;
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
 			this._fetch(params, headers, "GET", url)

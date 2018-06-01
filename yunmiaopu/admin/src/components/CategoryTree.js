@@ -11,29 +11,31 @@ class CategoryForm extends React.Component{
 
     this.state = {
       fields:{
+        id:{
+          value:0,
+        },
         cnName:{
-          value:props.initVaule.cnName||'',
+          value:'',
           validateStatus:''
         },
         enName:{
-          value:props.initVaule.enName||'',
+          value:'',
           validateStatus:''
         },
         desc:{
-          value:props.initVaule.desc||'',
+          value:'',
           validateStatus:''
         },
         wikiUrl:{
-          value:props.initVaule.wikiUrl||'',
+          value:'',
           validateStatus:''
         },
         closed:{
-          value:props.initVaule.closed === true ? true : false, 
+          value:false,
           validateStatus:''
         },
       }
-    }
-
+    };
   }
 
   cleanFileds(){
@@ -41,6 +43,7 @@ class CategoryForm extends React.Component{
       for(var key in prevStates.fields){
           prevStates.fields[key].value = '';
       }
+      prevStates.fields.closed.value = false;
       return prevStates;
     });
 
@@ -57,12 +60,6 @@ class CategoryForm extends React.Component{
       prevStates.fields[key].value = bool;
       return prevStates;
     });
-  }
-
-  handleFormChange = (changedFields) => {
-    this.setState(({ fields }) => ({
-      fields: { ...fields, ...changedFields },
-    }));
   }
 
   handleSubmit = (e)=>{
@@ -86,8 +83,9 @@ class CategoryForm extends React.Component{
     for(var key in this.state.fields){
       data[key] = this.state.fields[key].value;
     }
+    data.parentId = this.props.parentData.key;
     this.props.onSubmit(data).then(rsp=>{
-      if('ok' == rsp.status){
+      if('OK' == rsp.code){
         this.cleanFileds();
         return;
       }
@@ -101,6 +99,15 @@ class CategoryForm extends React.Component{
         return prevStates;
       });
     });
+  }
+
+  componentBeforeUpdate(){
+    this.setState(prevStates=>{
+      for(var k in this.props.initValue){
+        prevStates.fields[k].value = this.props.initValue[k];
+      }
+      return prevStates;
+    })
   }
 
   render(){
@@ -167,7 +174,7 @@ export default class CategoryTree extends React.Component{
         category:"none",
         attribute:"none"
       },
-      initVaule:{
+      initValue:{
 
       }
     }
@@ -189,19 +196,22 @@ export default class CategoryTree extends React.Component{
 
   onNodeExpand = (expandedKeys, {expanded, node}) => {
     if(!node.props.dataRef.isLeaf)
-      this.setCurren(node.props.dataRef);
+      this.setCurrent(node.props.dataRef);
+    console.log("expanded: ", expanded, node.props);
+    if(expanded)
+      this.loadData(node.props.dataRef.key);
   }
 
   onNodeSelect = (selectedKeys, {selected, selectedNodes, node, event}) => {
     if(!node.props.dataRef.isLeaf)
-      this.setCurren(node.props.dataRef);
+      this.setCurrent(node.props.dataRef);
   }
 
   showCategoryForm = ()=>{
-    this.setState({form:{span:9, display:{category:"", attribute:"none"}}, initVaule:{}});
+    this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
   }
   addCategory(category){
-    var ret = this.state.curNodeData.children.push({title:`${category.enName}(${category.cnName}`, key:category.id, children:[]});
+    var ret = this.state.curNodeData.children.push({title:category.cnName, key:category.id, children:[]});
     this.setState(prevStates=>prevStates);
     return ret;
   }
@@ -213,9 +223,10 @@ export default class CategoryTree extends React.Component{
   handleCategorySubmit = (data)=>{
     return new Promise((resolve, reject)=>{
       this.restCgy.create(data).then(res=>res.json()).then(json=>{
-        if('ok' == json.status){
+        console.log(json);
+        if('OK' == json.code){
           var ret = this.addCategory(json.data);
-          this.setCurren(ret);
+          this.setCurrent(ret);
           message.success('Category saved. Attribute will be Next!');
           setTimeout(()=>{
             this.showAttributeForm(); 
@@ -227,7 +238,7 @@ export default class CategoryTree extends React.Component{
   }
 
   showAttributeForm = ()=>{
-    this.setState({form:{span:9, display:{category:"none", attribute:""}, initVaule:{}}});
+    this.setState({form:{span:9, display:{category:"none", attribute:""}, initValue:{}}});
   }
   handleAttributeSubmit = (data)=>{
     
@@ -238,7 +249,6 @@ export default class CategoryTree extends React.Component{
   }
 
   loadData(categoryId){
-    console.log("categoryId", categoryId);
     this.restCgyParent.select(categoryId).then(rsp=>rsp.json())
       .then(list=>{
         list.map(cgy=>{
@@ -286,6 +296,7 @@ export default class CategoryTree extends React.Component{
   }
 
   render() {
+    console.log(this.state);
     const menu = (
       <Menu>
         <Menu.Item>
@@ -311,11 +322,11 @@ export default class CategoryTree extends React.Component{
           <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon type="close" /></a>
           <CategoryForm display={this.state.form.display.category} 
                         parentData={this.state.curNodeData} 
-                        initVaule={this.state.form.display.category != 'none' ? this.state.form.initVaule:{}}
+                        initValue={this.state.form.display.category != 'none' ? this.state.form.initValue:{}}
                         onSubmit={this.handleCategorySubmit} />
           <AttributeForm display={this.state.form.display.attribute} 
                           parentData={this.state.curNodeData} 
-                          initVaule={this.state.form.display.attribute != 'none' ? this.state.form.initVaule:{}}
+                          initValue={this.state.form.display.attribute != 'none' ? this.state.form.initValue:{}}
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
         <Col span={18-this.state.form.span} style={{height:"100%"}}>

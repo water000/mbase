@@ -2,6 +2,7 @@ package cn.yunmiaopu.category.controller;
 
 import cn.yunmiaopu.category.entity.Category;
 import cn.yunmiaopu.category.service.ICategoryService;
+import cn.yunmiaopu.common.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,19 +22,19 @@ public class CategoryController {
     private ICategoryService cgysrv;
 
     @GetMapping("category/{id}")
-    public Category get(@PathVariable long id){
+    public Category get(@PathVariable Long id){
         Optional<Category> opt = cgysrv.findById(id);
         return opt.isPresent() ? opt.get() : null;
     }
 
     @PostMapping("/category")
-    public Category save(Category cgy){
+    public Response save(Category cgy){
         cgy = (Category)cgysrv.save(cgy);
-        return cgy;
+        return Response.ok(cgy);
     }
 
     @GetMapping("/categories/{parentId}")
-    public Iterable<Category> children(long parentId){
+    public Iterable<Category> children(@PathVariable Long parentId){
         return cgysrv.findByParentId(parentId);
     }
 
