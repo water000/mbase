@@ -26,7 +26,7 @@ public class CategoryController {
         return opt.isPresent() ? opt.get() : null;
     }
 
-    @PutMapping("/category")
+    @PostMapping("/category")
     public Category save(Category cgy){
         cgy = (Category)cgysrv.save(cgy);
         return cgy;

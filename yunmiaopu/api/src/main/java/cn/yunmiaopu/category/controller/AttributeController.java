@@ -12,18 +12,25 @@ import java.util.Optional;
  * Created by macbookpro on 2018/5/29.
  */
 @RestController
-@RequestMapping("/category-attribute")
 public class AttributeController {
 
     @Autowired
     private IAttributeService srv;
 
-    @PutMapping
+    @PostMapping("/category-attribute")
     public Attribute save(Attribute attr){
         return (Attribute)srv.save(attr);
     }
 
-    @GetMapping("/{categoryId}")
+    @GetMapping("/category-attribute/{categoryId}")
+    public Attribute get(@PathVariable long attributeId){
+        Optional<Attribute> opt = srv.findById(new Long(attributeId));
+        if(!opt.isPresent())
+            throw new IllegalArgumentException("$attributeId not found");
+        return opt.get();
+    }
+
+    @GetMapping("/category-attributes/{categoryId}")
     public Iterable<Attribute> list(@PathVariable long categoryId){
         return srv.findByCategoryId(categoryId);
     }

@@ -1,12 +1,10 @@
 package cn.yunmiaopu.category.entity;
 
+import javafx.beans.NamedArg;
 import org.hibernate.annotations.GeneratorType;
 import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 /**
  * Created by macbookpro on 2018/5/24.
@@ -18,6 +16,7 @@ public class Category {
     private long id;
     private String enName;
     private String cnName;
+    @Column(name="[desc]")
     private String desc;
     private long parentId;
     private String wikiUrl;

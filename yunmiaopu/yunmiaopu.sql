@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS category_basic(
 	parent_id int unsigned not null,
 	wiki_url varchar(512) not null default '',
 	create_ts int unsigned not null,
+	closed tinyint not null default 0,
 	primary key(id),
 	key(parent_id)
 );

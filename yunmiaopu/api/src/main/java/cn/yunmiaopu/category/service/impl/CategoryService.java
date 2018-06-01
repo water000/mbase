@@ -15,10 +15,16 @@ import javax.annotation.PostConstruct;
 @Service
 public class CategoryService extends CrudServiceAdapter implements ICategoryService {
     @Autowired
-    private ICategoryDao repo;
+    private ICategoryDao dao;
+
+    @PostConstruct
+    public void init(){
+        super.setRepository(dao);
+    }
+
 
     public Iterable<Category> findByParentId(long parentId){
-        return repo.findByParentId(parentId);
+        return dao.findByParentId(parentId);
     }
 
 }
