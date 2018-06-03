@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+                        http://www.springframework.org/schema/mvc
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+                        http://www.springframework.org/schema/aop
+                        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+                        http://www.springframework.org/schema/data/jpa
+                        http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+    <!-- 设置使用注解的类所在的jar包 -->
+    <context:component-scan base-package="cn.yunmiaopu" >
+    </context:component-scan>
+    <mvc:annotation-driven>
+        <mvc:argument-resolvers>
+            <bean class="cn.yunmiaopu.user.util.UserSessionArgumentResolver" />
+        </mvc:argument-resolvers>
+    </mvc:annotation-driven>
+
+    <tx:annotation-driven/>
+
+    <mvc:cors>
+        <mvc:mapping path="/**" allowed-origins="*" allow-credentials="true" max-age="1800" allowed-methods="GET,POST,OPTIONS"/>
+    </mvc:cors>
+
+    <mvc:interceptors>
+        <bean class="cn.yunmiaopu.permission.util.HandleInterceptor"/>
+        <!--mvc:interceptor>
+            <mvc:mapping path="/test/number.do"/ -->
+        <!-- 定义在mvc:interceptor下面的表示是对特定的请求才进行拦截的 -->
+        <!--bean class="com.host.app.web.interceptor.LoginInterceptor"/>
+    </mvc:interceptor-->
+    </mvc:interceptors>
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+          destroy-method="close">
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/cn_yunmiaopu"/>
+        <property name="user" value="root"/>
+        <property name="password" value=""/>
+    </bean>
+    <bean id="namingStrategy" class="cn.yunmiaopu.common.util.ImprovedPhysicalNamingStrategy"></bean>
+
+    <!-- use spring-redis-session to replace the servlet http-session -->
+    <bean id="lettuceConnectionFactory"
+          class="org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory"
+          p:host-name="127.0.0.1" p:port="6379"/>
+    <bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration"/>
+
+
+    <!-- spring-data-jpa -->
+    <bean id="persistenceProvider" class="org.hibernate.jpa.HibernatePersistenceProvider"/>
+    <bean name="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager" />
+    <bean id="hibernateJpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter" />
+    <bean id="entityManagerFactory"
+          class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="jpaVendorAdapter" ref="hibernateJpaVendorAdapter" />
+        <property name="persistenceProvider" ref="persistenceProvider" />
+        <property name="packagesToScan" >
+            <array>
+                <value>cn.yunmiaopu.*.entity</value>
+            </array>
+        </property>
+        <property name="jpaPropertyMap">
+            <map>
+                <entry key="hibernate.query.substitutions" value="true 1, false 0" />
+                <entry key="hibernate.default_batch_fetch_size" value="16" />
+                <entry key="hibernate.max_fetch_depth" value="2" />
+                <entry key="hibernate.generate_statistics" value="false" />
+                <entry key="hibernate.bytecode.use_reflection_optimizer" value="true" />
+
+                <entry key="hibernate.cache.use_query_cache" value="false" />
+                <entry key="hibernate.cache.use_second_level_cache" value="false" />
+
+                <entry key="hibernate.enable_lazy_load_no_trans" value="true"/>
+                <entry key="hibernate.physical_naming_strategy" value="cn.yunmiaopu.common.util.ImprovedPhysicalNamingStrategy" />
+                <entry key="hibernate.show_sql" value="true" />
+                <!--<entry key="hibernate.hbm2ddl.auto" value="validate"/>-->
+            </map>
+        </property>
+    </bean>
+    <jpa:repositories base-package="cn.yunmiaopu.**.dao" entity-manager-factory-ref="entityManagerFactory" />
+
+
+</beans>
