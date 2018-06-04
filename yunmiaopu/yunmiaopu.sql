@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS category_basic(
 	wiki_url varchar(512) not null default '',
 	create_ts int unsigned not null,
 	closed tinyint not null default 0,
+	img_token varchar(128) not null default '',
 	primary key(id),
 	key(parent_id)
 );

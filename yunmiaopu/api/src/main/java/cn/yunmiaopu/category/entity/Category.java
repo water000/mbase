@@ -22,6 +22,7 @@ public class Category {
     private String wikiUrl;
     private long createTs;
     private boolean closed;
+    private String imgToken;
 
 
     public long getId() {
@@ -46,6 +47,14 @@ public class Category {
 
     public void setEnName(String enName) {
         this.enName = enName;
+    }
+
+    public String getImgToken() {
+        return imgToken;
+    }
+
+    public void setImgToken(String imgToken) {
+        this.imgToken = imgToken;
     }
 
     public String getCnName() {

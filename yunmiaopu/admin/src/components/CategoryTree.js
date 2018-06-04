@@ -1,5 +1,6 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge} from 'antd';
+import moment from 'moment';
 import RestFetch from "../RestFetch"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
@@ -145,6 +146,60 @@ class CategoryForm extends React.Component{
   }
 }
 
+class CategoryTable extends React.Component{
+
+  render(){
+    const columns = [
+      {
+        title: '#(Category)',
+        dataIndex: 'id',
+        key: 'id',
+        render:(_1, record, index)=>index+1
+      },
+      {
+        title: 'CN-Name',
+        dataIndex:'cnName',
+        key:'CN-Name',
+        render:(_1, record, index)=>record.rawdata.cnName
+      },
+      {
+        title : 'EN-name',
+        dataIndex : 'enName',
+        key:'enName',
+        render:(_1, record, index)=>record.rawdata.enName
+      },
+      {
+        title: 'Desc',
+        dataIndex:'desc',
+        key:'desc',
+        render:(_1, record, index)=>record.rawdata.desc
+      },
+      {
+        title: 'Wiki-URL',
+        dataIndex:'wikiUrl',
+        key:'wikiUrl',
+        render:(_1, record, index)=>record.rawdata.wikiUrl
+      },
+      {
+        title: 'Create-Datetime',
+        dataIndex:'createTs',
+        key:'createTs',
+        render:(_1, record, index)=>moment(new Date(record.rawdata.createTs*1000), 'YYYY-MM-DD')
+      },
+      {
+        title: 'Closed',
+        dataIndex:'closed',
+        key:'closed',
+        render:(text, record)=><Badge status={0 == record.rawdata.closed ? "success" : "default"} />
+      },
+    ];
+
+    <List />
+
+    return <Table size='small' columns={columns} dataSource={this.props.data} pagination={false} />
+  }
+}
+
 class AttributeForm extends React.Component{
 
   constructor(props){
@@ -165,7 +220,7 @@ export default class CategoryTree extends React.Component{
 	state = {
     curNodeData : null,
     treeData: [
-      { title: 'All', key: '0', children:[] },
+      { title: 'All', key: '0', children:[], rawdata:null },
       //{ title: 'Tree Node', key: '2', isLeaf: true },
     ],
     form:{
@@ -211,19 +266,20 @@ export default class CategoryTree extends React.Component{
     this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
   }
   addCategory(category){
-    var ret = this.state.curNodeData.children.push({title:category.cnName, key:category.id, children:[]});
+    var ret = this.state.curNodeData.children.push({
+      title:category.cnName, key:category.id, children:[], rawdata:category});
     this.setState(prevStates=>prevStates);
     return ret;
   }
   addAttribute(attribute){
-    var ret = this.state.curNodeData.children.push({title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true});
+    var ret = this.state.curNodeData.children.push({
+      title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true, rawdata:attribute});
     this.setState(prevStates=>prevStates);
     return ret;
   }
   handleCategorySubmit = (data)=>{
     return new Promise((resolve, reject)=>{
       this.restCgy.create(data).then(res=>res.json()).then(json=>{
-        console.log(json);
         if('OK' == json.code){
           var ret = this.addCategory(json.data);
           this.setCurrent(ret);
@@ -296,7 +352,6 @@ export default class CategoryTree extends React.Component{
   }
 
   render() {
-    console.log(this.state);
     const menu = (
       <Menu>
         <Menu.Item>
@@ -330,7 +385,8 @@ export default class CategoryTree extends React.Component{
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
         <Col span={18-this.state.form.span} style={{height:"100%"}}>
-          <h4>Detail of category and attribute within ({this.state.curNodeData.title})</h4>
+          <h4>Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
+          <CategoryTable data={this.state.curNodeData.children} />
         </Col>
       </Row>
     );

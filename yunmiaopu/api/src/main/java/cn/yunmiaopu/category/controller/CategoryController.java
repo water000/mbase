@@ -29,6 +29,8 @@ public class CategoryController {
 
     @PostMapping("/category")
     public Response save(Category cgy){
+        if(0 == cgy.getId())
+            cgy.setCreateTs(System.currentTimeMillis()/1000);
         cgy = (Category)cgysrv.save(cgy);
         return Response.ok(cgy);
     }
