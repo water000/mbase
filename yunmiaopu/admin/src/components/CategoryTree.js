@@ -1,5 +1,6 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar} from 'antd';
+import { List } from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 const TreeNode = Tree.TreeNode;
@@ -102,10 +103,11 @@ class CategoryForm extends React.Component{
     });
   }
 
-  componentBeforeUpdate(){
+  componentWillReceiveProps(nextProps){
     this.setState(prevStates=>{
-      for(var k in this.props.initValue){
-        prevStates.fields[k].value = this.props.initValue[k];
+      for(var k in nextProps.initValue){
+        if(prevStates.fields[k])
+          prevStates.fields[k].value = nextProps.initValue[k];
       }
       return prevStates;
     })
@@ -152,15 +154,16 @@ class CategoryTable extends React.Component{
     return (
       <List
         itemLayout="horizontal"
+        size="small"
         dataSource={this.props.data}
         renderItem={item => (
           <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
             <List.Item.Meta
               avatar={<Avatar src={item.rawdata.imgUrl} >{item.rawdata.enName}</Avatar>}
-              title={<Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>}
-              description={item.rawdata.desc}
+              title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
+                <span style={{color:'#aaa', fontSize:'80%', marginLeft:'20px'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
+              description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><i>wiki:{item.rawdata.wikiUrl}</i></div>}</div>}
             />
-            <div><p><i>{item.rawdata.wikiUrl}</i></p><p>create at: {new Date(item.rawdata.createTs*1000).toLocaleString()}</p></div>
           </List.Item>
         )}
       />
@@ -188,7 +191,7 @@ class AttributeForm extends React.Component{
 export default class CategoryTree extends React.Component{
 	state = {
     curNodeData : null,
-    draggable: false
+    draggable: false,
     treeData: [
       { title: 'All', key: '0', children:[], rawdata:null },
       //{ title: 'Tree Node', key: '2', isLeaf: true },
@@ -272,11 +275,11 @@ export default class CategoryTree extends React.Component{
   }
 
   handleCategoryEdit = (category)=>{
+    this.showCategoryForm();
     this.setState(prevStates=>{
       prevStates.form.initValue = category.rawdata;
       return prevStates;
     });
-    this.showCategoryForm();
   }
 
   hideForm = ()=>{
@@ -365,7 +368,7 @@ export default class CategoryTree extends React.Component{
           <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon type="close" /></a>
           <CategoryForm display={this.state.form.display.category} 
                         parentData={this.state.curNodeData} 
-                        initValue={this.state.form.display.category != 'none' ? this.state.form.initValue:{}}
+                        initValue={this.state.form.initValue}
                         onSubmit={this.handleCategorySubmit} />
           <AttributeForm display={this.state.form.display.attribute} 
                           parentData={this.state.curNodeData} 
