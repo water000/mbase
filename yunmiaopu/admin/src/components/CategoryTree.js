@@ -149,55 +149,24 @@ class CategoryForm extends React.Component{
 class CategoryTable extends React.Component{
 
   render(){
-    const columns = [
-      {
-        title: '#(Category)',
-        dataIndex: 'id',
-        key: 'id',
-        render:(_1, record, index)=>index+1
-      },
-      {
-        title: 'CN-Name',
-        dataIndex:'cnName',
-        key:'CN-Name',
-        render:(_1, record, index)=>record.rawdata.cnName
-      },
-      {
-        title : 'EN-name',
-        dataIndex : 'enName',
-        key:'enName',
-        render:(_1, record, index)=>record.rawdata.enName
-      },
-      {
-        title: 'Desc',
-        dataIndex:'desc',
-        key:'desc',
-        render:(_1, record, index)=>record.rawdata.desc
-      },
-      {
-        title: 'Wiki-URL',
-        dataIndex:'wikiUrl',
-        key:'wikiUrl',
-        render:(_1, record, index)=>record.rawdata.wikiUrl
-      },
-      {
-        title: 'Create-Datetime',
-        dataIndex:'createTs',
-        key:'createTs',
-        render:(_1, record, index)=>moment(new Date(record.rawdata.createTs*1000), 'YYYY-MM-DD')
-      },
-      {
-        title: 'Closed',
-        dataIndex:'closed',
-        key:'closed',
-        render:(text, record)=><Badge status={0 == record.rawdata.closed ? "success" : "default"} />
-      },
-    ];
-
-    <List />
-
-    return <Table size='small' columns={columns} dataSource={this.props.data} pagination={false} />
+    return (
+      <List
+        itemLayout="horizontal"
+        dataSource={this.props.data}
+        renderItem={item => (
+          <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
+            <List.Item.Meta
+              avatar={<Avatar src={item.rawdata.imgUrl} >{item.rawdata.enName}</Avatar>}
+              title={<Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>}
+              description={item.rawdata.desc}
+            />
+            <div><p><i>{item.rawdata.wikiUrl}</i></p><p>create at: {new Date(item.rawdata.createTs*1000).toLocaleString()}</p></div>
+          </List.Item>
+        )}
+      />
+    );
   }
+
 }
 
 class AttributeForm extends React.Component{
@@ -219,6 +188,7 @@ class AttributeForm extends React.Component{
 export default class CategoryTree extends React.Component{
 	state = {
     curNodeData : null,
+    draggable: false
     treeData: [
       { title: 'All', key: '0', children:[], rawdata:null },
       //{ title: 'Tree Node', key: '2', isLeaf: true },
@@ -262,9 +232,6 @@ export default class CategoryTree extends React.Component{
       this.setCurrent(node.props.dataRef);
   }
 
-  showCategoryForm = ()=>{
-    this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
-  }
   addCategory(category){
     var ret = this.state.curNodeData.children.push({
       title:category.cnName, key:category.id, children:[], rawdata:category});
@@ -276,6 +243,10 @@ export default class CategoryTree extends React.Component{
       title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true, rawdata:attribute});
     this.setState(prevStates=>prevStates);
     return ret;
+  }
+
+  showCategoryForm = ()=>{
+    this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
   }
   handleCategorySubmit = (data)=>{
     return new Promise((resolve, reject)=>{
@@ -300,6 +271,14 @@ export default class CategoryTree extends React.Component{
     
   }
 
+  handleCategoryEdit = (category)=>{
+    this.setState(prevStates=>{
+      prevStates.form.initValue = category.rawdata;
+      return prevStates;
+    });
+    this.showCategoryForm();
+  }
+
   hideForm = ()=>{
     this.setState(prevStates=>{prevStates.form.span=0;return prevStates;});
   }
@@ -320,7 +299,6 @@ export default class CategoryTree extends React.Component{
           });
         });
     }
-
   }
 
   onLoadData = (treeNode) => {
@@ -338,17 +316,24 @@ export default class CategoryTree extends React.Component{
     return data.map((item) => {
       if (item.children) {
         return (
-          <TreeNode title={item.title} key={item.key} dataRef={item}>
+          <TreeNode title={item.title} key={item.key} dataRef={item} disabled={item.closed}>
             {this.renderTreeNodes(item.children)}
           </TreeNode>
         );
       }
-      return <TreeNode {...item} dataRef={item} />;
+      return <TreeNode {...item} dataRef={item} disabled={item.closed}/>;
     });
   }
 
   componentDidMount(){
     this.loadData(this.state.curNodeData.key);
+  }
+
+  trunDragDrop = (onOrOff)=>{
+    this.setState(prevStates=>{
+      prevStates.draggable = onOrOff;
+      return prevStates;
+    });
   }
 
   render() {
@@ -360,6 +345,9 @@ export default class CategoryTree extends React.Component{
         <Menu.Item>
           <a rel="noopener noreferrer" href="#" onClick={this.showAttributeForm}>Attribute</a>
         </Menu.Item>
+        <Menu.Item>
+          <a rel="noopener noreferrer" href="#" onClick={()=>this.trunDragDrop(true)}>Drag-Drop-Once</a>
+        </Menu.Item>
       </Menu>
     );
     return (
@@ -369,7 +357,7 @@ export default class CategoryTree extends React.Component{
             <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><Icon type="plus" /></a>
           </Dropdown>
           <h4>Catalog</h4>
-          <Tree loadData={this.onLoadData} onSelect={this.onNodeSelect} onExpand={this.onNodeExpand} defaultExpandAll={true}>
+          <Tree loadData={this.onLoadData} onSelect={this.onNodeSelect} onExpand={this.onNodeExpand} defaultExpandAll={true} draggable={this.state.draggable}>
             {this.renderTreeNodes(this.state.treeData)}
           </Tree>
         </Col>
@@ -386,7 +374,7 @@ export default class CategoryTree extends React.Component{
         </Col>
         <Col span={18-this.state.form.span} style={{height:"100%"}}>
           <h4>Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
-          <CategoryTable data={this.state.curNodeData.children} />
+          <CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} />
         </Col>
       </Row>
     );
