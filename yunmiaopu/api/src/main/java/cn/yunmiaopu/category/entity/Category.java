@@ -49,11 +49,11 @@ public class Category {
     }
 
     @JSONField(name="iconUrl", serializeUsing = JpgThumbnail.class)
-    public String getImgToken() {
+    public String getIconToken() {
         return iconToken;
     }
 
-    public void setImgToken(String iconToken) {
+    public void setIconToken(String iconToken) {
         this.iconToken = iconToken;
     }
 

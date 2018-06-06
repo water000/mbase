@@ -2,10 +2,12 @@ package cn.yunmiaopu.category.controller;
 
 import cn.yunmiaopu.category.entity.Category;
 import cn.yunmiaopu.category.service.ICategoryService;
+import cn.yunmiaopu.category.utli.JpgThumbnail;
 import cn.yunmiaopu.common.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Part;
 import java.util.Optional;
 
 /**
@@ -28,7 +30,15 @@ public class CategoryController {
     }
 
     @PostMapping("/category")
-    public Response save(Category cgy){
+    public Response save(Category cgy, Part icon){
+        if(null == icon)
+            throw new IllegalArgumentException("$icon is empty");
+        try {
+            cgy.setIconToken(new JpgThumbnail().resize(icon.getInputStream()));
+        }catch (Exception e){
+            throw new IllegalArgumentException("$icon read failed");
+        }
+
         if(0 == cgy.getId())
             cgy.setCreateTs(System.currentTimeMillis()/1000);
         cgy = (Category)cgysrv.save(cgy);
