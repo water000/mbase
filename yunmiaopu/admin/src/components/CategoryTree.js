@@ -1,6 +1,5 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar} from 'antd';
-import { List } from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 const TreeNode = Tree.TreeNode;
@@ -36,6 +35,13 @@ class CategoryForm extends React.Component{
           value:false,
           validateStatus:''
         },
+        iconUrl:{
+          value:[/*{
+            url:'',
+            status : 'done',
+          }*/],
+          validateStatus:''
+        },
       }
     };
   }
@@ -46,6 +52,7 @@ class CategoryForm extends React.Component{
           prevStates.fields[key].value = '';
       }
       prevStates.fields.closed.value = false;
+      prevStates.fields.iconUrl.value = [];
       return prevStates;
     });
 
@@ -64,6 +71,29 @@ class CategoryForm extends React.Component{
     });
   }
 
+  handleUploadChange = ({fileList})=>{
+    this.setState(prevStates=>{
+      prevStates.fields.iconUrl.value = fileList;
+      return prevStates;
+    });
+  }
+  handleBeforeUpload = (file) => {
+    this.setState(prevStates=>{
+      prevStates.fields.iconUrl.value.push(file);
+      return prevStates;
+    });
+    return false;
+  }
+  handleRemoveUpload = (file) => {
+    this.setState(prevStates=>{
+      let idx = prevStates.fields.iconUrl.value.indexOf(file);
+      if(idx >= 0 ){
+        prevStates.fields.iconUrl.value.splice(idx, 1);
+      }
+      return prevStates;
+    });
+  }
+
   handleSubmit = (e)=>{
     e.preventDefault();
 
@@ -73,6 +103,7 @@ class CategoryForm extends React.Component{
         prevStates.fields.cnName.help = 'CN-Name is required';
         return prevStates;
       });
+      return;
     }
     if(!this.state.fields.enName.value){
       this.setState(prevStates=>{
@@ -80,13 +111,17 @@ class CategoryForm extends React.Component{
         prevStates.fields.enName.help = 'EN-Name is required';
         return prevStates;
       });
+      return;
     }
-    var data = {};
-    for(var key in this.state.fields){
-      data[key] = this.state.fields[key].value;
+    if(0 == this.state.fields.iconUrl.value.length){
+        this.setState(prevStates=>{
+        prevStates.fields.iconUrl.validateStatus = 'error';
+        prevStates.fields.iconUrl.help = 'Icon is required';
+        return prevStates;
+      });
+      return;
     }
-    data.parentId = this.props.parentData.key;
-    this.props.onSubmit(data).then(rsp=>{
+    this.props.onSubmit(e.target).then(rsp=>{
       if('OK' == rsp.code){
         this.cleanFileds();
         return;
@@ -109,6 +144,9 @@ class CategoryForm extends React.Component{
         if(prevStates.fields[k])
           prevStates.fields[k].value = nextProps.initValue[k];
       }
+      if(prevStates.fields['iconUrl'].value.length != 0){
+        prevStates.fields['iconUrl'].value = [{url:nextProps.initValue['iconUrl'], status:'done'}];
+      }
       return prevStates;
     })
   }
@@ -127,6 +165,7 @@ class CategoryForm extends React.Component{
     return <div style={{display:this.props.display}}>
       <h4>Category mounted within ({this.props.parentData.title})</h4>
       <Form layout="vertical" style={{margin:"12px 10px"}} onSubmit={this.handleSubmit}>
+        <Input type="hidden" name="parentId" value={this.props.parentData.key} />
         <FormItem {...formItemLayout} {...this.state.fields.cnName} label="CN-Name" >
           <Input name="cnName" value={this.state.fields.cnName.value} onChange={(e)=>this.setValue(e.target)} required /> 
         </FormItem>
@@ -141,6 +180,21 @@ class CategoryForm extends React.Component{
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.closed} label="Closed">
           <Switch name="closed" checked={this.state.fields.closed.value} onChange={(b)=>this.setChecked('closed', b)}/> 
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.iconUrl} label="Icon">
+          <Upload
+            name="icon"
+            action=""
+            listType="picture-card"
+            fileList={this.state.fields.iconUrl.value}
+            beforeUpload={this.handleBeforeUpload}
+            onChange={this.handleUploadChange} >
+            { 0 == this.state.fields.iconUrl.value.length &&
+            <div>
+              <Icon type="plus" />
+              <div className="ant-upload-text">Upload</div>
+            </div> }
+          </Upload>
         </FormItem>
         <Button type="primary" htmlType="submit" style={{width:"100%"}}>Submit</Button>
       </Form>
@@ -251,9 +305,9 @@ export default class CategoryTree extends React.Component{
   showCategoryForm = ()=>{
     this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
   }
-  handleCategorySubmit = (data)=>{
+  handleCategorySubmit = (form)=>{
     return new Promise((resolve, reject)=>{
-      this.restCgy.create(data).then(res=>res.json()).then(json=>{
+      this.restCgy.create(form).then(res=>res.json()).then(json=>{
         if('OK' == json.code){
           var ret = this.addCategory(json.data);
           this.setCurrent(ret);

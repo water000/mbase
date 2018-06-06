@@ -1,8 +1,7 @@
 package cn.yunmiaopu.category.entity;
 
-import javafx.beans.NamedArg;
-import org.hibernate.annotations.GeneratorType;
-import org.hibernate.annotations.GenericGenerator;
+import cn.yunmiaopu.category.utli.JpgThumbnail;
+import com.alibaba.fastjson.annotation.JSONField;
 
 import javax.persistence.*;
 
@@ -22,7 +21,7 @@ public class Category {
     private String wikiUrl;
     private long createTs;
     private boolean closed;
-    private String imgToken;
+    private String iconToken;
 
 
     public long getId() {
@@ -49,12 +48,13 @@ public class Category {
         this.enName = enName;
     }
 
+    @JSONField(name="iconUrl", serializeUsing = JpgThumbnail.class)
     public String getImgToken() {
-        return imgToken;
+        return iconToken;
     }
 
-    public void setImgToken(String imgToken) {
-        this.imgToken = imgToken;
+    public void setImgToken(String iconToken) {
+        this.iconToken = iconToken;
     }
 
     public String getCnName() {
