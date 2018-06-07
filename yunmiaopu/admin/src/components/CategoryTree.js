@@ -124,11 +124,12 @@ class CategoryForm extends React.Component{
     }
 
     var formData = new FormData(e.target);
-    formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
-    console.log(this.state.fields.iconUrl);
+    if(this.state.fields.iconUrl.value[0].originFileObj)
+      formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
     this.props.onSubmit(formData).then(rsp=>{
       if('OK' == rsp.code){
-        this.cleanFileds();
+        if(0 == formData.get('id'))
+          this.cleanFileds();
         return;
       }
       this.setState(prevStates=>{
@@ -144,16 +145,19 @@ class CategoryForm extends React.Component{
   }
 
   componentWillReceiveProps(nextProps){
-    this.setState(prevStates=>{
-      for(var k in nextProps.initValue){
-        if(prevStates.fields[k])
-          prevStates.fields[k].value = nextProps.initValue[k];
-      }
-      if(prevStates.fields['iconUrl'].value.length != 0){
-        prevStates.fields['iconUrl'].value = [{url:Global.imgUrl(nextProps.initValue['iconUrl']), status:'done', uid:-1, name:""}];
-      }
-      return prevStates;
-    });
+    if(!nextProps.initValue || undefined == nextProps.initValue.cnName)
+      this.cleanFileds();
+    else
+      this.setState(prevStates=>{
+        for(var k in nextProps.initValue){
+          if(prevStates.fields[k])
+            prevStates.fields[k].value = nextProps.initValue[k];
+        }
+        if(prevStates.fields['iconUrl'].value.length != 0){
+          prevStates.fields['iconUrl'].value = [{url:Global.imgUrl(nextProps.initValue['iconUrl']), status:'done', uid:-1, name:""}];
+        }
+        return prevStates;
+      });
   }
 
   render(){
@@ -171,6 +175,7 @@ class CategoryForm extends React.Component{
       <h4>Category mounted within ({this.props.parentData.title})</h4>
       <Form layout="vertical" style={{margin:"12px 10px"}} onSubmit={this.handleSubmit}>
         <Input type="hidden" name="parentId" value={this.props.parentData.key} />
+        <Input type="hidden" name="id" value={this.props.initValue.id||0} />
         <FormItem {...formItemLayout} {...this.state.fields.cnName} label="CN-Name" >
           <Input name="cnName" value={this.state.fields.cnName.value} onChange={(e)=>this.setValue(e.target)} required /> 
         </FormItem>
@@ -308,26 +313,23 @@ export default class CategoryTree extends React.Component{
   }
 
   showCategoryForm = ()=>{
-    this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
-  }
-  handleCategorySubmit = (formData)=>{
-    return new Promise((resolve, reject)=>{
-      this.restCgy.create(formData).then(res=>res.json()).then(json=>{
-        if('OK' == json.code){
-          var ret = this.addCategory(json.data);
-          this.setCurrent(ret);
-          message.success('Category saved. Attribute will be Next!');
-          setTimeout(()=>{
-            this.showAttributeForm(); 
-          }, 3500);
-        }
-        resolve(json);
-      });
+    this.setState(prevStates=>{
+      prevStates.form.span = 9;
+      prevStates.form.display.category = '';
+      prevStates.form.display.attribute = 'none';
+      prevStates.form.initValue = {};
+      return prevStates;
     });
   }
 
   showAttributeForm = ()=>{
-    this.setState({form:{span:9, display:{category:"none", attribute:""}, initValue:{}}});
+    this.setState(prevStates=>{
+      prevStates.form.span = 9;
+      prevStates.form.display.category = 'none';
+      prevStates.form.display.attribute = '';
+      prevStates.form.initValue = {};
+      return prevStates;
+    });
   }
   handleAttributeSubmit = (data)=>{
     
@@ -345,6 +347,26 @@ export default class CategoryTree extends React.Component{
     this.setState(prevStates=>{prevStates.form.span=0;return prevStates;});
   }
 
+  handleCategorySubmit = (formData)=>{
+    return new Promise((resolve, reject)=>{
+      this.restCgy.create(formData).then(res=>res.json()).then(json=>{
+        if('OK' == json.code){
+          if(0 == formData.get('id')){
+            message.success('Category saved! Attribute will be next!');
+            var ret = this.addCategory(json.data);
+            this.setCurrent(ret);
+            setTimeout(()=>{
+              this.showAttributeForm(); 
+            }, 3500);
+          }else{
+            message.success('Category saved!');
+          }
+        }
+        resolve(json);
+      });
+    });
+  }
+  
   loadData(categoryId){
     this.restCgyParent.select(categoryId).then(rsp=>rsp.json())
       .then(list=>{

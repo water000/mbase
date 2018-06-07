@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.util.UUID;
 
 /**
  * Created by a on 2018/6/7.
@@ -47,21 +46,41 @@ public class UploadJpg extends UploadFile implements ObjectSerializer{
                     .toFile(path(size[i]));
         }
     }
+    private void delete(int[] idx){
+        for(int i: idx){
+            new File(path(size[i])).delete();
+        }
+    }
 
-    public void resizeS(InputStream src) throws Exception{
+    protected void resizeS(InputStream src) throws Exception{
         resize(src, new int[]{SMALL});
     }
-    public void resizeSM(InputStream src) throws Exception{
+    protected void deleteS(){
+        delete(new int[]{SMALL});
+    }
+    protected void resizeSM(InputStream src) throws Exception{
         resize(src, new int[]{SMALL, MEDIUM});
     }
-    public void resizeSL(InputStream src) throws Exception{
+    protected void deleteSM(){
+        delete(new int[]{SMALL, MEDIUM});
+    }
+    protected void resizeSL(InputStream src) throws Exception{
         resize(src, new int[]{SMALL, LARGE});
     }
-    public void resizeML(InputStream src) throws Exception{
+    protected void deleteSL(){
+        delete(new int[]{SMALL, LARGE});
+    }
+    protected void resizeML(InputStream src) throws Exception{
         resize(src, new int[]{MEDIUM, LARGE});
+    }
+    protected void deleteML(){
+        delete(new int[]{MEDIUM, LARGE});
     }
     public void resize(InputStream src) throws Exception{
         resize(src, new int[]{SMALL, MEDIUM, LARGE});
+    }
+    public void delete(){
+        delete( new int[]{SMALL, MEDIUM, LARGE});
     }
 
     private String url(char c){

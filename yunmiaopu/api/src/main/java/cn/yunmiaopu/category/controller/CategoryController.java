@@ -44,19 +44,40 @@ public class CategoryController {
 
     @PostMapping("/category")
     public Response save(Category cgy, MultipartFile icon){
-        if(null == icon)
+        if(0 == cgy.getId() && null == icon)
             throw new IllegalArgumentException("$icon is empty");
-        try {
-            upj.resize(icon.getInputStream());
-            cgy.setIconToken(upj.getToken());
-        }catch (Exception e){
-            e.printStackTrace();
-            throw new IllegalArgumentException("$icon read failed");
+
+        Category old = null;
+        if(cgy.getId() > 0){
+            Optional<Category> opt = cgysrv.findById(cgy.getId());
+            if(!opt.isPresent())
+                throw new IllegalArgumentException("$id not found");
+            old = opt.get();
         }
 
-        if(0 == cgy.getId())
-            cgy.setCreateTs(System.currentTimeMillis()/1000);
+        if(icon != null) {
+            if(old != null) {
+                String token = old.getIconToken();
+                if (token != null && token.length() > 0) {
+                    upj.setToken(token);
+                    upj.delete();
+                }
+            }
+
+            try {
+                upj.resize(icon.getInputStream());
+                cgy.setIconToken(upj.getToken());
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("$icon read failed");
+            }
+        }else {
+            cgy.setIconToken(old.getIconToken());
+        }
+
+        cgy.setCreateTs(System.currentTimeMillis()/1000);
         cgy = (Category)cgysrv.save(cgy);
+
         return Response.ok(cgy);
     }
 

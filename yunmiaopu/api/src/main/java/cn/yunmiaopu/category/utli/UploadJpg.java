@@ -20,6 +20,11 @@ public class UploadJpg extends cn.yunmiaopu.common.util.UploadJpg {
     }
 
     @Override
+    public void delete(){
+        deleteS();
+    }
+
+    @Override
     public String serializeUrl(){
         return smallURL();
     }

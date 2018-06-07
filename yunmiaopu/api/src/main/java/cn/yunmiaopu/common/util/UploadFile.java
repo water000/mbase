@@ -91,4 +91,8 @@ public class UploadFile {
                 StandardCopyOption.REPLACE_EXISTING);
     }
 
+    public void delete(){
+        new File(getRealPath()).delete();
+    }
+
 }
