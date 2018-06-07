@@ -90,13 +90,13 @@ class GlobalFetchCatcher{
       else
         desc = 'server error('+rsp.status+')';
     }else{
-      desc = rsp;
+      desc = rsp + "";
     }
     notification.error({
       placement:"bottomRight",
       message: desc,
-      description:<div><p>{url}</p></div>,
-      duration:null
+      description:<div><p><b>{method}: </b>{url}</p></div>,
+      duration:120
     });
     console.error("fetching error", ctx);
   }

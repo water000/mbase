@@ -2,12 +2,14 @@ package cn.yunmiaopu.category.controller;
 
 import cn.yunmiaopu.category.entity.Category;
 import cn.yunmiaopu.category.service.ICategoryService;
-import cn.yunmiaopu.category.utli.JpgThumbnail;
+import cn.yunmiaopu.category.utli.UploadJpg;
 import cn.yunmiaopu.common.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.Part;
+import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import java.util.Optional;
 
 /**
@@ -23,6 +25,17 @@ public class CategoryController {
     @Autowired
     private ICategoryService cgysrv;
 
+    @Autowired
+    private UploadJpg upj;
+
+    @Autowired
+    private ServletContext ctx;
+
+    @PostConstruct
+    public void init(){
+        upj.setRealRoot(ctx.getRealPath("/"));
+    }
+
     @GetMapping("category/{id}")
     public Category get(@PathVariable Long id){
         Optional<Category> opt = cgysrv.findById(id);
@@ -30,12 +43,14 @@ public class CategoryController {
     }
 
     @PostMapping("/category")
-    public Response save(Category cgy, Part icon){
+    public Response save(Category cgy, MultipartFile icon){
         if(null == icon)
             throw new IllegalArgumentException("$icon is empty");
         try {
-            cgy.setIconToken(new JpgThumbnail().resize(icon.getInputStream()));
+            upj.resize(icon.getInputStream());
+            cgy.setIconToken(upj.getToken());
         }catch (Exception e){
+            e.printStackTrace();
             throw new IllegalArgumentException("$icon read failed");
         }
 

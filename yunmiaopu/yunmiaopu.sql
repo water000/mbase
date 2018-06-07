@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS category_basic(
 	wiki_url varchar(512) not null default '',
 	create_ts int unsigned not null,
 	closed tinyint not null default 0,
-	icon_token varchar(128) not null default '',
+	icon_token varchar(64) not null default '',
 	primary key(id),
 	key(parent_id)
 );
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS category_attribute_options(
 	id int unsigned not null auto_increment,
 	attribute_id int unsigned not null default 0,
 	`desc` varchar(64) not null default '',
-	image_token varchar(32) not null default '',
+	image_token varchar(64) not null default '',
 	color varchar(16) not null default '',
 	primary key(id),
 	key(attribute_id)

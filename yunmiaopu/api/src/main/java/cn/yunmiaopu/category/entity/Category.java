@@ -1,6 +1,6 @@
 package cn.yunmiaopu.category.entity;
 
-import cn.yunmiaopu.category.utli.JpgThumbnail;
+import cn.yunmiaopu.category.utli.UploadJpg;
 import com.alibaba.fastjson.annotation.JSONField;
 
 import javax.persistence.*;
@@ -48,7 +48,7 @@ public class Category {
         this.enName = enName;
     }
 
-    @JSONField(name="iconUrl", serializeUsing = JpgThumbnail.class)
+    @JSONField(name="iconUrl", serializeUsing = UploadJpg.class)
     public String getIconToken() {
         return iconToken;
     }

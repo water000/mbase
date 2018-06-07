@@ -2,6 +2,7 @@ import React from 'react';
 import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
+import Global from "../Global"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
 
@@ -121,7 +122,11 @@ class CategoryForm extends React.Component{
       });
       return;
     }
-    this.props.onSubmit(e.target).then(rsp=>{
+
+    var formData = new FormData(e.target);
+    formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
+    console.log(this.state.fields.iconUrl);
+    this.props.onSubmit(formData).then(rsp=>{
       if('OK' == rsp.code){
         this.cleanFileds();
         return;
@@ -145,10 +150,10 @@ class CategoryForm extends React.Component{
           prevStates.fields[k].value = nextProps.initValue[k];
       }
       if(prevStates.fields['iconUrl'].value.length != 0){
-        prevStates.fields['iconUrl'].value = [{url:nextProps.initValue['iconUrl'], status:'done'}];
+        prevStates.fields['iconUrl'].value = [{url:Global.imgUrl(nextProps.initValue['iconUrl']), status:'done', uid:-1, name:""}];
       }
       return prevStates;
-    })
+    });
   }
 
   render(){
@@ -213,9 +218,9 @@ class CategoryTable extends React.Component{
         renderItem={item => (
           <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
             <List.Item.Meta
-              avatar={<Avatar src={item.rawdata.imgUrl} >{item.rawdata.enName}</Avatar>}
+              avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
               title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
-                <span style={{color:'#aaa', fontSize:'80%', marginLeft:'20px'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
+                <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
               description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><i>wiki:{item.rawdata.wikiUrl}</i></div>}</div>}
             />
           </List.Item>
@@ -305,9 +310,9 @@ export default class CategoryTree extends React.Component{
   showCategoryForm = ()=>{
     this.setState({form:{span:9, display:{category:"", attribute:"none"}, initValue:{}}});
   }
-  handleCategorySubmit = (form)=>{
+  handleCategorySubmit = (formData)=>{
     return new Promise((resolve, reject)=>{
-      this.restCgy.create(form).then(res=>res.json()).then(json=>{
+      this.restCgy.create(formData).then(res=>res.json()).then(json=>{
         if('OK' == json.code){
           var ret = this.addCategory(json.data);
           this.setCurrent(ret);
@@ -403,7 +408,7 @@ export default class CategoryTree extends React.Component{
           <a rel="noopener noreferrer" href="#" onClick={this.showAttributeForm}>Attribute</a>
         </Menu.Item>
         <Menu.Item>
-          <a rel="noopener noreferrer" href="#" onClick={()=>this.trunDragDrop(true)}>Drag-Drop-Once</a>
+          <a rel="noopener noreferrer" href="#" onClick={()=>this.trunDragDrop(true)}>Drag-Drop-Node-Once</a>
         </Menu.Item>
       </Menu>
     );

@@ -93,8 +93,9 @@ export default class RestFetch{
 						hasFile = true;
 				}
 				params = new FormData(params);
-				headers["Content-Type"] = hasFile ? "multipart/form-data; boundary=_____"+(new Date().getMilliseconds())
+				headers["Content-Type"] = hasFile ? "multipart/form-data;"
 					: "application/x-www-form-urlencoded;charset=UTF-8";
+			}else if(params instanceof FormData){
 			}else if("object" == typeof params){
 				params = new URLSearchParams(params).toString();
 				headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
