@@ -1,5 +1,5 @@
 
-create database IF NOT EXISTS cn_yunmiaopu charset=utf8;
+create database IF NOT EXISTS cn_yunmiaopu DEFAULT CHARACTER SET utf8;
 
 use cn_yunmiaopu;
 
@@ -20,8 +20,8 @@ insert into user_account values(1, 'admin', '13888888888', '',  unix_timestamp()
 CREATE TABLE IF NOT EXISTS category_basic(
 	id int unsigned not null auto_increment,
 	en_name varchar(64) not null default '',
-	cn_name varchar(64) not null default '',
-	`desc` varchar(256) not null default '',
+	cn_name varchar(64) CHARACTER SET utf8 not null default '',
+	`desc` varchar(256) CHARACTER SET utf8 not null default '',
 	parent_id int unsigned not null,
 	wiki_url varchar(512) not null default '',
 	create_ts int unsigned not null,

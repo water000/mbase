@@ -126,6 +126,7 @@ class CategoryForm extends React.Component{
     var formData = new FormData(e.target);
     if(this.state.fields.iconUrl.value[0].originFileObj)
       formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
+    formData.append('closed', this.state.fields.closed.value);
     this.props.onSubmit(formData).then(rsp=>{
       if('OK' == rsp.code){
         if(0 == formData.get('id'))
@@ -150,10 +151,10 @@ class CategoryForm extends React.Component{
     else
       this.setState(prevStates=>{
         for(var k in nextProps.initValue){
-          if(prevStates.fields[k])
+          if(nextProps.initValue[k] !== undefined && prevStates.fields[k] !== undefined)
             prevStates.fields[k].value = nextProps.initValue[k];
         }
-        if(prevStates.fields['iconUrl'].value.length != 0){
+        if(prevStates.fields['iconUrl'].value != null && prevStates.fields['iconUrl'].value.length != 0){
           prevStates.fields['iconUrl'].value = [{url:Global.imgUrl(nextProps.initValue['iconUrl']), status:'done', uid:-1, name:""}];
         }
         return prevStates;
@@ -172,7 +173,7 @@ class CategoryForm extends React.Component{
       },
     };
     return <div style={{display:this.props.display}}>
-      <h4>Category mounted within ({this.props.parentData.title})</h4>
+      <h4 className="title">Category mounted within <i>{this.props.parentData.title}</i></h4>
       <Form layout="vertical" style={{margin:"12px 10px"}} onSubmit={this.handleSubmit}>
         <Input type="hidden" name="parentId" value={this.props.parentData.key} />
         <Input type="hidden" name="id" value={this.props.initValue.id||0} />
@@ -189,7 +190,7 @@ class CategoryForm extends React.Component{
           <Input name="wikiUrl" value={this.state.fields.wikiUrl.value} onChange={(e)=>this.setValue(e.target)}/> 
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.closed} label="Closed">
-          <Switch name="closed" checked={this.state.fields.closed.value} onChange={(b)=>this.setChecked('closed', b)}/> 
+          <Switch checked={this.state.fields.closed.value} onChange={(b)=>this.setChecked('closed', b)}/> 
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.iconUrl} label="Icon">
           <Upload
@@ -199,7 +200,7 @@ class CategoryForm extends React.Component{
             fileList={this.state.fields.iconUrl.value}
             beforeUpload={this.handleBeforeUpload}
             onChange={this.handleUploadChange} >
-            { 0 == this.state.fields.iconUrl.value.length &&
+            { (null == this.state.fields.iconUrl.value || 0 == this.state.fields.iconUrl.value.length) &&
             <div>
               <Icon type="plus" />
               <div className="ant-upload-text">Upload</div>
@@ -226,7 +227,7 @@ class CategoryTable extends React.Component{
               avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
               title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
                 <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
-              description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><i>wiki:{item.rawdata.wikiUrl}</i></div>}</div>}
+              description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
             />
           </List.Item>
         )}
@@ -244,7 +245,7 @@ class AttributeForm extends React.Component{
 
   render(){
     return <div style={{display:this.props.display}}>
-      <h4>Attribute mounted within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
+      <h4 className="title">Attribute mounted within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
       <Form layout="vertical" style={{margin:"8px 5px"}}>
       </Form>
     </div>
@@ -289,9 +290,6 @@ export default class CategoryTree extends React.Component{
   onNodeExpand = (expandedKeys, {expanded, node}) => {
     if(!node.props.dataRef.isLeaf)
       this.setCurrent(node.props.dataRef);
-    console.log("expanded: ", expanded, node.props);
-    if(expanded)
-      this.loadData(node.props.dataRef.key);
   }
 
   onNodeSelect = (selectedKeys, {selected, selectedNodes, node, event}) => {
@@ -300,15 +298,29 @@ export default class CategoryTree extends React.Component{
   }
 
   addCategory(category){
-    var ret = this.state.curNodeData.children.push({
-      title:category.cnName, key:category.id, children:[], rawdata:category});
-    this.setState(prevStates=>prevStates);
+    var ret;
+    this.setState(prevStates=>{
+      ret = {title:category.cnName, key:category.id, children:[], rawdata:category};
+      prevStates.curNodeData.children.push(ret);
+      return prevStates;
+    });
     return ret;
   }
-  addAttribute(attribute){
-    var ret = this.state.curNodeData.children.push({
-      title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true, rawdata:attribute});
+  setCategory(category, data){
+    category.title = data['cnName'];
+    for(var k in category.rawdata){
+      if( data[k] !== undefined )
+        category.rawdata[k] = data[k] ;
+    }
     this.setState(prevStates=>prevStates);
+  }
+  addAttribute(attribute){
+    var ret;
+    this.setState(prevStates=>{
+      ret = prevStates.curNodeData.children.push({
+        title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true, rawdata:attribute});
+      return prevStates;
+    });
     return ret;
   }
 
@@ -351,7 +363,13 @@ export default class CategoryTree extends React.Component{
     return new Promise((resolve, reject)=>{
       this.restCgy.create(formData).then(res=>res.json()).then(json=>{
         if('OK' == json.code){
-          if(0 == formData.get('id')){
+          let id = 0;
+          if(formData instanceof FormData)
+            id = formData.get('id');
+          else if(formData instanceof Object)
+            id = formData.id || 0;
+
+          if(0 == id){
             message.success('Category saved! Attribute will be next!');
             var ret = this.addCategory(json.data);
             this.setCurrent(ret);
@@ -359,6 +377,12 @@ export default class CategoryTree extends React.Component{
               this.showAttributeForm(); 
             }, 3500);
           }else{
+            for(var i=0; i<this.state.curNodeData.children.length; i++){
+              if(id == this.state.curNodeData.children[i].key){
+                this.setCategory(this.state.curNodeData.children[i], json.data);
+                break;
+              }
+            }
             message.success('Category saved!');
           }
         }
@@ -366,7 +390,55 @@ export default class CategoryTree extends React.Component{
       });
     });
   }
-  
+
+  recursiveSearch(node){
+    let stack = [ {children:this.state.treeData[0].children, parentKey:this.state.treeData[0].key} ];
+    let found = {siblings:null, index:-1, parentKey:null};
+
+    for(; stack.length>0 && null == found.siblings; ){
+      let {children, parentKey} = stack.pop();
+      for(let i=0; i<children.length; i++){
+        if(children[i].key == node.props.dataRef.key){
+          if( (children[i].isLeaf && node.props.dataRef.isLeaf)
+            || (!children[i].isLeaf && !node.props.dataRef.isLeaf) )
+          {
+            found.siblings = children;
+            found.index = i;
+            found.parentKey = parentKey;
+            break;
+          }
+        }
+
+        if(!children[i].isLeaf){
+          stack.push( {children: children[i].children, parentKey: children[i].key} );
+        }
+
+      }
+    }
+
+    return found;
+  }
+
+  handleCategoryDrop = (info)=>{
+    const dragFromNode = info.dragNode;
+    const dropToNode   = info.node;
+    this.setState(prevStates=>{
+      let dragStateRef = this.recursiveSearch(dragFromNode); 
+      let dropStateRef = this.recursiveSearch(dropToNode)
+      if(dragStateRef.siblings != null && dropStateRef.siblings != null){
+        dragStateRef.siblings[dragStateRef.index].rawdata.parentId = dropStateRef.siblings[dropStateRef.index].key;
+        this.handleCategorySubmit(dragStateRef.siblings[dragStateRef.index].rawdata).then(rsp=>{
+          if('OK' == rsp.status){
+            let dragObj = dragStateRef.siblings.splice(dragStateRef.index, 1);
+            dropStateRef.siblings.push(dragObj);
+            prevStates.draggable = false;
+          }
+        });
+      }
+      return prevStates;
+    });
+  }
+
   loadData(categoryId){
     this.restCgyParent.select(categoryId).then(rsp=>rsp.json())
       .then(list=>{
@@ -387,30 +459,26 @@ export default class CategoryTree extends React.Component{
 
   onLoadData = (treeNode) => {
     return new Promise((resolve) => {
-  		if (treeNode.props.children) {
+  		if (treeNode.props.children.length > 0) {
   			resolve();
   			return;
   		}
-
-      this.loadData(treeNode.props.dataRef.key);
-      resolve();
+      setTimeout(() => {
+        this.loadData(treeNode.props.dataRef.key);
+        resolve();
+      }, 1000);
     });
   }
   renderTreeNodes = (data) => {
     return data.map((item) => {
-      if (item.children) {
-        return (
-          <TreeNode title={item.title} key={item.key} dataRef={item} disabled={item.closed}>
-            {this.renderTreeNodes(item.children)}
+      return (
+          <TreeNode title={item.title} key={item.key} dataRef={item} 
+              isLeaf={item.isLeaf||false}
+              disabled={(item.rawdata||{}).closed} >
+            { this.renderTreeNodes(item.children || []) }
           </TreeNode>
-        );
-      }
-      return <TreeNode {...item} dataRef={item} disabled={item.closed}/>;
+      );
     });
-  }
-
-  componentDidMount(){
-    this.loadData(this.state.curNodeData.key);
   }
 
   trunDragDrop = (onOrOff)=>{
@@ -436,16 +504,22 @@ export default class CategoryTree extends React.Component{
     );
     return (
       <Row gutter={16}>
-        <Col span={6} style={{borderRight:"1px solid #ccc", height:"100%"}}>
+        <Col span={6} >
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><Icon type="plus" /></a>
           </Dropdown>
-          <h4>Catalog</h4>
-          <Tree loadData={this.onLoadData} onSelect={this.onNodeSelect} onExpand={this.onNodeExpand} defaultExpandAll={true} draggable={this.state.draggable}>
+          <h4 className="title">Catalog</h4>
+          <Tree loadData={this.onLoadData} 
+                onSelect={this.onNodeSelect} 
+                onExpand={this.onNodeExpand} 
+                defaultExpandAll={true} 
+                defaultSelectedKeys={'0'}
+                onDrop={this.handleCategoryDrop}
+                draggable={this.state.draggable}>
             {this.renderTreeNodes(this.state.treeData)}
           </Tree>
         </Col>
-        <Col span={this.state.form.span} style={{borderRight:"1px solid #ccc", height:"100%"}}>
+        <Col span={this.state.form.span}> 
           <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon type="close" /></a>
           <CategoryForm display={this.state.form.display.category} 
                         parentData={this.state.curNodeData} 
@@ -456,8 +530,8 @@ export default class CategoryTree extends React.Component{
                           initValue={this.state.form.display.attribute != 'none' ? this.state.form.initValue:{}}
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
-        <Col span={18-this.state.form.span} style={{height:"100%"}}>
-          <h4>Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
+        <Col span={18-this.state.form.span} >
+          <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
           <CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} />
         </Col>
       </Row>

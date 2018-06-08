@@ -87,18 +87,10 @@ export default class RestFetch{
 		return new Promise((resolve, reject) => {
 			reject = reject || console.error;
 			if(params instanceof HTMLFormElement){
-				let hasFile = false, i=0;
-				for(; i<params.elements.length; i++){
-					if("file" == params.elements[i].type)
-						hasFile = true;
-				}
 				params = new FormData(params);
-				headers["Content-Type"] = hasFile ? "multipart/form-data;"
-					: "application/x-www-form-urlencoded;charset=UTF-8";
 			}else if(params instanceof FormData){
 			}else if("object" == typeof params){
-				params = new URLSearchParams(params).toString();
-				headers["Content-Type"] = "application/x-www-form-urlencoded;charset=UTF-8";
+				params = new URLSearchParams(params);
 			}
 			this._fetch(params, headers, "POST", url)
 				.then(rsp=>resolve(rsp))
