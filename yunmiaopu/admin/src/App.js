@@ -126,6 +126,13 @@ class App extends React.Component{
         <Layout style={{paddingLeft:'200px'}}>
           <Header style={{ background: '#fff' }} >
             <ul className='header-ul'>
+              <li className='breadcrumb'>
+                <Breadcrumb style={{ margin: '12px 0' }}>
+                  {this.state.selectedMenuIdx && this.getBreadcrumb(this.state.selectedMenuIdx).map((b, i)=>
+                    <Breadcrumb.Item>/{b}</Breadcrumb.Item>
+                  )}
+                </Breadcrumb>
+              </li>
               <li><Badge dot><Icon type="bell" style={{ fontSize: 20}} /></Badge></li>
               <li>
                 <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" style={{verticalAlign:"middle", marginRight:'2px'}} />
@@ -137,13 +144,8 @@ class App extends React.Component{
               </li>
             </ul>
           </Header>
-          <Content style={{ margin: '0 16px' }}>
-            <Breadcrumb style={{ margin: '12px 0' }}>
-              {this.state.selectedMenuIdx && this.getBreadcrumb(this.state.selectedMenuIdx).map((b, i)=>
-                <Breadcrumb.Item>/{b}</Breadcrumb.Item>
-              )}
-            </Breadcrumb>
-            <div style={{ padding: 24, background: '#fff', minHeight: 360 }}>
+          <Content style={{ margin: '20px 50px' }}>
+            <div style={{minHeight:'600px' }}>
             <div id='IDD_CONTENT'>
               {router}
             </div>

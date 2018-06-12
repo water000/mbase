@@ -12,6 +12,7 @@ class CategoryForm extends React.Component{
     super(props);
 
     this.state = {
+      loading:false,
       fields:{
         id:{
           value:0,
@@ -123,6 +124,8 @@ class CategoryForm extends React.Component{
       return;
     }
 
+    
+
     var formData = new FormData(e.target);
     if(this.state.fields.iconUrl.value[0].originFileObj)
       formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
@@ -174,7 +177,7 @@ class CategoryForm extends React.Component{
     };
     return <div style={{display:this.props.display}}>
       <h4 className="title">Category mounted within <i>{this.props.parentData.title}</i></h4>
-      <Form layout="vertical" style={{margin:"12px 10px"}} onSubmit={this.handleSubmit}>
+      <Form layout="vertical" onSubmit={this.handleSubmit} style={{padding:"12px 10px", background:'#fff'}} >
         <Input type="hidden" name="parentId" value={this.props.parentData.key} />
         <Input type="hidden" name="id" value={this.props.initValue.id||0} />
         <FormItem {...formItemLayout} {...this.state.fields.cnName} label="CN-Name" >
@@ -207,7 +210,7 @@ class CategoryForm extends React.Component{
             </div> }
           </Upload>
         </FormItem>
-        <Button type="primary" htmlType="submit" style={{width:"100%"}}>Submit</Button>
+        <Button loading={this.state.loading} type="primary" htmlType="submit" style={{width:"100%"}}>Submit</Button>
       </Form>
     </div>
   }
@@ -220,6 +223,7 @@ class CategoryTable extends React.Component{
       <List
         itemLayout="horizontal"
         size="small"
+        style={{background:'#fff'}}
         dataSource={this.props.data}
         renderItem={item => (
           <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
@@ -503,13 +507,13 @@ export default class CategoryTree extends React.Component{
       </Menu>
     );
     return (
-      <Row gutter={16}>
+      <Row gutter={16} style={{paddingBottom:'8px'}}>
         <Col span={6} >
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><Icon type="plus" /></a>
           </Dropdown>
           <h4 className="title">Catalog</h4>
-          <Tree loadData={this.onLoadData} 
+          <div style={{background:'#fff'}}><Tree loadData={this.onLoadData} 
                 onSelect={this.onNodeSelect} 
                 onExpand={this.onNodeExpand} 
                 defaultExpandAll={true} 
@@ -517,7 +521,7 @@ export default class CategoryTree extends React.Component{
                 onDrop={this.handleCategoryDrop}
                 draggable={this.state.draggable}>
             {this.renderTreeNodes(this.state.treeData)}
-          </Tree>
+          </Tree></div>
         </Col>
         <Col span={this.state.form.span}> 
           <a href="#" onClick={this.hideForm} style={{position:"absolute", right:"10px"}}><Icon type="close" /></a>
@@ -532,7 +536,7 @@ export default class CategoryTree extends React.Component{
         </Col>
         <Col span={18-this.state.form.span} >
           <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
-          <CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} />
+          <div style={{background:'#fff', padding:'0 3px'}}><CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} /></div>
         </Col>
       </Row>
     );
