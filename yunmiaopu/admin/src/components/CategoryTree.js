@@ -163,13 +163,26 @@ class CategoryForm extends React.Component{
     });
   }
 
-  componentDidUpdate(prevProps){
-    if(this.props.cnName != prevProps.cnName){
-      
+  componentDidUpdate(prevProps, prevStates){
+    console.log(this.props.initValue, prevProps.initValue);
+    if(this.props.parentData.key !== prevProps.parentData.key || this.props.initValue.id !== prevProps.initValue.id){
+      if(!this.props.initValue || undefined === this.props.initValue.id)
+        this.cleanFileds();
+      else
+        this.setState(prevStates=>{
+          for(var k in this.props.initValue){
+            if(this.props.initValue[k] !== undefined && prevStates.fields[k] !== undefined)
+              prevStates.fields[k].value = this.props.initValue[k];
+          }
+          if(prevStates.fields['iconUrl'].value != null && prevStates.fields['iconUrl'].value.length != 0){
+            prevStates.fields['iconUrl'].value = [{url:Global.imgUrl(this.props.initValue['iconUrl']), status:'done', uid:-1, name:""}];
+          }
+          return prevStates;
+        });
     }
   }
 
-  componentWillReceiveProps(nextProps){
+  /*componentWillReceiveProps(nextProps){
     if(!nextProps.initValue || undefined === nextProps.initValue.cnName)
       this.cleanFileds();
     else
@@ -183,7 +196,7 @@ class CategoryForm extends React.Component{
         }
         return prevStates;
       });
-  }
+  }*/
 
   render(){
     const formItemLayout = {
@@ -267,6 +280,7 @@ class AttributeForm extends React.Component{
   constructor(props){
     super(props);
     this.state = {
+      type:0,
       fields:{
         name:{
           value:'',
@@ -274,6 +288,13 @@ class AttributeForm extends React.Component{
         }
       }
     };
+  }
+
+  handleTypeChange=(event){
+    this.setState(prevStates=>{
+      prevStates.type = event.target.value;
+      return prevStates;
+    });
   }
 
   render(){
@@ -296,11 +317,15 @@ class AttributeForm extends React.Component{
           <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.type} label="Type" >
-          <RadioGroup defaultValue="a">
-            <RadioButton value="a">Color</RadioButton>
-            <RadioButton value="b">Enum</RadioButton>
-            <RadioButton value="c">Input</RadioButton>
+          <RadioGroup defaultValue={1} onChange={this.handleTypeChange}>
+            <RadioButton value={1}>Color</RadioButton>
+            <RadioButton value={2}>Enum</RadioButton>
+            <RadioButton value={3}>Input</RadioButton>
           </RadioGroup>
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.value} label="Value" >
+          <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
+          {}
         </FormItem>
       </Form>
     </div>
