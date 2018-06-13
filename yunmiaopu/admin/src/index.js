@@ -38,7 +38,7 @@ const _menu = [
   {title:'Home', items:[{title:'index', link:'/index'}, {title:'about', link:'/about'}]},
   {title:'Permission', link:'/permission'},
   {title:'Category', link:'/category'}
-]
+];
 
 class AuthHandle extends React.Component{
   constructor(props){
@@ -96,7 +96,7 @@ class GlobalFetchCatcher{
       placement:"bottomRight",
       message: desc,
       description:<div><p><b>{method}: </b>{url}</p></div>,
-      duration:120
+      duration:60
     });
     console.error("fetching error", ctx);
   }

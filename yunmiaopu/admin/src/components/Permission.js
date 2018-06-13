@@ -142,6 +142,7 @@ class MarkAction extends React.Component{
 			{this.state.response.code && <Alert onClose={()=>this.resetResponse()} closable={true} style={{marginBottom:'15px'}} type={'OK' == this.state.response.code ? 'success' : 'error'} message={this.state.response.code + ', '+this.state.response.msg} showIcon /> }
 			<h4 style={{marginBottom:'15px'}} >Mark action(s) for access control<a style={{float:"right"}} href="javascript:;" onClick={(e)=>this.props.onBack(this.state.selectedData)}>&lt;Back</a></h4>
 			<Table
+			style={{background:'#fff'}}
 			rowSelection={rowSelection}
 			pagination = {false}
 			rowKey = {(record, index)=>index}
@@ -246,7 +247,6 @@ class Role extends React.Component{
         	ptxt = {color:"#333", fontSize:"13px"};
 		return (
 			<div>
-				<h4 style={{marginBottom:'15px'}} >Role Info</h4>
 		        <Form layout="horizontal">
 		          <FormItem label="Name: " {...formItemLayout} >
 			            <Input placeholder="input name" value={this.state.name} name="name" 
@@ -367,6 +367,8 @@ class RoleList extends React.Component{
 				    });
 		return (
 			<div>
+				<h4 style={{marginBottom:'15px'}} >Role Info</h4>
+				<div style={{background:'#fff', padding:'20px'}}>
 				<Tabs activeKey={this.state.activeTabKey} 
 					onChange={this.handleTabChange} 
 					tabPosition="right"
@@ -376,6 +378,7 @@ class RoleList extends React.Component{
 				    </TabPane>
 				    {list}
 				</Tabs>
+				</div>
 			</div>
 		)
 	}

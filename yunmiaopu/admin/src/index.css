@@ -8,10 +8,9 @@ body {
 
 .router{height: 100%;}
 
-.header-ul{margin:0;padding:0;}
+.header-ul{margin:0;padding:0;text-align: right;}
 .header-ul li{display: inline-block;margin-right:30px;}
-.header-ul .breadcrumb{width:80%;}
-
+.ant-breadcrumb{line-height: 64px !important}
 
 a.link-user-avatar-profile{display: inline-block;}
 a.link-user-avatar-profile .ant-avatar{vertical-align: middle;margin: 0 3px 3px 0;}

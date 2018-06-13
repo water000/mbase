@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import {Link, BrowserRouter as Router, Route } from 'react-router-dom';
 import './App.css';
-import { Layout, Menu, Breadcrumb, Icon, Badge, Avatar, Select, Dropdown } from 'antd';
+import { Layout, Menu, Breadcrumb, Icon, Badge, Avatar, Select, Dropdown , Row, Col} from 'antd';
 import createBrowserHistory from 'history/createBrowserHistory';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -125,25 +125,29 @@ class App extends React.Component{
         </Sider>
         <Layout style={{paddingLeft:'200px'}}>
           <Header style={{ background: '#fff' }} >
-            <ul className='header-ul'>
-              <li className='breadcrumb'>
-                <Breadcrumb style={{ margin: '12px 0' }}>
+            <Row gutter={8}>
+              <Col span={12}>
+                <Breadcrumb>
                   {this.state.selectedMenuIdx && this.getBreadcrumb(this.state.selectedMenuIdx).map((b, i)=>
-                    <Breadcrumb.Item>/{b}</Breadcrumb.Item>
+                    <Breadcrumb.Item>{b}</Breadcrumb.Item>
                   )}
                 </Breadcrumb>
-              </li>
-              <li><Badge dot><Icon type="bell" style={{ fontSize: 20}} /></Badge></li>
-              <li>
-                <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" style={{verticalAlign:"middle", marginRight:'2px'}} />
-                <Dropdown overlay={DropdownList}>
-                  <a className="ant-dropdown-link" href="#">
-                    tiger <Icon type="down" />
-                  </a>
-                </Dropdown>
-              </li>
-            </ul>
-          </Header>
+              </Col>
+              <Col span={12}>
+                <ul className='header-ul'>
+                  <li><Badge dot><Icon type="bell" style={{ fontSize: 20}} /></Badge></li>
+                  <li>
+                    <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" style={{verticalAlign:"middle", marginRight:'2px'}} />
+                    <Dropdown overlay={DropdownList}>
+                      <a className="ant-dropdown-link" href="#">
+                        tiger <Icon type="down" />
+                      </a>
+                    </Dropdown>
+                  </li>
+                </ul>
+              </Col>
+            </Row>
+                      </Header>
           <Content style={{ margin: '20px 50px' }}>
             <div style={{minHeight:'600px' }}>
             <div id='IDD_CONTENT'>

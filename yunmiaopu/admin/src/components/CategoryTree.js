@@ -1,10 +1,12 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Radio } from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 import Global from "../Global"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
+const RadioButton = Radio.Button;
+const RadioGroup = Radio.Group;
 
 class CategoryForm extends React.Component{
 
@@ -124,13 +126,21 @@ class CategoryForm extends React.Component{
       return;
     }
 
-    
+    this.setState(prevStates=>{
+      prevStates.loading = true;
+      return prevStates;
+    });
 
     var formData = new FormData(e.target);
     if(this.state.fields.iconUrl.value[0].originFileObj)
       formData.append('icon', this.state.fields.iconUrl.value[0].originFileObj);
     formData.append('closed', this.state.fields.closed.value);
     this.props.onSubmit(formData).then(rsp=>{
+      this.setState(prevStates=>{
+        prevStates.loading = false;
+        return prevStates;
+      });
+
       if('OK' == rsp.code){
         if(0 == formData.get('id'))
           this.cleanFileds();
@@ -145,11 +155,22 @@ class CategoryForm extends React.Component{
         }
         return prevStates;
       });
+    }).catch(e=>{
+      this.setState(prevStates=>{
+        prevStates.loading = false;
+        return prevStates;
+      });
     });
   }
 
+  componentDidUpdate(prevProps){
+    if(this.props.cnName != prevProps.cnName){
+      
+    }
+  }
+
   componentWillReceiveProps(nextProps){
-    if(!nextProps.initValue || undefined == nextProps.initValue.cnName)
+    if(!nextProps.initValue || undefined === nextProps.initValue.cnName)
       this.cleanFileds();
     else
       this.setState(prevStates=>{
@@ -178,7 +199,7 @@ class CategoryForm extends React.Component{
     return <div style={{display:this.props.display}}>
       <h4 className="title">Category mounted within <i>{this.props.parentData.title}</i></h4>
       <Form layout="vertical" onSubmit={this.handleSubmit} style={{padding:"12px 10px", background:'#fff'}} >
-        <Input type="hidden" name="parentId" value={this.props.parentData.key} />
+        <Input type="hidden" name="parentId" value={this.props.parentData.rawdata.id||0} />
         <Input type="hidden" name="id" value={this.props.initValue.id||0} />
         <FormItem {...formItemLayout} {...this.state.fields.cnName} label="CN-Name" >
           <Input name="cnName" value={this.state.fields.cnName.value} onChange={(e)=>this.setValue(e.target)} required /> 
@@ -245,12 +266,42 @@ class AttributeForm extends React.Component{
 
   constructor(props){
     super(props);
+    this.state = {
+      fields:{
+        name:{
+          value:'',
+          validateStatus:''
+        }
+      }
+    };
   }
 
   render(){
+    const formItemLayout = {
+      labelCol: {
+        xs: { span: 24 },
+        sm: { span: 5 },
+      },
+      wrapperCol: {
+        xs: { span: 24 },
+        sm: { span: 19 },
+      },
+    };
     return <div style={{display:this.props.display}}>
       <h4 className="title">Attribute mounted within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
-      <Form layout="vertical" style={{margin:"8px 5px"}}>
+      <Form layout="vertical" style={{padding:"12px 10px", background:'#fff'}}>
+        <Input type="hidden" name="categoryId" value={this.props.initValue.categoryId||0} />
+        <Input type="hidden" name="id" value={this.props.initValue.id||0} />
+        <FormItem {...formItemLayout} {...this.state.fields.name} label="Name" >
+          <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.type} label="Type" >
+          <RadioGroup defaultValue="a">
+            <RadioButton value="a">Color</RadioButton>
+            <RadioButton value="b">Enum</RadioButton>
+            <RadioButton value="c">Input</RadioButton>
+          </RadioGroup>
+        </FormItem>
       </Form>
     </div>
   }
@@ -262,7 +313,7 @@ export default class CategoryTree extends React.Component{
     curNodeData : null,
     draggable: false,
     treeData: [
-      { title: 'All', key: '0', children:[], rawdata:null },
+      { title: 'All', key: '0', children:[], rawdata:{} },
       //{ title: 'Tree Node', key: '2', isLeaf: true },
     ],
     form:{
@@ -304,7 +355,7 @@ export default class CategoryTree extends React.Component{
   addCategory(category){
     var ret;
     this.setState(prevStates=>{
-      ret = {title:category.cnName, key:category.id, children:[], rawdata:category};
+      ret = {title:category.cnName, key:`${category.id}C`, children:[], rawdata:category};
       prevStates.curNodeData.children.push(ret);
       return prevStates;
     });
@@ -322,7 +373,7 @@ export default class CategoryTree extends React.Component{
     var ret;
     this.setState(prevStates=>{
       ret = prevStates.curNodeData.children.push({
-        title:`${attribute.enName}(${attribute.cnName}`, key:attribute.id, isLeaf:true, rawdata:attribute});
+        title:`${attribute.enName}(${attribute.cnName}`, key:`${attribute.id}A`, isLeaf:true, rawdata:attribute});
       return prevStates;
     });
     return ret;
@@ -382,7 +433,7 @@ export default class CategoryTree extends React.Component{
             }, 3500);
           }else{
             for(var i=0; i<this.state.curNodeData.children.length; i++){
-              if(id == this.state.curNodeData.children[i].key){
+              if(id == this.state.curNodeData.children[i].rawdata.id){
                 this.setCategory(this.state.curNodeData.children[i], json.data);
                 break;
               }
@@ -403,14 +454,10 @@ export default class CategoryTree extends React.Component{
       let {children, parentKey} = stack.pop();
       for(let i=0; i<children.length; i++){
         if(children[i].key == node.props.dataRef.key){
-          if( (children[i].isLeaf && node.props.dataRef.isLeaf)
-            || (!children[i].isLeaf && !node.props.dataRef.isLeaf) )
-          {
-            found.siblings = children;
-            found.index = i;
-            found.parentKey = parentKey;
-            break;
-          }
+          found.siblings = children;
+          found.index = i;
+          found.parentKey = parentKey;
+          break;
         }
 
         if(!children[i].isLeaf){
@@ -468,7 +515,7 @@ export default class CategoryTree extends React.Component{
   			return;
   		}
       setTimeout(() => {
-        this.loadData(treeNode.props.dataRef.key);
+        this.loadData(treeNode.props.dataRef.rawdata.id||0);
         resolve();
       }, 1000);
     });
@@ -517,7 +564,8 @@ export default class CategoryTree extends React.Component{
                 onSelect={this.onNodeSelect} 
                 onExpand={this.onNodeExpand} 
                 defaultExpandAll={true} 
-                defaultSelectedKeys={'0'}
+                defaultSelectedKeys={[this.state.curNodeData.key]}
+                selectedKeys={[this.state.curNodeData.key]}
                 onDrop={this.handleCategoryDrop}
                 draggable={this.state.draggable}>
             {this.renderTreeNodes(this.state.treeData)}
@@ -531,7 +579,7 @@ export default class CategoryTree extends React.Component{
                         onSubmit={this.handleCategorySubmit} />
           <AttributeForm display={this.state.form.display.attribute} 
                           parentData={this.state.curNodeData} 
-                          initValue={this.state.form.display.attribute != 'none' ? this.state.form.initValue:{}}
+                          initValue={this.state.form.initValue}
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
         <Col span={18-this.state.form.span} >
