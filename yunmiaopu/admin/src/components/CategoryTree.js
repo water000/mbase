@@ -1,12 +1,11 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Radio } from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List } from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
+import {RequestKVRadioGroup, RequestKVSelect} from "../RequestKV"
 import Global from "../Global"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
-const RadioButton = Radio.Button;
-const RadioGroup = Radio.Group;
 
 class CategoryForm extends React.Component{
 
@@ -280,21 +279,58 @@ class AttributeForm extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      type:0,
       fields:{
         name:{
           value:'',
           validateStatus:''
+        },
+        type:{
+          value:'',
+        },
+        inputType:{
+          value:'',
+        },
+        enum:{
+          value:[''],
         }
       }
     };
   }
 
-  handleTypeChange=(event){
+  handleTypeChange=(value)=>{
     this.setState(prevStates=>{
-      prevStates.type = event.target.value;
+      prevStates.fields.type.value = value;
       return prevStates;
     });
+  }
+
+  handleInputTypeChange=(value)=>{
+    this.setState(prevStates=>{
+      prevStates.fields.inputType.value = value;
+      return prevStates;
+    });
+  }
+
+  handleChangeEnum=(target)=>{
+    let idx = parseInt(target.id);
+    this.setState(prevStates=>{
+      if(!target.value)
+        prevStates.fields.enum.value.splice(idx);
+      else
+        prevStates.fields.enum.value[idx] = target.value;
+      if( 0 == prevStates.fields.enum.value.length)
+        prevStates.fields.enum.value.push('');
+      return prevStates;
+    });
+  }
+
+  handleAppendEnum=(target)=>{
+    if(target.value.length > 0){
+      this.setState(prevStates=>{
+        prevStates.fields.enum.value.push(target.value);
+        return prevStates;
+      });
+    }
   }
 
   render(){
@@ -316,16 +352,33 @@ class AttributeForm extends React.Component{
         <FormItem {...formItemLayout} {...this.state.fields.name} label="Name" >
           <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
         </FormItem>
-        <FormItem {...formItemLayout} {...this.state.fields.type} label="Type" >
-          <RadioGroup defaultValue={1} onChange={this.handleTypeChange}>
-            <RadioButton value={1}>Color</RadioButton>
-            <RadioButton value={2}>Enum</RadioButton>
-            <RadioButton value={3}>Input</RadioButton>
-          </RadioGroup>
+        <FormItem {...formItemLayout} {...this.state.fields.type} label="Type">
+          <RequestKVRadioGroup
+            value={this.state.fields.type.value} 
+            defaultValue={this.state.fields.type.value} 
+            onChange={this.handleTypeChange} 
+            name='type'
+            url='/category/enums'
+            id='Attribute.Type' />
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.value} label="Value" >
-          <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
-          {}
+          {
+            'CONSTANT' == this.state.fields.type.value && 
+              <Input name="value" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
+          }
+          {
+            'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
+              <Input name="enum" id={idx} value={item} onChange={(event)=>this.handleChangeEnum(event.target)} onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />) 
+          }
+          {
+            'INPUT' == this.state.fields.type.value && 
+              <RequestKVSelect 
+                name='inputType'
+                value={this.state.fields.inputType.value}
+                defaultValue={this.state.fields.inputType.value} 
+                url='/category/enums'
+                id='Attribute.InputType'
+                onChange={this.handleInputTypeChange} />}
         </FormItem>
       </Form>
     </div>

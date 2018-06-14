@@ -9,11 +9,11 @@ import javax.persistence.Id;
  * Created by macbookpro on 2018/5/24.
  */
 
-enum ValueType{STRING, TEXT, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, OTHER_OPTIONS}
-enum Type{NORMAL, SALE, IMPORTANT}
-
 @Entity(name = "category_attribute")
 public class Attribute {
+
+    public enum InputType{STRING, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, TIME}
+    public enum Type{INPUT, ENUM, COLOR, CONSTANT}
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -21,7 +21,7 @@ public class Attribute {
     private long categoryId;
     private String name;
     private String value;
-    private ValueType valueType;
+    private InputType valueType;
     private int txtMaxLength;
     private Type type;
     private boolean optionsExists;
@@ -67,11 +67,11 @@ public class Attribute {
         this.value = value;
     }
 
-    public ValueType getValueType() {
+    public InputType getValueType() {
         return valueType;
     }
 
-    public void setValueType(ValueType valueType) {
+    public void setInputType(InputType valueType) {
         this.valueType = valueType;
     }
 

@@ -1,16 +1,19 @@
 package cn.yunmiaopu.category.controller;
 
+import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.category.entity.Category;
 import cn.yunmiaopu.category.service.ICategoryService;
 import cn.yunmiaopu.category.utli.UploadJpg;
 import cn.yunmiaopu.common.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
-import java.util.Optional;
+import java.lang.reflect.Type;
+import java.util.*;
 
 /**
  * Created by macbookpro on 2018/5/28.
@@ -87,6 +90,34 @@ public class CategoryController {
     }
 
 
+    private static Map<String, Map> enumsMap = new HashMap();
+    private static Enum[][] enums = {
+            Attribute.Type.values(),
+            Attribute.InputType.values(),
+    };
+    @Autowired
+    private ApplicationContext appctx;
+    private void initEnum(){
+        for(Enum[] values : enums){
+            Map<String, String> dict = new LinkedHashMap();
+            String msg = appctx.getMessage(values[0].getClass().getCanonicalName(), null, Locale.getDefault());
+            String[] arr = null;
+            if(msg != null && msg.length() > 0){
+                arr = msg.split(",");
+            }
+            for(int i=0; i<values.length; i++){
+                dict.put(values[i].name(), arr!=null && i<arr.length ? arr[i] : values[i].name());
+            }
+            String en = values[0].getClass().getEnclosingClass().getSimpleName();
+            enumsMap.put(null == en ? "" : en+'.' + values[0].getClass().getSimpleName() , dict);
+        }
+    }
+    @RequestMapping("/category/enums")
+    public Object enums(){
+        if(0 == enumsMap.size())
+            initEnum();
+        return enumsMap;
+    }
 
 
 }

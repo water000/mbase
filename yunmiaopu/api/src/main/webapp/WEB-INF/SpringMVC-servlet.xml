@@ -42,7 +42,7 @@
 
     <tx:annotation-driven/>
 
-    <!-- handle the form exist file(s) -->
+    <!-- handle the form that exist upload file(s) -->
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
         <property name="defaultEncoding" value="utf-8"></property>
         <property name="maxUploadSize" value="10485760000"></property>
@@ -67,7 +67,7 @@
         <property name="driverClass" value="com.mysql.jdbc.Driver"/>
         <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/cn_yunmiaopu?useUnicode=true&amp;characterEncoding=utf-8"/>
         <property name="user" value="root"/>
-        <property name="password" value="123456"/>
+        <property name="password" value=""/>
     </bean>
     <bean id="namingStrategy" class="cn.yunmiaopu.common.util.ImprovedPhysicalNamingStrategy"></bean>
 
@@ -111,6 +111,16 @@
         </property>
     </bean>
     <jpa:repositories base-package="cn.yunmiaopu.**.dao" entity-manager-factory-ref="entityManagerFactory" />
+
+    <!--①注册资源Bean,其Bean名称只能为messageSource -->
+    <bean id="messageSource"
+          class="org.springframework.context.support.ResourceBundleMessageSource">
+        <property name="basenames">
+            <list>
+                <value>cn.yunmiaopu.category.il8n.enum_resource</value>
+            </list>
+        </property>
+    </bean>
 
 
 </beans>
