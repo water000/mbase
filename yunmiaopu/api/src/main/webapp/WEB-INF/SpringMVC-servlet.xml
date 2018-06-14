@@ -67,7 +67,7 @@
         <property name="driverClass" value="com.mysql.jdbc.Driver"/>
         <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/cn_yunmiaopu?useUnicode=true&amp;characterEncoding=utf-8"/>
         <property name="user" value="root"/>
-        <property name="password" value=""/>
+        <property name="password" value="123456"/>
     </bean>
     <bean id="namingStrategy" class="cn.yunmiaopu.common.util.ImprovedPhysicalNamingStrategy"></bean>
 
@@ -117,7 +117,7 @@
           class="org.springframework.context.support.ResourceBundleMessageSource">
         <property name="basenames">
             <list>
-                <value>cn.yunmiaopu.category.il8n.enum_resource</value>
+                <value>il8n.category_enum_resource</value>
             </list>
         </property>
     </bean>

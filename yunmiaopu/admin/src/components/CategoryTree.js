@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List } from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 import {RequestKVRadioGroup, RequestKVSelect} from "../RequestKV"
@@ -279,8 +279,13 @@ class AttributeForm extends React.Component{
   constructor(props){
     super(props);
     this.state = {
+      loading:false,
       fields:{
         name:{
+          value:'',
+          validateStatus:''
+        },
+        value:{
           value:'',
           validateStatus:''
         },
@@ -292,9 +297,22 @@ class AttributeForm extends React.Component{
         },
         enum:{
           value:[''],
+        },
+        isPartOfSKU:{
+          value:false,
+        },
+        isRequired:{
+          value:false,
         }
       }
     };
+  }
+
+  handleValueChange=(target)=>{
+    this.setState(prevStates=>{
+      prevStates.fields[target.name].value = target.value;
+      return prevStates;
+    });
   }
 
   handleTypeChange=(value)=>{
@@ -311,11 +329,25 @@ class AttributeForm extends React.Component{
     });
   }
 
+  handleChangePartOfSKU=(target)=>{
+    this.setState(prevStates=>{
+      prevStates.fields.isPartOfSKU.value = !prevStates.fields.isPartOfSKU.value;
+      return prevStates;
+    });
+  }
+
+  handleSwitch=(target)=>{
+    this.setState(prevStates=>{
+      prevStates.fields[target.name].value = !prevStates.fields[target.name].value;
+      return prevStates;
+    });
+  }
+
   handleChangeEnum=(target)=>{
     let idx = parseInt(target.id);
     this.setState(prevStates=>{
       if(!target.value)
-        prevStates.fields.enum.value.splice(idx);
+        prevStates.fields.enum.value.splice(idx, 1);
       else
         prevStates.fields.enum.value[idx] = target.value;
       if( 0 == prevStates.fields.enum.value.length)
@@ -327,6 +359,8 @@ class AttributeForm extends React.Component{
   handleAppendEnum=(target)=>{
     if(target.value.length > 0){
       this.setState(prevStates=>{
+        let idx = parseInt(target.id);
+        prevStates.fields.enum.value[idx] = '';
         prevStates.fields.enum.value.push(target.value);
         return prevStates;
       });
@@ -350,7 +384,7 @@ class AttributeForm extends React.Component{
         <Input type="hidden" name="categoryId" value={this.props.initValue.categoryId||0} />
         <Input type="hidden" name="id" value={this.props.initValue.id||0} />
         <FormItem {...formItemLayout} {...this.state.fields.name} label="Name" >
-          <Input name="cnName" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
+          <Input name="name" value={this.state.fields.name.value} onChange={(e)=>this.handleValueChange(e.target)} required /> 
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.type} label="Type">
           <RequestKVRadioGroup
@@ -364,11 +398,14 @@ class AttributeForm extends React.Component{
         <FormItem {...formItemLayout} {...this.state.fields.value} label="Value" >
           {
             'CONSTANT' == this.state.fields.type.value && 
-              <Input name="value" value={this.state.fields.name.value} onChange={(e)=>this.setValue(e.target)} required /> 
+              <Input name="value" value={this.state.fields.value.value} onChange={(e)=>this.handleValueChange(e.target)} required /> 
           }
           {
             'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
-              <Input name="enum" id={idx} value={item} onChange={(event)=>this.handleChangeEnum(event.target)} onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />) 
+              <Input name="enum" id={idx} value={item} 
+                style={{borderLeft:0,borderRight:0, borderTop:0, borderBottomStyle:'dashed'}}
+                onChange={(event)=>this.handleChangeEnum(event.target)} 
+                onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />)
           }
           {
             'INPUT' == this.state.fields.type.value && 
@@ -380,6 +417,27 @@ class AttributeForm extends React.Component{
                 id='Attribute.InputType'
                 onChange={this.handleInputTypeChange} />}
         </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.isPartOfSKU} label="SKU Part" >
+          <Checkbox 
+            name='isPartOfSKU'
+            defaultChecked={this.state.fields.isPartOfSKU.value}
+            checked={this.state.fields.isPartOfSKU.value}
+            onChange={(e)=>this.handleSwitch(e.target)}
+          >
+            Yes
+          </Checkbox>
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.isRequired} label="Required" >
+          <Checkbox 
+            name='isRequired'
+            defaultChecked={this.state.fields.isRequired.value}
+            checked={this.state.fields.isRequired.value}
+            onChange={(e)=>this.handleSwitch(e.target)}
+          >
+            Yes
+          </Checkbox>
+        </FormItem>
+        <Button loading={this.state.loading} type="primary" htmlType="submit" style={{width:"100%"}}>Submit</Button>
       </Form>
     </div>
   }
