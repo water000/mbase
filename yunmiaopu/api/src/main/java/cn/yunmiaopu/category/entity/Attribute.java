@@ -12,28 +12,22 @@ import javax.persistence.Id;
 @Entity(name = "category_attribute")
 public class Attribute {
 
-    public enum InputType{STRING, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, TIME}
-    public enum Type{INPUT, ENUM, COLOR, CONSTANT}
+    public enum InputType {STRING, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, TIME}
+
+    public enum Type {INPUT, ENUM, COLOR, CONSTANT}
 
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private long categoryId;
     private String name;
-    private String value;
-    private InputType valueType;
-    private int txtMaxLength;
+    private String value; // constant value, non-constant saved by class Option
+    private InputType inputType;
     private Type type;
-    private boolean optionsExists;
-    private boolean optionsExtendable;
-
-    public boolean isOptionsExtendable() {
-        return optionsExtendable;
-    }
-
-    public void setOptionsExtendable(boolean optionsExtendable) {
-        this.optionsExtendable = optionsExtendable;
-    }
+    private long overrideAttributeId; /* true to override the id(not appear) */
+    private boolean isPartOfSKU;
+    private boolean isRequired;
+    private boolean isKeyToSearch;
 
     public long getId() {
         return id;
@@ -67,20 +61,12 @@ public class Attribute {
         this.value = value;
     }
 
-    public InputType getValueType() {
-        return valueType;
+    public InputType getInputType() {
+        return inputType;
     }
 
-    public void setInputType(InputType valueType) {
-        this.valueType = valueType;
-    }
-
-    public int getTxtMaxLength() {
-        return txtMaxLength;
-    }
-
-    public void setTxtMaxLength(int txtMaxLength) {
-        this.txtMaxLength = txtMaxLength;
+    public void setInputType(InputType inputType) {
+        this.inputType = inputType;
     }
 
     public Type getType() {
@@ -91,11 +77,35 @@ public class Attribute {
         this.type = type;
     }
 
-    public boolean isOptionsExists() {
-        return optionsExists;
+    public long getOverrideAttributeId() {
+        return overrideAttributeId;
     }
 
-    public void setOptionsExists(boolean optionsExists) {
-        this.optionsExists = optionsExists;
+    public void setOverrideAttributeId(long overrideAttributeId) {
+        this.overrideAttributeId = overrideAttributeId;
+    }
+
+    public boolean isPartOfSKU() {
+        return isPartOfSKU;
+    }
+
+    public void setIsPartOfSKU(boolean isPartOfSKU) {
+        this.isPartOfSKU = isPartOfSKU;
+    }
+
+    public boolean isRequired() {
+        return isRequired;
+    }
+
+    public void setIsRequired(boolean isRequired) {
+        this.isRequired = isRequired;
+    }
+
+    public boolean isKeyToSearch() {
+        return isKeyToSearch;
+    }
+
+    public void setIsKeyToSearch(boolean isKeyToSearch) {
+        this.isKeyToSearch = isKeyToSearch;
     }
 }

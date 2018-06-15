@@ -2,6 +2,7 @@ import React from 'react';
 import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
+import ColPicker from "../ColPicker"
 import {RequestKVRadioGroup, RequestKVSelect} from "../RequestKV"
 import Global from "../Global"
 const TreeNode = Tree.TreeNode;
@@ -346,7 +347,7 @@ class AttributeForm extends React.Component{
   handleChangeEnum=(target)=>{
     let idx = parseInt(target.id);
     this.setState(prevStates=>{
-      if(!target.value)
+      if(!target.value && idx>0)
         prevStates.fields.enum.value.splice(idx, 1);
       else
         prevStates.fields.enum.value[idx] = target.value;
@@ -401,11 +402,24 @@ class AttributeForm extends React.Component{
               <Input name="value" value={this.state.fields.value.value} onChange={(e)=>this.handleValueChange(e.target)} required /> 
           }
           {
+            'COLOR' == this.state.fields.type.value && 
+              <ColPicker />
+          }
+          {
             'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
-              <Input name="enum" id={idx} value={item} 
-                style={{borderLeft:0,borderRight:0, borderTop:0, borderBottomStyle:'dashed'}}
+              {return idx>0 ? 
+              <span style={{display:'inline-block',width:'50%', borderBottom:'1px dashed #ccc'}}>
+                {idx}.<Input name="enum" id={idx} value={item} 
+                style={{border:'0',width:'85%'}}
                 onChange={(event)=>this.handleChangeEnum(event.target)} 
-                onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />)
+                required /></span>
+                :
+              <Input name="enum" id={idx} value={item} 
+                placeholder={0==idx?'Entry to create; Back until empty to Delete':''}
+                onChange={(event)=>this.handleChangeEnum(event.target)} 
+                onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />
+              }
+            )
           }
           {
             'INPUT' == this.state.fields.type.value && 
