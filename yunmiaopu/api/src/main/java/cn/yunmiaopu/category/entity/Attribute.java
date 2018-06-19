@@ -16,18 +16,22 @@ public class Attribute {
 
     public enum Type {INPUT, ENUM, COLOR, CONSTANT}
 
+    public enum NamedColor{AQUA, BLACK, BLUE, FUCHSIA, GRAY, GREEN, LIME, MAROON, NAVY, OLIVE, PURPLE, RED, SILVER, TEAL, WHITE, YELLOW}
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private long categoryId;
     private String name;
-    private String value; // constant value, non-constant saved by class Option
+    private String value; // constant value, non-constant saved to class Option
     private InputType inputType;
     private Type type;
+    private byte optionsCounter; // counter for type[enum, color]
     private long overrideAttributeId; /* true to override the id(not appear) */
+    private boolean allowOverride;
     private boolean isPartOfSKU;
     private boolean isRequired;
-    private boolean isKeyToSearch;
+    private boolean allowSearch;
 
     public long getId() {
         return id;
@@ -101,11 +105,27 @@ public class Attribute {
         this.isRequired = isRequired;
     }
 
-    public boolean isKeyToSearch() {
-        return isKeyToSearch;
+   public byte getOptionsCounter() {
+        return optionsCounter;
     }
 
-    public void setIsKeyToSearch(boolean isKeyToSearch) {
-        this.isKeyToSearch = isKeyToSearch;
+    public void setOptionsCounter(byte optionsCounter) {
+        this.optionsCounter = optionsCounter;
+    }
+
+    public boolean isAllowOverride() {
+        return allowOverride;
+    }
+
+    public void setAllowOverride(boolean allowOverride) {
+        this.allowOverride = allowOverride;
+    }
+
+    public boolean isAllowSearch() {
+        return allowSearch;
+    }
+
+    public void setAllowSearch(boolean allowSearch) {
+        this.allowSearch = allowSearch;
     }
 }

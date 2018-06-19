@@ -1,34 +1,19 @@
 
 import React from 'react';
-import {Checkbox, Button, Input, Upload, Dropdown} from 'antd';
+import {Checkbox, Button, Input, Upload, Dropdown, Icon} from 'antd';
 //npm install react-color-picker
 import ColorPicker from 'react-color-picker';
 import 'react-color-picker/index.css';
 
-const NAMED_COLOR = [
-	'aqua', '浅绿色',
-	'black', '黑色',
-	'blue', '蓝色',
-	'fuchsia', '紫红色',
-	'gray', '灰色',
-	'green', '绿色',
-	'lime', '绿黄色',
-	'maroon', '褐红色',
-	'navy', '深蓝色',
-	'olive', '橄榄色',
-	'purple', '紫色',
-	'red', '红色',
-	'silver', '银色',
-	'teal', '青色',
-	'white', '白色',
-	'yellow', '黄色',
-];
+import {RequestKV} from "./RequestKV"
+import Global from "./Global"
 
 export default class ColPicker extends React.Component{
 
 	constructor(props){
 		super(props);
     this.state = {
+      named_color:{},
       color:[],
       custom:{name:'', arg:''}
     };
@@ -56,7 +41,6 @@ export default class ColPicker extends React.Component{
         }
       }
       if(i == prevStates.color.length){
-        console.log(prevStates.custom);
         prevStates.color.push(this.encode(prevStates.custom.name, prevStates.custom.arg));
       }else{
         if(name)
@@ -91,37 +75,71 @@ export default class ColPicker extends React.Component{
     });
   }
 
+  handleCheckboxChange(checkbox){
+    //check, uncheck
+    //custom_new, custom_edit
+  }
+
+  checked(value){
+    for(var i=0; i<this.props.checkedColor.length; i++){
+      if(value === this.props.checkedColor[i].value){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  componentDidMount(){
+    RequestKV.fetch('/category/enums', 'Attribute.NamedColor').then(json=>{
+      this.setState(prevStates=>{
+        prevStates.named_color = json;
+        return prevStates;
+      });
+    });
+  }
+
   render(){
-    var box = [];
-    for(var i=0; i<NAMED_COLOR.length; i+=2){
-      box.push(<span className='color-box'>
+    var named_color = [], custom_color = [];
+    for(var k in this.state.named_color){
+      named_color.push(<span className='color-box'>
         <Checkbox 
           name='color' 
           style={{width:'75px'}} 
-          value={NAMED_COLOR[i]} 
-          checked={this.state.color.indexOf(NAMED_COLOR[i])!=-1}>
-          {NAMED_COLOR[i+1]}
+          value={k} 
+          defaultChecked={this.checked(k)}>
+          {this.state.named_color[k]}
         </Checkbox>
-        <span className='color-bg' style={{background:NAMED_COLOR[i]}}></span></span>);
+        <span className='color-bg' style={{background:k}}></span></span>);
     }
-    for(var i=0; i<this.state.color.length; i++){
-      if(-1 == NAMED_COLOR.indexOf(this.state.color[i])){
-        var arr = this.decode(this.state.color[i]);
-         box.push(<span className='color-box'>
+    for(var i=0; i<this.props.checkedColor.length; i++){
+      if(0 == this.props.checkedColor[i].value.indexOf('#')){
+        custom_color.push(<span className='color-box'>
           <Checkbox 
             name='color' 
             style={{width:'75px'}} 
-            value={this.state.color[i]} 
-            checked='true'>
-            {arr[0]}
+            value={this.props.checkedColor[i].value}
+            defaultChecked='true'>
+            <a>{this.props.checkedColor[i].label}</a>
           </Checkbox>
-          <span className='color-bg' style={{background:arr[1]||''}}></span></span>); 
+          <span className='color-bg' style={{background:this.props.checkedColor[i].value}}></span></span>); 
+      }
+      else if(this.props.checkedColor[i].vaue.indexOf('.jpg') != -1){
+        custom_color.push(<span className='color-box'>
+          <Checkbox 
+            name='color' 
+            style={{width:'75px'}} 
+            value={this.props.checkedColor[i].value}
+            defaultChecked='true'>
+            {this.props.checkedColor[i].label}
+          </Checkbox>
+          <span className='color-bg'><img src={Global.imgUrl(this.props.checkedColor[i].value)} /></span></span>); 
       }
     }
     return (
       <div>
         <div className='color-picker'>
-          {box}
+          <div>{named_color}</div>
+          <div>{custom_color}</div>
         </div>
         <div style={{marginTop:'10px', position:'relative'}}>
           <Input 
@@ -135,13 +153,11 @@ export default class ColPicker extends React.Component{
           {
             this.state.custom.name && 
               <span>
-                <Dropdown 
-                  overlay={<ColorPicker value={this.state.custom.arg} 
-                  onDrag={this.handleCustomColorChanged} />} 
-                  trigger={['click']}>
-                  <Button size='small' icon='edit' style={{color:this.state.custom.arg}}>Color</Button>
+
+                <Dropdown overlay={<ColorPicker value={this.state.custom.arg} 
+                    onDrag={this.handleCustomColorChanged} />} >
+                  <Upload><Button icon='upload' size='small'>Image<Icon type="down" /></Button></Upload>
                 </Dropdown>
-                <Upload><Button icon='upload' size='small'>Image</Button></Upload>
                 <Button type='primary' size='small' onClick={this.handleSubmit} 
                   style={{position:'absolute', top:0,right:0}}>OK</Button>
               </span>

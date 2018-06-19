@@ -304,6 +304,12 @@ class AttributeForm extends React.Component{
         },
         isRequired:{
           value:false,
+        },
+        allowSearch:{
+          value:false,
+        },
+        allowOverride:{
+          value:false,
         }
       }
     };
@@ -403,7 +409,7 @@ class AttributeForm extends React.Component{
           }
           {
             'COLOR' == this.state.fields.type.value && 
-              <ColPicker />
+              <ColPicker checkedColor={[]} />
           }
           {
             'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
@@ -446,6 +452,26 @@ class AttributeForm extends React.Component{
             name='isRequired'
             defaultChecked={this.state.fields.isRequired.value}
             checked={this.state.fields.isRequired.value}
+            onChange={(e)=>this.handleSwitch(e.target)}
+          >
+            Yes
+          </Checkbox>
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.allowSearch} label="Allow Search" >
+          <Checkbox 
+            name='allowSearch'
+            defaultChecked={this.state.fields.allowSearch.value}
+            checked={this.state.fields.allowSearch.value}
+            onChange={(e)=>this.handleSwitch(e.target)}
+          >
+            Yes
+          </Checkbox>
+        </FormItem>
+        <FormItem {...formItemLayout} {...this.state.fields.allowOverride} label="Allow Override" >
+          <Checkbox 
+            name='allowOverride'
+            defaultChecked={this.state.fields.allowOverride.value}
+            checked={this.state.fields.allowOverride.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Yes

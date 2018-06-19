@@ -14,9 +14,9 @@ public class Option {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private long id;
     private long attributeId;
-    private String desc;
-    private String image_token;
-    private String color;
+    private String label;
+    private String value;
+    private byte order;
 
     public long getId() {
         return id;
@@ -34,27 +34,27 @@ public class Option {
         this.attributeId = attributeId;
     }
 
-    public String getDesc() {
-        return desc;
+    public String getLabel() {
+        return label;
     }
 
-    public void setDesc(String desc) {
-        this.desc = desc;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
-    public String getImage_token() {
-        return image_token;
+    public String getValue() {
+        return value;
     }
 
-    public void setImage_token(String image_token) {
-        this.image_token = image_token;
+    public void setValue(String value) {
+        this.value = value;
     }
 
-    public String getColor() {
-        return color;
+    public byte getOrder() {
+        return order;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setOrder(byte order) {
+        this.order = order;
     }
 }

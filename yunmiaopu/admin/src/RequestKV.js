@@ -6,7 +6,7 @@ const RadioGroup = Radio.Group;
 const Option = Select.Option;
 
 let cache = {};
-class RequestKV{}
+export class RequestKV{}
 RequestKV.fetch = (url, key)=>{
   return new Promise((resolve, reject)=>{
     if(cache[url])
@@ -18,7 +18,7 @@ RequestKV.fetch = (url, key)=>{
           resolve(json[key]);
         })
         .catch(err=>{
-          (console.err||reject)(err);
+          (reject || console.error)(err);
         }) ;
   });
 }

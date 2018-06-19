@@ -94,6 +94,7 @@ public class CategoryController {
     private static Enum[][] enums = {
             Attribute.Type.values(),
             Attribute.InputType.values(),
+            Attribute.NamedColor.values(),
     };
     @Autowired
     private ApplicationContext appctx;
