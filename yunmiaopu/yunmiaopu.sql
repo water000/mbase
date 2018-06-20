@@ -36,13 +36,13 @@ CREATE TABLE IF NOT EXISTS category_attribute(
 	category_id int unsigned not null default 0,
 	name varchar(64) not null default '',
 	value varchar(255) not null default '', -- value of content-type, none-constant saved to option
-	input_type tinyint not null default 0, 
 	type tinyint not null default 0, -- contant, input, enum, color
-	is_overridable tinyint not null default 0,
+	input_type tinyint not null default 0, -- if the type above is 'input', then the field save the type to input
+	allow_override tinyint not null default 0,
 	override_attribute_id int unsigned not null default 0,
 	is_part_of_sku tinyint not null default 0,
 	is_required tinyint not null default 0,
-	is_key_to_search tinyint not null default 0,
+	allow_search tinyint not null default 0,
 	options_counter tinyint not null default 0, -- counter for type[Color, Enum]
 	primary key(id),
 	key(category_id)
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS category_attribute_option(
 	id int unsigned not null auto_increment,
 	attribute_id int unsigned not null default 0,
 	label varchar(127) not null default '',
-	value varchar(255) not null default '',
+	extra varchar(255) not null default '', -- extra info like color(white, #fff); image token
 	order tinyint not null default 0,
 	primary key(id),
 	key(attribute_id, order)

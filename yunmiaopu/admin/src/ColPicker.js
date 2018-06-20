@@ -1,6 +1,6 @@
 
 import React from 'react';
-import {Checkbox, Button, Input, Upload, Dropdown, Icon} from 'antd';
+import {Checkbox, Button, Input, Upload, Dropdown, Modal} from 'antd';
 //npm install react-color-picker
 import ColorPicker from 'react-color-picker';
 import 'react-color-picker/index.css';
@@ -15,7 +15,7 @@ export default class ColPicker extends React.Component{
     this.state = {
       named_color:{},
       color:[],
-      custom:{name:'', arg:''}
+      custom:{label:'', extra:'', dataRef:null}
     };
 	}
 
@@ -54,39 +54,86 @@ export default class ColPicker extends React.Component{
 
   handleCustomNameChanged=(v)=>{
     this.setState(prevStates=>{
-      prevStates.custom.name = v;
+      prevStates.custom.label = v;
       return prevStates;
     });
   }
 
   handleCustomColorChanged=(v)=>{
     this.setState(prevStates=>{
-      prevStates.custom.arg = v;
+      prevStates.custom.extra = v;
       return prevStates;
     });
   }
 
   handleSubmit=()=>{
-    this._searchAndChange(this.state.custom);
+    this.props.onSubmit(this.state.custom);
     this.setState(prevStates=>{
-      prevStates.custom.name = '';
-      prevStates.custom.arg = '';
+      prevStates.custom.label = '';
+      prevStates.custom.extra = '';
+      prevStates.custom.dataRef = null;
       return prevStates;
     });
   }
 
-  handleCheckboxChange(checkbox){
+  //@props, null if new color
+  handleCheckboxChange=(checkbox, props)=>{
     //check, uncheck
     //custom_new, custom_edit
+    if(!checkbox.checked){
+      Modal.confirm({
+        title:'Do you want to DELETE the item?',
+        content:'data can not be revert after submitting',
+        okType: 'danger',
+        onOk:()=>{
+          this.props.onChange(checkbox.checked, props);
+        }
+      });
+    }else{
+      this.props.onChange(checkbox.checked, props);
+    }
+
+  }
+
+  handleCustomEdit=(props)=>{
+    this.setState(prevStates=>{
+      prevStates.custom.label = props.label;
+      prevStates.custom.extra = props.extra;
+      prevStates.custom.dataRef = props;
+      return prevStates;
+    });
+  }
+
+  handleBeforeUpload=(file)=>{
+    this.setState(prevStates=>{
+      prevStates.custom.extra = file;
+      return prevStates;
+    });
+    return false;
+  }
+
+  handleRemoveUpload=(file)=>{
+    this.setState(prevStates=>{
+      prevStates.custom.extra = '';
+      return prevStates;
+    });
+  }
+
+  handleUploadChange=(file)=>{
+    console.log('file:', file);
+    this.setState(prevStates=>{
+      prevStates.custom.extra = file;
+      return prevStates;
+    });
   }
 
   checked(value){
     for(var i=0; i<this.props.checkedColor.length; i++){
       if(value === this.props.checkedColor[i].value){
-        return true;
+        return this.props.checkedColor[i];
       }
     }
-    return false;
+    return null;
   }
 
   componentDidMount(){
@@ -101,39 +148,41 @@ export default class ColPicker extends React.Component{
   render(){
     var named_color = [], custom_color = [];
     for(var k in this.state.named_color){
+      var checked = this.checked(k);
       named_color.push(<span className='color-box'>
         <Checkbox 
           name='color' 
           style={{width:'75px'}} 
           value={k} 
-          defaultChecked={this.checked(k)}>
+          onChange={(e)=>this.handleCheckboxChange(e.target, {label:this.state.named_color[k], extra:k, dataRef:checked})}
+          defaultChecked={checked != null}>
           {this.state.named_color[k]}
         </Checkbox>
         <span className='color-bg' style={{background:k}}></span></span>);
     }
     for(var i=0; i<this.props.checkedColor.length; i++){
-      if(0 == this.props.checkedColor[i].value.indexOf('#')){
-        custom_color.push(<span className='color-box'>
+      var extra = null;
+      if('object' == typeof this.props.checkedColor[i].extra)
+        extra = <span className='color-bg'><img src={this.props.checkedColor[i].extra.data} /></span>; 
+      else if(0 == this.props.checkedColor[i].extra.indexOf('#'))
+        extra = <span className='color-bg' title={this.props.checkedColor[i].extra} style={{background:this.props.checkedColor[i].extra}}></span>; 
+      else
+        extra = <span className='color-bg'><img src={Global.imgUrl(this.props.checkedColor[i].value)} /></span>; 
+      var box = <span className='color-box'>
           <Checkbox 
             name='color' 
             style={{width:'75px'}} 
-            value={this.props.checkedColor[i].value}
-            defaultChecked='true'>
-            <a>{this.props.checkedColor[i].label}</a>
+            onChange={((i)=>(e)=>this.handleCheckboxChange(e.target, {label:null, extra:null,  dataRef:this.props.checkedColor[i]}))(i)}
+            checked='true'>
+            {((i)=><a href='#' title='cancel' onClick={(e)=>this.handleCustomEdit(this.props.checkedColor[i])}>
+              {this.props.checkedColor[i].label}
+            </a>)(i)}
           </Checkbox>
-          <span className='color-bg' style={{background:this.props.checkedColor[i].value}}></span></span>); 
-      }
-      else if(this.props.checkedColor[i].vaue.indexOf('.jpg') != -1){
-        custom_color.push(<span className='color-box'>
-          <Checkbox 
-            name='color' 
-            style={{width:'75px'}} 
-            value={this.props.checkedColor[i].value}
-            defaultChecked='true'>
-            {this.props.checkedColor[i].label}
-          </Checkbox>
-          <span className='color-bg'><img src={Global.imgUrl(this.props.checkedColor[i].value)} /></span></span>); 
-      }
+          {extra}
+        <span>;
+      custom_color.push(
+        box 
+      );
     }
     return (
       <div>
@@ -144,22 +193,32 @@ export default class ColPicker extends React.Component{
         <div style={{marginTop:'10px', position:'relative'}}>
           <Input 
             name='name' 
-            style={{width:'100px', margin:'0 5px'}} 
+            style={{width:'100px', marginRight:'5px'}} 
             size='small' 
             placeholder='custom name' 
-            value={this.state.custom.name}
+            value={this.state.custom.label}
             onChange={(e)=>this.handleCustomNameChanged(e.target.value)}
             required />
           {
-            this.state.custom.name && 
+            this.state.custom.label && 
               <span>
-
-                <Dropdown overlay={<ColorPicker value={this.state.custom.arg} 
-                    onDrag={this.handleCustomColorChanged} />} >
-                  <Upload><Button icon='upload' size='small'>Image<Icon type="down" /></Button></Upload>
+                <Dropdown 
+                  overlay={<ColorPicker value={this.state.custom.arg} 
+                    onDrag={this.handleCustomColorChanged} />} 
+                  trigger={['click']}>
+                  <Button size='small' icon='edit' style={{color:this.state.custom.extra}}>Color</Button>
                 </Dropdown>
+                <Upload 
+                  fileList={typeof this.state.custom.extra !== 'string' ? [this.state.custom.extra] : []}
+                  beforeUpload={this.handleBeforeUpload}
+                  onRemove={this.handleRemoveUpload}
+                >
+                  <Button icon='upload' size='small'>Image</Button>
+                </Upload>
                 <Button type='primary' size='small' onClick={this.handleSubmit} 
-                  style={{position:'absolute', top:0,right:0}}>OK</Button>
+                  disabled={!this.state.custom.label || !this.state.custom.extra} 
+                  style={{position:'absolute', top:0,right:'15px'}}>OK</Button>
+                {this.state.custom.dataRef && <a style={{position:'absolute', top:0,bottom:0,right:'0',color:'red'}}>&times;</a>}
               </span>
           }
         </div>

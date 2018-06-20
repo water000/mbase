@@ -15,7 +15,7 @@ public class Option {
     private long id;
     private long attributeId;
     private String label;
-    private String value;
+    private String extra; // extra info like color(white, #fff);image token
     private byte order;
 
     public long getId() {
@@ -42,12 +42,12 @@ public class Option {
         this.label = label;
     }
 
-    public String getValue() {
-        return value;
+    public String getExtra() {
+        return extra;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setExtra(String extra) {
+        this.extra = extra;
     }
 
     public byte getOrder() {

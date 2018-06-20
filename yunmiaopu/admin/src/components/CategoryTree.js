@@ -164,7 +164,6 @@ class CategoryForm extends React.Component{
   }
 
   componentDidUpdate(prevProps, prevStates){
-    console.log(this.props.initValue, prevProps.initValue);
     if(this.props.parentData.key !== prevProps.parentData.key || this.props.initValue.id !== prevProps.initValue.id){
       if(!this.props.initValue || undefined === this.props.initValue.id)
         this.cleanFileds();
@@ -310,6 +309,9 @@ class AttributeForm extends React.Component{
         },
         allowOverride:{
           value:false,
+        },
+        options:{
+          value:[]
         }
       }
     };
@@ -374,6 +376,39 @@ class AttributeForm extends React.Component{
     }
   }
 
+  handleColorChange=(checked, {label, extra, dataRef})=>{
+    this.setState(prevStates=>{
+      if(checked){
+        prevStates.fields.options.value.push({label, extra});
+      }else{
+        for(var i=0; i<prevStates.fields.options.value.length; i++){
+          if(dataRef === prevStates.fields.options.value[i]){
+            prevStates.fields.options.value.splice(i, 1);
+            break;
+          }
+        }
+      }
+      return prevStates;
+    });
+  }
+
+  handleColorSubmit=({label, extra, dataRef})=>{
+    this.setState(prevStates=>{
+      if(null == dataRef){
+        prevStates.fields.options.value.push({label, extra});
+      }else{
+        for(var i=0; i<prevStates.fields.options.value.length; i++){
+          if(dataRef === prevStates.fields.options.value[i]){
+            prevStates.fields.options.value[i].label = label;
+            prevStates.fields.options.value[i].extra = extra;
+            break;
+          }
+        }
+      }
+      return prevStates;
+    });
+  }
+
   render(){
     const formItemLayout = {
       labelCol: {
@@ -409,7 +444,9 @@ class AttributeForm extends React.Component{
           }
           {
             'COLOR' == this.state.fields.type.value && 
-              <ColPicker checkedColor={[]} />
+              <ColPicker checkedColor={this.state.fields.options.value}
+                onChange={this.handleColorChange}
+                onSubmit={this.handleColorSubmit} />
           }
           {
             'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
