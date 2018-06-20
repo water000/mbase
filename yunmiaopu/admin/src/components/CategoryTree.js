@@ -594,7 +594,7 @@ export default class CategoryTree extends React.Component{
 
   showCategoryForm = ()=>{
     this.setState(prevStates=>{
-      prevStates.form.span = 9;
+      prevStates.form.span = 11;
       prevStates.form.display.category = '';
       prevStates.form.display.attribute = 'none';
       prevStates.form.initValue = {};
@@ -604,7 +604,7 @@ export default class CategoryTree extends React.Component{
 
   showAttributeForm = ()=>{
     this.setState(prevStates=>{
-      prevStates.form.span = 9;
+      prevStates.form.span = 11;
       prevStates.form.display.category = 'none';
       prevStates.form.display.attribute = '';
       prevStates.form.initValue = {};
@@ -767,8 +767,8 @@ export default class CategoryTree extends React.Component{
       </Menu>
     );
     return (
-      <Row gutter={16} style={{paddingBottom:'8px'}}>
-        <Col span={6} >
+      <Row gutter={10} style={{paddingBottom:'8px'}}>
+        <Col span={5} >
           <Dropdown overlay={menu}>
             <a className="ant-dropdown-link" href="#"  style={{position:"absolute", right:"10px"}}><Icon type="plus" /></a>
           </Dropdown>
@@ -795,7 +795,7 @@ export default class CategoryTree extends React.Component{
                           initValue={this.state.form.initValue}
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
-        <Col span={18-this.state.form.span} >
+        <Col span={19-this.state.form.span} >
           <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
           <div style={{background:'#fff', padding:'0 3px'}}><CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} /></div>
         </Col>

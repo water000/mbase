@@ -66,14 +66,18 @@ export default class ColPicker extends React.Component{
     });
   }
 
-  handleSubmit=()=>{
-    this.props.onSubmit(this.state.custom);
+  cleanCustom(){
     this.setState(prevStates=>{
       prevStates.custom.label = '';
       prevStates.custom.extra = '';
       prevStates.custom.dataRef = null;
       return prevStates;
     });
+  }
+
+  handleSubmit=()=>{
+    this.props.onSubmit(this.state.custom);
+    this.cleanCustom(); 
   }
 
   //@props, null if new color
@@ -87,6 +91,9 @@ export default class ColPicker extends React.Component{
         okType: 'danger',
         onOk:()=>{
           this.props.onChange(checkbox.checked, props);
+          if(props.dataRef == this.state.custom.dataRef){
+            this.cleanCustom(); 
+          }
         }
       });
     }else{
@@ -104,7 +111,11 @@ export default class ColPicker extends React.Component{
     });
   }
 
-  handleBeforeUpload=(file)=>{
+  handleCustomCancel=()=>{
+    this.cleanCustom();
+  }
+
+  handleBeforeUpload=(file,list)=>{
     this.setState(prevStates=>{
       prevStates.custom.extra = file;
       return prevStates;
@@ -161,28 +172,27 @@ export default class ColPicker extends React.Component{
         <span className='color-bg' style={{background:k}}></span></span>);
     }
     for(var i=0; i<this.props.checkedColor.length; i++){
-      var extra = null;
+      var extra = null, box = null, reader =  new FileReader();
       if('object' == typeof this.props.checkedColor[i].extra)
-        extra = <span className='color-bg'><img src={this.props.checkedColor[i].extra.data} /></span>; 
+        extra = <span className='color-bg'><img className='color-bg' src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](this.props.checkedColor[i].extra)} /></span>; 
       else if(0 == this.props.checkedColor[i].extra.indexOf('#'))
         extra = <span className='color-bg' title={this.props.checkedColor[i].extra} style={{background:this.props.checkedColor[i].extra}}></span>; 
       else
         extra = <span className='color-bg'><img src={Global.imgUrl(this.props.checkedColor[i].value)} /></span>; 
-      var box = <span className='color-box'>
+      box = <span className='color-box'>
           <Checkbox 
             name='color' 
             style={{width:'75px'}} 
             onChange={((i)=>(e)=>this.handleCheckboxChange(e.target, {label:null, extra:null,  dataRef:this.props.checkedColor[i]}))(i)}
-            checked='true'>
+            checked={true}
+          >
             {((i)=><a href='#' title='cancel' onClick={(e)=>this.handleCustomEdit(this.props.checkedColor[i])}>
               {this.props.checkedColor[i].label}
             </a>)(i)}
           </Checkbox>
           {extra}
-        <span>;
-      custom_color.push(
-        box 
-      );
+        </span>;
+      custom_color.push(box);
     }
     return (
       <div>
@@ -218,7 +228,10 @@ export default class ColPicker extends React.Component{
                 <Button type='primary' size='small' onClick={this.handleSubmit} 
                   disabled={!this.state.custom.label || !this.state.custom.extra} 
                   style={{position:'absolute', top:0,right:'15px'}}>OK</Button>
-                {this.state.custom.dataRef && <a style={{position:'absolute', top:0,bottom:0,right:'0',color:'red'}}>&times;</a>}
+                {this.state.custom.dataRef && 
+                  <a 
+                    onClick={this.handleCustomCancel}
+                   style={{position:'absolute', top:0,bottom:0,right:'0',color:'red'}}>&times;</a>}
               </span>
           }
         </div>
