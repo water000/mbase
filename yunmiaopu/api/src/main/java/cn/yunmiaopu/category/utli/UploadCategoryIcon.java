@@ -8,9 +8,9 @@ import java.io.InputStream;
  * Created by a on 2018/6/6.
  */
 @Component
-public class UploadJpg extends cn.yunmiaopu.common.util.UploadJpg {
+public class UploadCategoryIcon extends cn.yunmiaopu.common.util.UploadJpg {
 
-    public UploadJpg(){
+    public UploadCategoryIcon(){
         super("category");
     }
 
