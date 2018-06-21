@@ -84,8 +84,9 @@ export class RequestKVSelect extends React.Component{
   }
 
   componentDidUpdate(prevProps, prevStates){
-    if(!prevProps.defaultValue && this.first)
+    if(!prevProps.emptyOption && prevStates.kv != this.state.kv && this.first){
       this.props.onChange(this.first);
+    }
   }
 
   loadKV(){
@@ -99,16 +100,20 @@ export class RequestKVSelect extends React.Component{
 
   render(){
     let opts = [];
+
+    if(this.props.emptyOption !== undefined)
+      opts.push(<Option value={this.props.emptyOption.value}>{this.props.emptyOption.label}</Option>);
+
     for(var k in this.state.kv){
       opts.push(<Option value={k}>{this.state.kv[k]}</Option>);
       this.first = this.first || k;
     }
+
     return (
       <Select 
-        name={this.props.name}
-        value={this.props.value}
-        defaultValue={this.props.defaultValue || this.first} 
-        onChange={this.props.onChange}>
+        {...this.props}
+        defaultValue={ this.props.defaultValue ||(this.props.emptyOption !== undefined ? this.props.emptyOption.value : this.first)} 
+      >
       {opts}
       </Select>
     );

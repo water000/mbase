@@ -1,10 +1,14 @@
 package cn.yunmiaopu.category.controller;
 
 import cn.yunmiaopu.category.entity.Attribute;
+import cn.yunmiaopu.category.entity.Option;
 import cn.yunmiaopu.category.service.IAttributeService;
+import cn.yunmiaopu.category.service.IOptionService;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +21,65 @@ public class AttributeController {
     @Autowired
     private IAttributeService srv;
 
+    @Autowired
+    private IOptionService optsrv;
+
     @PostMapping("/category-attribute")
-    public Attribute save(Attribute attr){
-        return (Attribute)srv.save(attr);
+    public JSONObject save(Attribute attr, @RequestBody List<Option> opts){
+        byte optionsCounter = 0;
+
+        if (opts != null && opts.size() > 0) {
+            if( 0 == attr.getId() ){
+                optionsCounter = (byte)opts.size();
+            }else{
+                Iterator<Option> srcitr = optsrv.findByAttributeId(attr.getId()).iterator();
+                Iterator<Option> dstitr = opts.iterator();
+
+                for(; srcitr.hasNext(); ){
+                    Option found = null;
+                    Option cmp = srcitr.next();
+
+                    for(; dstitr.hasNext(); ){
+                        Option next = dstitr.next();
+                        if(next.getId() > 0 && next.getId() == cmp.getId()){
+                            found = srcitr.next();
+                            break;
+                        }
+                    }
+
+                    if(found != null){
+                        if(found.equals(cmp)){// no need to update if absolutely equals
+                            dstitr.remove();
+                        }
+                        optionsCounter++;
+                    }else{
+                        srcitr.remove();
+                        optionsCounter--;
+                        optsrv.deleteById(cmp.getId());
+                    }
+                }
+
+                for(; dstitr.hasNext(); ){
+                    if(0 == dstitr.next().getId())
+                        optionsCounter++;
+                }
+            }
+        }
+
+
+        attr.setOptionsCounter(optionsCounter);
+        attr = (Attribute)srv.save(attr);
+        if(opts != null && opts.size() > 0){
+            for(Option opt : opts){
+                opt.setAttributeId(attr.getId());
+                optsrv.save(opt);
+            }
+        }
+
+        JSONObject json = new JSONObject();
+        json.put("attribute", attr);
+        json.put("options", opts);
+        return json;
     }
 
     @GetMapping("/category-attribute/{categoryId}")

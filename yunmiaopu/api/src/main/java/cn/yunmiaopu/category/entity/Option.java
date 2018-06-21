@@ -18,6 +18,20 @@ public class Option {
     private String extra; // extra info like color(white, #fff);image token
     private byte order;
 
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof Option))
+            return false;
+        Option that = (Option) o;
+        if(this == that)
+            return true;
+        return id == that.id
+               && attributeId == that.attributeId
+               && (label == that.label || (label != null && that.label != null && label.equals(that.label)))
+               && (extra == that.extra || (extra != null && that.extra != null && extra.equals(that.extra)))
+               && order == that.order;
+    }
+
     public long getId() {
         return id;
     }

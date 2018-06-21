@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox, Modal} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 import ColPicker from "../ColPicker"
@@ -317,6 +317,20 @@ class AttributeForm extends React.Component{
     };
   }
 
+  isValueEmpty(){
+    return !this.state.fields.value.value 
+      && !this.state.fields.inputType.value
+      && 1 == this.state.fields.enum.value.length
+      && 0 == this.state.fields.options.value.length
+  }
+
+  cleanValue(){
+    this.state.fields.value.value = '';
+    this.state.fields.inputType.value = '';
+    this.state.fields.enum.value = [''];
+    this.state.fields.options.value = [];
+  }
+
   handleValueChange=(target)=>{
     this.setState(prevStates=>{
       prevStates.fields[target.name].value = target.value;
@@ -325,10 +339,25 @@ class AttributeForm extends React.Component{
   }
 
   handleTypeChange=(value)=>{
-    this.setState(prevStates=>{
-      prevStates.fields.type.value = value;
-      return prevStates;
-    });
+    if(!this.isValueEmpty()){
+      Modal.confirm({
+        title:'Are you sure to swith the radio even if the value of previous type is not empty?',
+        content:'operation can not be revert',
+        okType: 'danger',
+        onOk:()=>{
+          this.setState(prevStates=>{
+              prevStates.fields.type.value = value;
+            return prevStates;
+          });
+          this.cleanValue();
+        }
+      });
+    }else{
+      this.setState(prevStates=>{
+          prevStates.fields.type.value = value;
+        return prevStates;
+      });
+    }
   }
 
   handleInputTypeChange=(value)=>{
@@ -468,50 +497,50 @@ class AttributeForm extends React.Component{
             'INPUT' == this.state.fields.type.value && 
               <RequestKVSelect 
                 name='inputType'
-                value={this.state.fields.inputType.value}
                 defaultValue={this.state.fields.inputType.value} 
+                emptyOption={{value:'', label:'--select input type--'}}
                 url='/category/enums'
                 id='Attribute.InputType'
                 onChange={this.handleInputTypeChange} />}
         </FormItem>
-        <FormItem {...formItemLayout} {...this.state.fields.isPartOfSKU} label="SKU Part" >
+        <FormItem {...formItemLayout} {...this.state.fields.isPartOfSKU} label="Option" >
           <Checkbox 
             name='isPartOfSKU'
             defaultChecked={this.state.fields.isPartOfSKU.value}
             checked={this.state.fields.isPartOfSKU.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
-            Yes
+            SKU Part 
           </Checkbox>
         </FormItem>
-        <FormItem {...formItemLayout} {...this.state.fields.isRequired} label="Required" >
+        <FormItem {...formItemLayout} {...this.state.fields.isRequired} label="Option" >
           <Checkbox 
             name='isRequired'
             defaultChecked={this.state.fields.isRequired.value}
             checked={this.state.fields.isRequired.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
-            Yes
+            Required
           </Checkbox>
         </FormItem>
-        <FormItem {...formItemLayout} {...this.state.fields.allowSearch} label="Allow Search" >
+        <FormItem {...formItemLayout} {...this.state.fields.allowSearch} label="Option" >
           <Checkbox 
             name='allowSearch'
             defaultChecked={this.state.fields.allowSearch.value}
             checked={this.state.fields.allowSearch.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
-            Yes
+            Allow Search
           </Checkbox>
         </FormItem>
-        <FormItem {...formItemLayout} {...this.state.fields.allowOverride} label="Allow Override" >
+        <FormItem {...formItemLayout} {...this.state.fields.allowOverride} label="Option" >
           <Checkbox 
             name='allowOverride'
             defaultChecked={this.state.fields.allowOverride.value}
             checked={this.state.fields.allowOverride.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
-            Yes
+            Allow Override
           </Checkbox>
         </FormItem>
         <Button loading={this.state.loading} type="primary" htmlType="submit" style={{width:"100%"}}>Submit</Button>
@@ -594,7 +623,7 @@ export default class CategoryTree extends React.Component{
 
   showCategoryForm = ()=>{
     this.setState(prevStates=>{
-      prevStates.form.span = 11;
+      prevStates.form.span = 10;
       prevStates.form.display.category = '';
       prevStates.form.display.attribute = 'none';
       prevStates.form.initValue = {};
@@ -604,7 +633,7 @@ export default class CategoryTree extends React.Component{
 
   showAttributeForm = ()=>{
     this.setState(prevStates=>{
-      prevStates.form.span = 11;
+      prevStates.form.span = 10;
       prevStates.form.display.category = 'none';
       prevStates.form.display.attribute = '';
       prevStates.form.initValue = {};

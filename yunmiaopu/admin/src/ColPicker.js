@@ -174,11 +174,13 @@ export default class ColPicker extends React.Component{
     for(var i=0; i<this.props.checkedColor.length; i++){
       var extra = null, box = null, reader =  new FileReader();
       if('object' == typeof this.props.checkedColor[i].extra)
-        extra = <span className='color-bg'><img className='color-bg' src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](this.props.checkedColor[i].extra)} /></span>; 
+        extra = <img className='color-bg' src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](this.props.checkedColor[i].extra)} />; 
       else if(0 == this.props.checkedColor[i].extra.indexOf('#'))
         extra = <span className='color-bg' title={this.props.checkedColor[i].extra} style={{background:this.props.checkedColor[i].extra}}></span>; 
+      else if(this.props.checkedColor[i].extra.indexOf('.jpg') > 0)
+        extra = <img className='color-bg' src={Global.imgUrl(this.props.checkedColor[i].value)} />; 
       else
-        extra = <span className='color-bg'><img src={Global.imgUrl(this.props.checkedColor[i].value)} /></span>; 
+        continue;
       box = <span className='color-box'>
           <Checkbox 
             name='color' 
