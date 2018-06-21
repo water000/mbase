@@ -7,6 +7,8 @@ import cn.yunmiaopu.common.util.CrudServiceAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+
 /**
  * Created by macbookpro on 2018/5/28.
  */
@@ -14,9 +16,14 @@ import org.springframework.stereotype.Service;
 public class OptionService extends CrudServiceAdapter implements IOptionService {
 
     @Autowired
-    private IOptionDao repo;
+    private IOptionDao dao;
+
+    @PostConstruct
+    public void init(){
+        super.setRepository(dao);
+    }
 
     public Iterable<Option> findByAttributeId(long attributeId){
-        return repo.findByAttributeId(attributeId);
+        return dao.findByAttributeId(attributeId);
     }
 }

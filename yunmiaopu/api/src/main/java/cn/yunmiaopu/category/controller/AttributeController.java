@@ -4,6 +4,7 @@ import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.category.entity.Option;
 import cn.yunmiaopu.category.service.IAttributeService;
 import cn.yunmiaopu.category.service.IOptionService;
+import cn.yunmiaopu.common.util.Response;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -28,7 +29,7 @@ public class AttributeController {
     private IOptionService optsrv;
 
     @PostMapping("/category-attribute")
-    public JSONObject save(Attribute attr,
+    public Response save(Attribute attr,
                            String options,
                            @RequestParam("colorImg[]")MultipartFile[] colorImg){
         byte optionsCounter = 0;
@@ -88,7 +89,7 @@ public class AttributeController {
 
         JSONObject json = (JSONObject)JSON.toJSON(attr);
         json.put("options", opts);
-        return json;
+        return Response.ok(json);
     }
 
     @GetMapping("/category-attribute/{categoryId}")

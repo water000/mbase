@@ -1,5 +1,6 @@
 package cn.yunmiaopu.category.utli;
 
+import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.common.util.UploadJpg;
 
 import java.io.InputStream;
@@ -25,6 +26,6 @@ public class UploadAttributeColor extends UploadJpg {
     @Override
     public String serializeUrl(){
         String token = getToken();
-        return token.startsWith("#") ? token : smallURL();
+        return token.startsWith("#") || Attribute.NamedColor.valueOf(token) != null ? token : smallURL();
     }
 }

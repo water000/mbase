@@ -1,5 +1,5 @@
 import React from 'react';
-import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox, Modal} from 'antd';
+import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, message, Table, Badge, Avatar, Upload, List, Checkbox, Modal, Tag} from 'antd';
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 import ColPicker from "../ColPicker"
@@ -252,32 +252,36 @@ class CategoryForm extends React.Component{
 class CategoryTable extends React.Component{
 
   render(){
+    console.log(this.props.data);
     var fn=(item)=>{
       var desc;
       if(item.isLeaf){
-        if('CONSTANT' == item.type)
-          desc = item.value;
-        else if('INPUT' == item.type)
-          desc = item.inputType;
-        else if(item.optionsCounter > 0){
-          desc = item.options.map((item, idx)=>{
+        if('CONSTANT' == item.rawdata.type)
+          desc = 'value: ' + item.rawdata.value;
+        else if('INPUT' == item.rawdata.type)
+          desc = 'InputType: ' + item.rawdata.inputType;
+        else if(item.rawdata.optionsCounter > 0){
+          desc = item.rawdata.options.map((item, idx)=>{
             var extra;
             if(item.extra.length > 0){
               if(item.extra.indexOf('.jpg') > 0)
-                extra = <img src={Global.imgUrl(item.extra)} style={{width:'20px', height:'20px'}} />
+                extra = <Tag><img src={Global.imgUrl(item.extra)} style={{width:'14px', height:'14px'}} />{item.label}</Tag>
               else
-                extra = <span style={{width:'20px', height:'20px', background:item.extra}}/>
+                extra = <Tag style={{background:item.extra}}>{item.label}</Tag>
             }
-            return <span>{item.label}{extra}</span>
+            return extra;
           });
         }
       }
       return item.isLeaf ?
         <List.Item.Meta
-          avatar={<Avatar>{item.rawdata.type}</Avatar>}
+          avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type}</Avatar>}
           title={<div>{item.rawdata.name}
             <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
-          description={<div>{desc}</div>}
+          description={<div>{desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
+            {item.rawdata.isRequired && <Tag>Required</Tag>}
+            {item.rawdata.allowSearch && <Tag>Allow Search</Tag>}
+            {item.rawdata.allowOverride && <Tag>Allow Override</Tag>} </div>}
         />
         :
         <List.Item.Meta
@@ -362,19 +366,21 @@ class AttributeForm extends React.Component{
   cleanFileds(){
     this.setState(prevStates=>{
       for(var k in prevStates.fields){
-        switch(typeof prevStates.fields[k]){
+        switch(typeof prevStates.fields[k].value){
           case 'string':
-            prevStates.field[k].value = '';
+            prevStates.fields[k].value = '';
             break;
           case 'number':
-            prevStates.field[k].value = 0;
+            prevStates.fields[k].value = 0;
             break;
           case 'boolean':
-            prevStates.field[k].value = false;
+            prevStates.fields[k].value = false;
             break;
-        }
-        if(prevStates.fields[k] instanceof Array){
-          prevStates.fields[k].value = [];
+          default:
+            if(prevStates.fields[k].value instanceof Array){
+              prevStates.fields[k].value = [];
+            }
+          break;
         }
       }
       return prevStates;
@@ -485,6 +491,11 @@ class AttributeForm extends React.Component{
 
   handleSubmit = (e)=>{
     e.preventDefault();
+
+    this.setState(prevStates=>{
+      prevStates.loading = true;
+      return prevStates;
+    });
 
     var form = new FormData();
     form.append('categoryId', this.props.category.rawdata.id);
@@ -605,6 +616,7 @@ class AttributeForm extends React.Component{
               <RequestKVSelect 
                 name='inputType'
                 defaultValue={this.state.fields.inputType.value} 
+                value={this.state.fields.inputType.value} 
                 emptyOption={{value:'', label:'--select input type--'}}
                 url='/category/enums'
                 id='Attribute.InputType'
@@ -614,6 +626,7 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='isPartOfSKU'
             defaultChecked={this.state.fields.isPartOfSKU.value}
+            checked={this.state.fields.isPartOfSKU.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             SKU Part 
@@ -623,6 +636,7 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='isRequired'
             defaultChecked={this.state.fields.isRequired.value}
+            checked={this.state.fields.isRequired.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Required
@@ -632,6 +646,7 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='allowSearch'
             defaultChecked={this.state.fields.allowSearch.value}
+            checked={this.state.fields.allowSearch.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Allow Search
@@ -641,6 +656,7 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='allowOverride'
             defaultChecked={this.state.fields.allowOverride.value}
+            checked={this.state.fields.allowOverride.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Allow Override
@@ -698,10 +714,13 @@ export default class CategoryTree extends React.Component{
   }
 
   addCategory(category){
-    var ret;
+    var ret, list = category instanceof Array ? category : [category];
     this.setState(prevStates=>{
-      ret = {title:category.cnName, key:`${category.id}C`, children:[], rawdata:category};
-      prevStates.curNodeData.children.push(ret);
+      for( var i=0; i<list.length; i++ ){
+        var category = list[i];
+        ret = {title:category.cnName, key:`${category.id}C`, children:[], rawdata:category};
+        prevStates.curNodeData.children.push(ret);
+      }
       return prevStates;
     });
     return ret;
@@ -715,10 +734,13 @@ export default class CategoryTree extends React.Component{
     this.setState(prevStates=>prevStates);
   }
   addAttribute(attribute){
-    var ret;
+    var ret, list = attribute instanceof Array ? attribute : [attribute];
     this.setState(prevStates=>{
-      ret = prevStates.curNodeData.children.push({
-        title:attribute.name, key:`${attribute.id}A`, isLeaf:true, rawdata:attribute});
+      for(var i=0; i<list.length; i++){
+        var attribute = list[i];
+        ret = prevStates.curNodeData.children.push({
+          title:attribute.name, key:`${attribute.id}A`, isLeaf:true, rawdata:attribute});
+      }
       return prevStates;
     });
     return ret;
@@ -743,14 +765,17 @@ export default class CategoryTree extends React.Component{
   }
 
   showAttributeForm = ()=>{
-    this.setState(prevStates=>{
-      prevStates.form.span = 10;
-      prevStates.form.display.category = 'none';
-      prevStates.form.display.attribute = '';
-      prevStates.form.initValue = {};
-      return prevStates;
-    });
+    if(this.state.curNodeData.key != '0'){
+      this.setState(prevStates=>{
+        prevStates.form.span = 10;
+        prevStates.form.display.category = 'none';
+        prevStates.form.display.attribute = '';
+        prevStates.form.initValue = {};
+        return prevStates;
+      });
+    }
   }
+
   handleAttributeSubmit = (formData)=>{
     return new Promise((resolve, reject)=>{
       this.restAttr.create(formData).then(res=>res.json()).then(json=>{
@@ -774,14 +799,20 @@ export default class CategoryTree extends React.Component{
           message.success('Attribute saved!');
         }
         resolve(json);
+      })
+      .catch(e=>{
+        (reject || console.error)(e);
       });
     });
   }
 
-  handleCategoryEdit = (category)=>{
-    this.showCategoryForm();
+  handleEdit = (node)=>{
+    if(node.isLeaf)
+      this.showAttributeForm();
+    else
+      this.showCategoryForm();
     this.setState(prevStates=>{
-      prevStates.form.initValue = category.rawdata;
+      prevStates.form.initValue = node.rawdata;
       return prevStates;
     });
   }
@@ -869,17 +900,13 @@ export default class CategoryTree extends React.Component{
   loadData(categoryId){
     this.restCgyParent.select(categoryId).then(rsp=>rsp.json())
       .then(list=>{
-        list.map(cgy=>{
-          this.addCategory(cgy);
-        });
+        this.addCategory(list);
       });
 
     if(categoryId != '0'){
       this.restAttrList.select(categoryId).then(rsp=>rsp.json())
         .then(list=>{
-          list.map(attr=>{
-            this.addAttribute(attr);
-          });
+          this.addAttribute(list);
         });
     }
   }
@@ -921,7 +948,7 @@ export default class CategoryTree extends React.Component{
         <Menu.Item>
           <a rel="noopener noreferrer" href="#" onClick={this.showCategoryForm}>Category</a>
         </Menu.Item>
-        <Menu.Item>
+        <Menu.Item disabled={this.state.curNodeData.key == '0'}>
           <a rel="noopener noreferrer" href="#" onClick={this.showAttributeForm}>Attribute</a>
         </Menu.Item>
         <Menu.Item>
@@ -960,7 +987,7 @@ export default class CategoryTree extends React.Component{
         </Col>
         <Col span={19-this.state.form.span} >
           <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
-          <div style={{background:'#fff', padding:'0 3px'}}><CategoryTable data={this.state.curNodeData.children} onEdit={this.handleCategoryEdit} /></div>
+          <div style={{background:'#fff', padding:'0 3px'}}><CategoryTable data={this.state.curNodeData.children} onEdit={this.handleEdit} /></div>
         </Col>
       </Row>
     );

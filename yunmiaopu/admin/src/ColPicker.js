@@ -210,7 +210,7 @@ export default class ColPicker extends React.Component{
             placeholder='custom name' 
             value={this.state.custom.label}
             onChange={(e)=>this.handleCustomNameChanged(e.target.value)}
-            required />
+            />
           {
             this.state.custom.label && 
               <span>

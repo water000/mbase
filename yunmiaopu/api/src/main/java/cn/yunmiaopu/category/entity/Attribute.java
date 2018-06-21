@@ -1,5 +1,7 @@
 package cn.yunmiaopu.category.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -90,6 +92,7 @@ public class Attribute {
         this.overrideAttributeId = overrideAttributeId;
     }
 
+    @JSONField(name="isPartOfSKU")
     public boolean isPartOfSKU() {
         return isPartOfSKU;
     }
@@ -98,6 +101,7 @@ public class Attribute {
         this.isPartOfSKU = isPartOfSKU;
     }
 
+    @JSONField(name="isRequired")
     public boolean isRequired() {
         return isRequired;
     }
@@ -106,7 +110,7 @@ public class Attribute {
         this.isRequired = isRequired;
     }
 
-   public byte getOptionsCounter() {
+    public byte getOptionsCounter() {
         return optionsCounter;
     }
 
