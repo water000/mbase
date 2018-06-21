@@ -252,7 +252,6 @@ class CategoryForm extends React.Component{
 class CategoryTable extends React.Component{
 
   render(){
-    console.log(this.props.data);
     var fn=(item)=>{
       var desc;
       if(item.isLeaf){
@@ -263,14 +262,17 @@ class CategoryTable extends React.Component{
         else if(item.rawdata.optionsCounter > 0){
           desc = item.rawdata.options.map((item, idx)=>{
             var extra;
-            if(item.extra.length > 0){
+            if(item.extra != null && item.extra.length > 0){
               if(item.extra.indexOf('.jpg') > 0)
                 extra = <Tag><img src={Global.imgUrl(item.extra)} style={{width:'14px', height:'14px'}} />{item.label}</Tag>
               else
                 extra = <Tag style={{background:item.extra}}>{item.label}</Tag>
+            }else{
+              extra = <Tag>{item.label}</Tag>;
             }
             return extra;
           });
+          desc = <span>Enums:{desc}</span>
         }
       }
       return item.isLeaf ?
@@ -598,7 +600,8 @@ class AttributeForm extends React.Component{
               <span>
                 <Input name="enum" id='0' 
                   placeholder={'Entry to create; Back until empty to Delete'}
-                  onPressEnter={(e)=>{e.preventDefault();this.handleAppendEnum(e.target)}} required />
+                  onPressEnter={(e)=>{e.preventDefault();this.handleAppendEnum(e.target)}} 
+                  required={0==this.state.fields.options.value.length} />
                 {
                   this.state.fields.options.value.map((item,idx)=>
                      <span style={{display:'inline-block',width:'50%', borderBottom:'1px dashed #ccc'}}>

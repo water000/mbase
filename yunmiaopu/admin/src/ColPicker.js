@@ -19,39 +19,6 @@ export default class ColPicker extends React.Component{
     };
 	}
 
-  encode(name, arg){
-    return name + '$' + arg;
-  }
-  decode(value){
-    return value.split('$');
-  }
-  replace({name,arg}, value){
-    if(name)
-      return name + '$' + value.substr(value.indexOf('$')+1);
-    else
-      return value.substr(0, value.indexOf('$')) + '$' + arg;
-  }
-
-  _searchAndChange({name, arg}){
-    this.setState(prevStates=>{
-      for(var i=0; i<prevStates.color.length; i++){
-        if(0 == prevStates.color[i].indexOf(prevStates.custom.name)){
-          prevStates.color[i] = this.replace({name, arg}, prevStates.color[i]);
-          break;
-        }
-      }
-      if(i == prevStates.color.length){
-        prevStates.color.push(this.encode(prevStates.custom.name, prevStates.custom.arg));
-      }else{
-        if(name)
-          prevStates.custom.name = name;
-        else if(arg)
-          prevStates.custom.arg = arg;
-      }
-      return prevStates;
-    });
-  }
-
   handleCustomNameChanged=(v)=>{
     this.setState(prevStates=>{
       prevStates.custom.label = v;
@@ -140,7 +107,7 @@ export default class ColPicker extends React.Component{
 
   checked(value){
     for(var i=0; i<this.props.checkedColor.length; i++){
-      if(value === this.props.checkedColor[i].value){
+      if(value === this.props.checkedColor[i].extra){
         return this.props.checkedColor[i];
       }
     }
@@ -165,8 +132,10 @@ export default class ColPicker extends React.Component{
           name='color' 
           style={{width:'75px'}} 
           value={k} 
-          onChange={(e)=>this.handleCheckboxChange(e.target, {label:this.state.named_color[k], extra:k, dataRef:checked})}
+          onChange={((k)=>(e)=>this.handleCheckboxChange(e.target, {label:this.state.named_color[k], extra:k, dataRef:checked}))(k)}
+          checked={checked != null}
           defaultChecked={checked != null}>
+
           {this.state.named_color[k]}
         </Checkbox>
         <span className='color-bg' style={{background:k}}></span></span>);
