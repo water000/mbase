@@ -32,6 +32,7 @@ public class Attribute {
     private boolean isPartOfSKU;
     private boolean isRequired;
     private boolean allowSearch;
+    private long editTs;
 
     public long getId() {
         return id;
@@ -127,5 +128,13 @@ public class Attribute {
 
     public void setAllowSearch(boolean allowSearch) {
         this.allowSearch = allowSearch;
+    }
+
+    public long getEditTs() {
+        return editTs;
+    }
+
+    public void setEditTs(long editTs) {
+        this.editTs = editTs;
     }
 }

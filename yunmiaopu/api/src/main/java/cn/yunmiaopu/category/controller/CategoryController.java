@@ -3,7 +3,7 @@ package cn.yunmiaopu.category.controller;
 import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.category.entity.Category;
 import cn.yunmiaopu.category.service.ICategoryService;
-import cn.yunmiaopu.category.utli.UploadJpg;
+import cn.yunmiaopu.category.utli.UploadCategoryIcon;
 import cn.yunmiaopu.common.util.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
-import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -29,7 +28,7 @@ public class CategoryController {
     private ICategoryService cgysrv;
 
     @Autowired
-    private UploadJpg upj;
+    private UploadCategoryIcon upj;
 
     @Autowired
     private ServletContext ctx;

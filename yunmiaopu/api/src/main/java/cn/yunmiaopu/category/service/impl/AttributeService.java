@@ -9,6 +9,7 @@ import cn.yunmiaopu.common.util.CrudServiceAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
@@ -19,13 +20,18 @@ import java.util.Optional;
 public class AttributeService extends CrudServiceAdapter implements IAttributeService {
 
     @Autowired
-    private IAttributeDao repo;
+    private IAttributeDao dao;
 
     @Autowired
     private ICategoryService cgysrv;
 
+    @PostConstruct
+    public void init(){
+        super.setRepository(dao);
+    }
+
     public Iterable<Attribute> findByCategoryId(long categoryId){
-        return repo.findByCategoryId(categoryId);
+        return dao.findByCategoryId(categoryId);
     }
 
     public LinkedHashMap<Category, Iterable<Attribute>> ancestors(long categoryId){

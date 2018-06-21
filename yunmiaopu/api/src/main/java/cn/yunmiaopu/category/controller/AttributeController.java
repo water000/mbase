@@ -4,9 +4,12 @@ import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.category.entity.Option;
 import cn.yunmiaopu.category.service.IAttributeService;
 import cn.yunmiaopu.category.service.IOptionService;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Iterator;
 import java.util.List;
@@ -25,8 +28,14 @@ public class AttributeController {
     private IOptionService optsrv;
 
     @PostMapping("/category-attribute")
-    public JSONObject save(Attribute attr, @RequestBody List<Option> opts){
+    public JSONObject save(Attribute attr,
+                           String options,
+                           @RequestParam("colorImg[]")MultipartFile[] colorImg){
         byte optionsCounter = 0;
+
+        List<Option> opts = null;
+        if(options != null && options.length() > 0)
+            opts = JSON.parseArray(options, Option.class);
 
         if (opts != null && opts.size() > 0) {
             if( 0 == attr.getId() ){
@@ -68,31 +77,43 @@ public class AttributeController {
 
 
         attr.setOptionsCounter(optionsCounter);
+        attr.setEditTs(System.currentTimeMillis()/1000);
         attr = (Attribute)srv.save(attr);
         if(opts != null && opts.size() > 0){
-            for(Option opt : opts){
-                opt.setAttributeId(attr.getId());
-                optsrv.save(opt);
+            for(Option o : opts){
+                o.setAttributeId(attr.getId());
+                optsrv.save(o);
             }
         }
 
-        JSONObject json = new JSONObject();
-        json.put("attribute", attr);
+        JSONObject json = (JSONObject)JSON.toJSON(attr);
         json.put("options", opts);
         return json;
     }
 
     @GetMapping("/category-attribute/{categoryId}")
-    public Attribute get(@PathVariable long attributeId){
+    public JSONObject get(@PathVariable long attributeId){
         Optional<Attribute> opt = srv.findById(new Long(attributeId));
         if(!opt.isPresent())
             throw new IllegalArgumentException("$attributeId not found");
-        return opt.get();
+        Attribute attr = opt.get();
+        JSONObject json = (JSONObject)JSONObject.toJSON(attr);
+        json.put("options", optsrv.findByAttributeId(attr.getId()));
+
+        return json;
     }
 
     @GetMapping("/category-attributes/{categoryId}")
-    public Iterable<Attribute> list(@PathVariable long categoryId){
-        return srv.findByCategoryId(categoryId);
+    public JSONArray list(@PathVariable long categoryId){
+        JSONArray ret = new JSONArray();
+
+        for(Attribute attr : srv.findByCategoryId(categoryId) ){
+            JSONObject item = (JSONObject)JSON.toJSON(attr);
+            item.put("options", optsrv.findByAttributeId(attr.getId()));
+            ret.add(item);
+        }
+
+        return ret;
     }
 
     @DeleteMapping("/{attributeId}")

@@ -1,14 +1,14 @@
 package cn.yunmiaopu.category.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import cn.yunmiaopu.category.utli.UploadAttributeColor;
+import com.alibaba.fastjson.annotation.JSONField;
+
+import javax.persistence.*;
 
 /**
  * Created by macbookpro on 2018/5/24.
  */
-@Entity(name = "category_attribute_options")
+@Entity(name = "category_attribute_option")
 public class Option {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -16,6 +16,7 @@ public class Option {
     private long attributeId;
     private String label;
     private String extra; // extra info like color(white, #fff);image token
+    @Column(name="[order]")
     private byte order;
 
     @Override
@@ -56,6 +57,7 @@ public class Option {
         this.label = label;
     }
 
+    @JSONField(serializeUsing = UploadAttributeColor.class)
     public String getExtra() {
         return extra;
     }

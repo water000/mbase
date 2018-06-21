@@ -252,6 +252,41 @@ class CategoryForm extends React.Component{
 class CategoryTable extends React.Component{
 
   render(){
+    var fn=(item)=>{
+      var desc;
+      if(item.isLeaf){
+        if('CONSTANT' == item.type)
+          desc = item.value;
+        else if('INPUT' == item.type)
+          desc = item.inputType;
+        else if(item.optionsCounter > 0){
+          desc = item.options.map((item, idx)=>{
+            var extra;
+            if(item.extra.length > 0){
+              if(item.extra.indexOf('.jpg') > 0)
+                extra = <img src={Global.imgUrl(item.extra)} style={{width:'20px', height:'20px'}} />
+              else
+                extra = <span style={{width:'20px', height:'20px', background:item.extra}}/>
+            }
+            return <span>{item.label}{extra}</span>
+          });
+        }
+      }
+      return item.isLeaf ?
+        <List.Item.Meta
+          avatar={<Avatar>{item.rawdata.type}</Avatar>}
+          title={<div>{item.rawdata.name}
+            <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
+          description={<div>{desc}</div>}
+        />
+        :
+        <List.Item.Meta
+          avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
+          title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
+            <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
+          description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
+        />;
+    }
     return (
       <List
         itemLayout="horizontal"
@@ -260,12 +295,7 @@ class CategoryTable extends React.Component{
         dataSource={this.props.data}
         renderItem={item => (
           <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
-            <List.Item.Meta
-              avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
-              title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
-                <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
-              description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
-            />
+            {fn(item)}
           </List.Item>
         )}
       />
@@ -281,6 +311,9 @@ class AttributeForm extends React.Component{
     this.state = {
       loading:false,
       fields:{
+        id:{
+          value:0,
+        },
         name:{
           value:'',
           validateStatus:''
@@ -294,9 +327,6 @@ class AttributeForm extends React.Component{
         },
         inputType:{
           value:'',
-        },
-        enum:{
-          value:[''],
         },
         isPartOfSKU:{
           value:false,
@@ -320,15 +350,35 @@ class AttributeForm extends React.Component{
   isValueEmpty(){
     return !this.state.fields.value.value 
       && !this.state.fields.inputType.value
-      && 1 == this.state.fields.enum.value.length
       && 0 == this.state.fields.options.value.length
   }
 
   cleanValue(){
     this.state.fields.value.value = '';
     this.state.fields.inputType.value = '';
-    this.state.fields.enum.value = [''];
     this.state.fields.options.value = [];
+  }
+
+  cleanFileds(){
+    this.setState(prevStates=>{
+      for(var k in prevStates.fields){
+        switch(typeof prevStates.fields[k]){
+          case 'string':
+            prevStates.field[k].value = '';
+            break;
+          case 'number':
+            prevStates.field[k].value = 0;
+            break;
+          case 'boolean':
+            prevStates.field[k].value = false;
+            break;
+        }
+        if(prevStates.fields[k] instanceof Array){
+          prevStates.fields[k].value = [];
+        }
+      }
+      return prevStates;
+    });
   }
 
   handleValueChange=(target)=>{
@@ -367,13 +417,6 @@ class AttributeForm extends React.Component{
     });
   }
 
-  handleChangePartOfSKU=(target)=>{
-    this.setState(prevStates=>{
-      prevStates.fields.isPartOfSKU.value = !prevStates.fields.isPartOfSKU.value;
-      return prevStates;
-    });
-  }
-
   handleSwitch=(target)=>{
     this.setState(prevStates=>{
       prevStates.fields[target.name].value = !prevStates.fields[target.name].value;
@@ -381,15 +424,18 @@ class AttributeForm extends React.Component{
     });
   }
 
-  handleChangeEnum=(target)=>{
-    let idx = parseInt(target.id);
+  handleChangeEnum=(target, item)=>{
     this.setState(prevStates=>{
-      if(!target.value && idx>0)
-        prevStates.fields.enum.value.splice(idx, 1);
-      else
-        prevStates.fields.enum.value[idx] = target.value;
-      if( 0 == prevStates.fields.enum.value.length)
-        prevStates.fields.enum.value.push('');
+      for(var i=0; i<this.state.fields.options.value.length; i++){
+        if(item === this.state.fields.options.value[i]){
+          if(0 == target.value.length){
+            this.state.fields.options.value.splice(i, 1);
+          }else{
+            item.label = target.value;
+          }
+          break;
+        }
+      }
       return prevStates;
     });
   }
@@ -397,9 +443,8 @@ class AttributeForm extends React.Component{
   handleAppendEnum=(target)=>{
     if(target.value.length > 0){
       this.setState(prevStates=>{
-        let idx = parseInt(target.id);
-        prevStates.fields.enum.value[idx] = '';
-        prevStates.fields.enum.value.push(target.value);
+        prevStates.fields.options.value.push({label:target.value});
+        target.value = '';
         return prevStates;
       });
     }
@@ -438,6 +483,66 @@ class AttributeForm extends React.Component{
     });
   }
 
+  handleSubmit = (e)=>{
+    e.preventDefault();
+
+    var form = new FormData();
+    form.append('categoryId', this.props.category.rawdata.id);
+    for(var k in this.state.fields){
+      if( k != 'options'){
+        form.append(k, this.state.fields[k].value);
+      }
+    }
+    for(var i=0; i<this.state.fields.options.length; i++){
+      if(this.state.fields.options.value[i].extra instanceof File){
+        form.append('colorImg[]', this.state.fields.options.value[i].extra);
+        this.state.fields.options.value[i].extra = '';
+      }
+    }
+    form.append('options', JSON.stringify(this.state.fields.options.value));
+    this.props.onSubmit(form).then(rsp=>{
+      this.setState(prevStates=>{
+        prevStates.loading = false;
+        return prevStates;
+      });
+
+      if('OK' == rsp.code){
+        if(0 == form.get('id'))
+          this.cleanFileds();
+        return;
+      }
+      this.setState(prevStates=>{
+        for(var k in rsp.data){
+          if(prevStates.fields[k]){
+            prevStates.fields[k].validateStatus = 'error';
+            prevStates.fields[k].help = rsp.data[k];
+          }
+        }
+        return prevStates;
+      });
+    }).catch(e=>{
+      this.setState(prevStates=>{
+        prevStates.loading = false;
+        return prevStates;
+      });
+    });
+  }
+
+  componentDidUpdate(prevProps, prevStates){
+    if(this.props.initValue.id !== prevProps.initValue.id){
+      if(!this.props.initValue || undefined === this.props.initValue.id)
+        this.cleanFileds();
+      else
+        this.setState(prevStates=>{
+          for(var k in this.props.initValue){
+            if(this.props.initValue[k] !== undefined && prevStates.fields[k] !== undefined)
+              prevStates.fields[k].value = this.props.initValue[k];
+          }
+          return prevStates;
+        });
+    }
+  }
+
   render(){
     const formItemLayout = {
       labelCol: {
@@ -450,8 +555,8 @@ class AttributeForm extends React.Component{
       },
     };
     return <div style={{display:this.props.display}}>
-      <h4 className="title">Attribute mounted within <span className="ant-form-text">({this.props.parentData.title})</span></h4>
-      <Form layout="vertical" style={{padding:"12px 10px", background:'#fff'}}>
+      <h4 className="title">Attribute mounted within <span className="ant-form-text"><i>{this.props.category.title}</i></span></h4>
+      <Form layout="vertical" style={{padding:"12px 10px", background:'#fff'}} onSubmit={this.handleSubmit}>
         <Input type="hidden" name="categoryId" value={this.props.initValue.categoryId||0} />
         <Input type="hidden" name="id" value={this.props.initValue.id||0} />
         <FormItem {...formItemLayout} {...this.state.fields.name} label="Name" >
@@ -478,20 +583,22 @@ class AttributeForm extends React.Component{
                 onSubmit={this.handleColorSubmit} />
           }
           {
-            'ENUM' == this.state.fields.type.value && this.state.fields.enum.value.map((item, idx)=>
-              {return idx>0 ? 
-              <span style={{display:'inline-block',width:'50%', borderBottom:'1px dashed #ccc'}}>
-                {idx}.<Input name="enum" id={idx} value={item} 
-                style={{border:'0',width:'85%'}}
-                onChange={(event)=>this.handleChangeEnum(event.target)} 
-                required /></span>
-                :
-              <Input name="enum" id={idx} value={item} 
-                placeholder={0==idx?'Entry to create; Back until empty to Delete':''}
-                onChange={(event)=>this.handleChangeEnum(event.target)} 
-                onPressEnter={(e)=>this.handleAppendEnum(e.target)} required />
-              }
-            )
+            'ENUM' == this.state.fields.type.value &&
+              <span>
+                <Input name="enum" id='0' 
+                  placeholder={'Entry to create; Back until empty to Delete'}
+                  onPressEnter={(e)=>{e.preventDefault();this.handleAppendEnum(e.target)}} required />
+                {
+                  this.state.fields.options.value.map((item,idx)=>
+                     <span style={{display:'inline-block',width:'50%', borderBottom:'1px dashed #ccc'}}>
+                        {idx+1}.<Input name="enum" id={idx} value={item.label} 
+                        style={{border:'0',width:'85%'}}
+                        onChange={(event)=>this.handleChangeEnum(event.target, item)} 
+                        required />
+                      </span>     
+                  )
+                }
+              </span>
           }
           {
             'INPUT' == this.state.fields.type.value && 
@@ -507,7 +614,6 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='isPartOfSKU'
             defaultChecked={this.state.fields.isPartOfSKU.value}
-            checked={this.state.fields.isPartOfSKU.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             SKU Part 
@@ -517,7 +623,6 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='isRequired'
             defaultChecked={this.state.fields.isRequired.value}
-            checked={this.state.fields.isRequired.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Required
@@ -527,7 +632,6 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='allowSearch'
             defaultChecked={this.state.fields.allowSearch.value}
-            checked={this.state.fields.allowSearch.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Allow Search
@@ -537,7 +641,6 @@ class AttributeForm extends React.Component{
           <Checkbox 
             name='allowOverride'
             defaultChecked={this.state.fields.allowOverride.value}
-            checked={this.state.fields.allowOverride.value}
             onChange={(e)=>this.handleSwitch(e.target)}
           >
             Allow Override
@@ -615,10 +718,18 @@ export default class CategoryTree extends React.Component{
     var ret;
     this.setState(prevStates=>{
       ret = prevStates.curNodeData.children.push({
-        title:`${attribute.enName}(${attribute.cnName}`, key:`${attribute.id}A`, isLeaf:true, rawdata:attribute});
+        title:attribute.name, key:`${attribute.id}A`, isLeaf:true, rawdata:attribute});
       return prevStates;
     });
     return ret;
+  }
+  setAttribute(attribute, data){
+    attribute.title = data.name;
+    for(var k in attribute.rawdata){
+      if( data[k] !== undefined )
+        attribute.rawdata[k] = data[k] ;
+    }
+    this.setState(prevStates=>prevStates);
   }
 
   showCategoryForm = ()=>{
@@ -640,8 +751,31 @@ export default class CategoryTree extends React.Component{
       return prevStates;
     });
   }
-  handleAttributeSubmit = (data)=>{
-    
+  handleAttributeSubmit = (formData)=>{
+    return new Promise((resolve, reject)=>{
+      this.restAttr.create(formData).then(res=>res.json()).then(json=>{
+        if('OK' == json.code){
+          let id = 0;
+          if(formData instanceof FormData)
+            id = formData.get('id');
+          else if(formData instanceof Object)
+            id = formData.id || 0;
+
+          if(0 == id){
+            var ret = this.addAttribute(json.data);
+          }else{
+            for(var i=0; i<this.state.curNodeData.children.length; i++){
+              if(id == this.state.curNodeData.children[i].rawdata.id){
+                this.setAttribute(this.state.curNodeData.children[i], json.data);
+                break;
+              }
+            }
+          }
+          message.success('Attribute saved!');
+        }
+        resolve(json);
+      });
+    });
   }
 
   handleCategoryEdit = (category)=>{
@@ -820,7 +954,7 @@ export default class CategoryTree extends React.Component{
                         initValue={this.state.form.initValue}
                         onSubmit={this.handleCategorySubmit} />
           <AttributeForm display={this.state.form.display.attribute} 
-                          parentData={this.state.curNodeData} 
+                          category={this.state.curNodeData} 
                           initValue={this.state.form.initValue}
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
