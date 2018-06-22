@@ -38,7 +38,6 @@ export class RequestKVRadioGroup extends React.Component{
   }
 
   componentDidUpdate(prevProps, prevStates){
-    console.log('kv radios:', prevProps, this.props);
     if(!this.props.defaultValue && this.first){
       this.props.onChange(this.first);
     }

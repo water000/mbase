@@ -4,6 +4,7 @@ import cn.yunmiaopu.category.entity.Attribute;
 import cn.yunmiaopu.category.entity.Option;
 import cn.yunmiaopu.category.service.IAttributeService;
 import cn.yunmiaopu.category.service.IOptionService;
+import cn.yunmiaopu.category.utli.UploadAttributeColor;
 import cn.yunmiaopu.common.util.Response;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -12,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
+import java.util.*;
 
 /**
  * Created by macbookpro on 2018/5/29.
@@ -28,6 +29,30 @@ public class AttributeController {
     @Autowired
     private IOptionService optsrv;
 
+    @Autowired
+    private UploadAttributeColor uac;
+
+    @Autowired
+    private ServletContext ctx;
+
+    @PostConstruct
+    public void init(){
+        uac.setRealRoot(ctx.getRealPath("/"));
+    }
+
+    private void _delImg(String token){
+        Attribute.NamedColor color = null;
+        try{
+            color = Attribute.NamedColor.valueOf(token);
+        } catch (Exception e){
+            color = null;
+        }
+        if(null == color && !token.startsWith("#")){
+            uac.setToken(token);
+            uac.delete();
+        }
+    }
+
     @PostMapping("/category-attribute")
     public Response save(Attribute attr,
                            String options,
@@ -35,42 +60,53 @@ public class AttributeController {
         byte optionsCounter = 0;
 
         List<Option> opts = null;
-        if(options != null && options.length() > 0)
-            opts = JSON.parseArray(options, Option.class);
+        List<Option> ignore = new ArrayList<Option>();
 
-        if (opts != null && opts.size() > 0) {
+        if(attr.getType() == Attribute.Type.COLOR || attr.getType() == Attribute.Type.ENUM){
+            if(options != null && options.length() > 0)
+                opts = JSON.parseArray(options, Option.class);
+            else
+                opts = new ArrayList<Option>();
+
             if( 0 == attr.getId() ){
                 optionsCounter = (byte)opts.size();
             }else{
                 Iterator<Option> srcitr = optsrv.findByAttributeId(attr.getId()).iterator();
-                Iterator<Option> dstitr = opts.iterator();
 
                 for(; srcitr.hasNext(); ){
                     Option found = null;
                     Option cmp = srcitr.next();
 
-                    for(; dstitr.hasNext(); ){
-                        Option next = dstitr.next();
+                    for(Option next : opts){
                         if(next.getId() > 0 && next.getId() == cmp.getId()){
-                            found = srcitr.next();
+                            found = next;
                             break;
                         }
                     }
 
                     if(found != null){
-                        if(found.equals(cmp)){// no need to update if absolutely equals
-                            dstitr.remove();
+                        if(cmp.getExtra() != null){
+                            String extra = found.getExtra();
+                            if(null == extra || 0 == extra.length()) {
+                                _delImg(cmp.getExtra());
+                            }else{
+                                found.setExtra(cmp.getExtra());
+                                if(found.equals(cmp)){// no need to update if absolutely equals
+                                    ignore.add(found);
+                                }
+                            }
                         }
                         optionsCounter++;
                     }else{
+                        if(cmp.getExtra() != null)
+                            _delImg(cmp.getExtra());
                         srcitr.remove();
-                        optionsCounter--;
                         optsrv.deleteById(cmp.getId());
                     }
                 }
 
-                for(; dstitr.hasNext(); ){
-                    if(0 == dstitr.next().getId())
+                for(Option opt : opts ){
+                    if(0 == opt.getId())
                         optionsCounter++;
                 }
             }
@@ -80,8 +116,23 @@ public class AttributeController {
         attr.setOptionsCounter(optionsCounter);
         attr.setEditTs(System.currentTimeMillis()/1000);
         attr = (Attribute)srv.save(attr);
+
         if(opts != null && opts.size() > 0){
+            int i=0;
             for(Option o : opts){
+                if(ignore.contains(o))
+                    continue;
+                if(Attribute.Type.COLOR == attr.getType()
+                        && colorImg != null
+                        && colorImg.length > 0
+                        && (null == o.getExtra() || 0 == o.getExtra().length())) {
+                    try {
+                        uac.resize(colorImg[i++].getInputStream());
+                        o.setExtra(uac.getToken());
+                    } catch (Exception e) {
+                        continue;
+                    }
+                }
                 o.setAttributeId(attr.getId());
                 optsrv.save(o);
             }

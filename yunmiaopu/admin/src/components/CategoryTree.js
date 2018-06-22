@@ -251,6 +251,28 @@ class CategoryForm extends React.Component{
 
 class CategoryTable extends React.Component{
 
+  constructor(props){
+    super(props);
+    this.state = {
+      previewVisible: false,
+      previewImage: '',
+    }
+  }
+
+  handleZoomOutImg = (img)=>{
+    this.setState(prevStates=>{
+      prevStates.previewVisible = true;
+      prevStates.previewImage = img.src;
+      return prevStates;
+    });
+  }
+  handleCancel = ()=>{
+    this.setState(prevStates=>{
+      prevStates.previewVisible = false;
+      return prevStates;
+    });
+  }
+
   render(){
     var fn=(item)=>{
       var desc;
@@ -262,9 +284,11 @@ class CategoryTable extends React.Component{
         else if(item.rawdata.optionsCounter > 0){
           desc = item.rawdata.options.map((item, idx)=>{
             var extra;
-            if(item.extra != null && item.extra.length > 0){
+            if(item.extra instanceof File)
+              extra = <Tag>{item.label}<img className='color-bg' onClick={(e)=>this.handleZoomOutImg(e.target)} src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](item.extra)} /></Tag>;
+            else if(item.extra != null && item.extra.length > 0){
               if(item.extra.indexOf('.jpg') > 0)
-                extra = <Tag><img src={Global.imgUrl(item.extra)} style={{width:'14px', height:'14px'}} />{item.label}</Tag>
+                extra = <Tag>{item.label}<img src={Global.imgUrl(item.extra)} onClick={(e)=>this.handleZoomOutImg(e.target)} style={{width:'12px', height:'12px'}} /></Tag>
               else
                 extra = <Tag style={{background:item.extra}}>{item.label}</Tag>
             }else{
@@ -277,7 +301,7 @@ class CategoryTable extends React.Component{
       }
       return item.isLeaf ?
         <List.Item.Meta
-          avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type}</Avatar>}
+          avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type.substr(0,3)}</Avatar>}
           title={<div>{item.rawdata.name}
             <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
           description={<div>{desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
@@ -294,17 +318,22 @@ class CategoryTable extends React.Component{
         />;
     }
     return (
-      <List
-        itemLayout="horizontal"
-        size="small"
-        style={{background:'#fff'}}
-        dataSource={this.props.data}
-        renderItem={item => (
-          <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
-            {fn(item)}
-          </List.Item>
-        )}
-      />
+      <div>
+        <List
+          itemLayout="horizontal"
+          size="small"
+          style={{background:'#fff'}}
+          dataSource={this.props.data}
+          renderItem={item => (
+            <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
+              {fn(item)}
+            </List.Item>
+          )}
+        />
+        <Modal visible={this.state.previewVisible} footer={null} onCancel={this.handleCancel}>
+          <img style={{ width: '100%' }} src={this.state.previewImage} />
+        </Modal>
+      </div>
     );
   }
 
@@ -506,13 +535,22 @@ class AttributeForm extends React.Component{
         form.append(k, this.state.fields[k].value);
       }
     }
-    for(var i=0; i<this.state.fields.options.length; i++){
+    for(var i=0; i<this.state.fields.options.value.length; i++){
       if(this.state.fields.options.value[i].extra instanceof File){
         form.append('colorImg[]', this.state.fields.options.value[i].extra);
         this.state.fields.options.value[i].extra = '';
       }
     }
     form.append('options', JSON.stringify(this.state.fields.options.value));
+    var imgs = form.getAll('colorImg[]');
+    if(imgs && imgs.length > 0){
+      var c=0;
+      for(var i=0; i<this.state.fields.options.value.length; i++){
+        if('' == this.state.fields.options.value[i].extra){
+          this.state.fields.options.value[i].extra = imgs[c++];
+        }
+      }
+    }
     this.props.onSubmit(form).then(rsp=>{
       this.setState(prevStates=>{
         prevStates.loading = false;
