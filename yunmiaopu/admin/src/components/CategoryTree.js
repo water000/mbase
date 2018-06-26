@@ -277,33 +277,31 @@ class CategoryTable extends React.Component{
     var header = true;
     var fn=(item, idx, length)=>{
       var desc;
-      var actions = [<a onClick={()=>this.props.onEdit(item)}><Icon type="edit" /></a>];
+      var actions = this.props.orderable ? [] : [<a onClick={()=>this.props.onEdit(item)}><Icon type="edit" /></a>];
       if(item.isLeaf){
         if('CONSTANT' == item.rawdata.type)
           desc = 'value: ' + item.rawdata.value;
         else if('INPUT' == item.rawdata.type)
           desc = 'InputType: ' + item.rawdata.inputType;
         else if(item.rawdata.optionsCounter > 0){
-          desc = item.rawdata.options.map((item, idx)=>{
-            var extra;
-            if(item.extra instanceof File)
-              extra = <Tag>{item.label}<img className='color-bg' onClick={(e)=>this.handleZoomOutImg(e.target)} src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](item.extra)} /></Tag>;
-            else if(item.extra != null && item.extra.length > 0){
-              if(item.extra.indexOf('.jpg') > 0)
-                extra = <Tag>{item.label}<img src={Global.imgUrl(item.extra)} onClick={(e)=>this.handleZoomOutImg(e.target)} style={{width:'12px', height:'12px'}} /></Tag>
+          desc = item.rawdata.options.map((opt, idx)=>{
+            var extra, style;
+            if(opt.extra instanceof File)
+              extra = <img className='color-bg' onClick={(e)=>this.handleZoomOutImg(e.target)} 
+                src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](opt.extra)} />;
+            else if(opt.extra != null && opt.extra.length > 0){
+              if(opt.extra.indexOf('.jpg') > 0)
+                extra = <img src={Global.imgUrl(opt.extra)} onClick={(e)=>this.handleZoomOutImg(e.target)} 
+                  style={{width:'12px', height:'12px'}} />
               else
-                extra = <Tag style={{background:item.extra}}>{item.label}</Tag>
-            }else{
-              extra = <Tag>{item.label}</Tag>;
+                style={background:opt.extra};
             }
-            return extra;
+            return <Tag {style && style={style}}>{opt.label}{extra}</Tag>;
           });
           desc = <span>Enums:{desc}</span>
         }
 
         if(this.props.orderable){
-          actions.splice(0, 1);
-
           if(!header)
             actions.push(<a onClick={e=>this.props.onAttributeOrderChange(item, 'forward')}><Icon type="arrow-up" /></a>);
           else
@@ -317,21 +315,21 @@ class CategoryTable extends React.Component{
         <List.Item actions={actions}>
           <List.Item.Meta
             avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type.substr(0,3)}</Avatar>}
-            title={<div>{item.rawdata.name}
-              <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
-            description={<div>{desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
+            title={<div>{item.rawdata.name}</div>}
+            description={<div>
+              {desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
               {item.rawdata.isRequired && <Tag>Required</Tag>}
               {item.rawdata.allowSearch && <Tag>Allow Search</Tag>}
-              {item.rawdata.allowOverride && <Tag>Allow Override</Tag>} </div>}
+              {item.rawdata.allowOverride && <Tag>Allow Override</Tag>} 
+              &nbsp;edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()};</div>}
           />
         </List.Item>
         :
         <List.Item actions={actions}>
           <List.Item.Meta
             avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
-            title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
-              <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
-            description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
+            title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/></div>}
+            description={<div>{item.rawdata.desc}<div> create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}&nbsp;&nbsp;{item.rawdata.wikiUrl && <a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}>wiki: <i>{item.rawdata.wikiUrl}</i></a>}</div></div>}
           />
         </List.Item>;
     }
@@ -957,11 +955,26 @@ export default class CategoryTree extends React.Component{
     });
   }
 
+  checkReorderDisabled(){
+    for(var ch=this.state.curNodeData.children,i=0; i < ch.length && !ch[i].isLeaf; i++) ;
+    return i==ch.length
+      || 'loading...' == this.state.reorder.steps[this.state.reorder.cursor]
+      || ( 'save' == this.state.reorder.steps[this.state.reorder.cursor] && 0 == this.state.reorder.undoStack.length);
+  }
+  handleAttributeOrderCancel = ()=>{
+    this.setState(prevStates=>{
+      prevStates.reorder.cursor = 0;
+      return prevStates;
+    });
+  }
   handleReorder = (link)=>{
     this.setState(prevStates=>{
       prevStates.reorder.cursor++;
-      if(prevStates.reorder.cursor == prevStates.reorder.steps.length)
+      if('loading...' == this.state.reorder.steps[this.state.reorder.cursor])
+        prevStates.reorder.undoStack.splice(0, prevStates.reorder.undoStack.length);
+      if(prevStates.reorder.cursor == prevStates.reorder.steps.length){
         prevStates.reorder.cursor = 0;
+      }
       return prevStates;
     });
   }
@@ -988,7 +1001,6 @@ export default class CategoryTree extends React.Component{
   }
   handleAttributeOrderUndo = ()=>{
     var {attribute, arrow} = this.state.reorder.undoStack.pop();
-    console.log('attribute: ', attribute, ', arrow: ', arrow);
     if(this._attr_reorder(attribute, 'forward' == arrow ? 'backward' : 'forward')){
       this.setState(this.state);
     }
@@ -1085,6 +1097,7 @@ export default class CategoryTree extends React.Component{
         <Col span={19-this.state.form.span} >
           <a className="ant-dropdown-link" href="#"  
             style={{position:"absolute", right:"10px"}}
+            disabled={this.checkReorderDisabled()}
             onClick={e=>this.handleReorder(e.target)} >
             {this.state.reorder.steps[this.state.reorder.cursor]}
           </a>
@@ -1092,6 +1105,11 @@ export default class CategoryTree extends React.Component{
             style={{position:"absolute", right:"43px"}}
             onClick={e=>this.handleAttributeOrderUndo()} >
             undo<i style={{color:'#aaa'}}> | </i>
+          </a>}
+          {'save' == this.state.reorder.steps[this.state.reorder.cursor]  && 0 == this.state.reorder.undoStack.length && <a className="ant-dropdown-link" href="#"  
+            style={{position:"absolute", right:"43px"}}
+            onClick={e=>this.handleAttributeOrderCancel()} >
+            cancel<i style={{color:'#aaa'}}> | </i>
           </a>}
           <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
           <div style={{background:'#fff', padding:'0 3px'}}>
