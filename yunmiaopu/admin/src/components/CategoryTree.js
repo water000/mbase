@@ -285,7 +285,7 @@ class CategoryTable extends React.Component{
           desc = 'InputType: ' + item.rawdata.inputType;
         else if(item.rawdata.optionsCounter > 0){
           desc = item.rawdata.options.map((opt, idx)=>{
-            var extra, style;
+            var extra, style={};
             if(opt.extra instanceof File)
               extra = <img className='color-bg' onClick={(e)=>this.handleZoomOutImg(e.target)} 
                 src={window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](opt.extra)} />;
@@ -296,7 +296,11 @@ class CategoryTable extends React.Component{
               else
                 style={background:opt.extra};
             }
-            return <Tag {style && style={style}}>{opt.label}{extra}</Tag>;
+            return <Tag style={style}>
+              {this.props.orderable && idx>0 && <a onClick={e=>this.props.onAttributeOrderChange(item, 'forward', opt)}><Icon type='arrow-left'/></a> } 
+                {opt.label}{extra}
+              {this.props.orderable && idx != item.rawdata.options.length-1 && <a onClick={e=>this.props.onAttributeOrderChange(item, 'backward', opt)}><Icon type='arrow-right' /></a>}
+            </Tag>;
           });
           desc = <span>Enums:{desc}</span>
         }
@@ -988,20 +992,37 @@ export default class CategoryTree extends React.Component{
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;
-        return true;
+        return [ch[i].rawdata.id,ch[i].rawdata.order, ch[dst].rawdata.id,ch[dst].rawdata.order];
       }
     }
-    return false;
+    return null;
   }
-  handleAttributeOrderChange = (attribute, arrow)=>{
-    if(this._attr_reorder(attribute, arrow)){
-      this.state.reorder.undoStack.push({attribute, arrow});
+  _opt_reorder(attribute, arrow, opt){
+    var ch = attribute.rawdata.options||[], i=0, dst, temp;
+    console.log(ch, arrow, opt, attribute);
+    for(; i<ch.length; i++){
+      if(ch[i] == opt){
+        dst = 'forward' == arrow ? i-1 : i+1;
+        ch[i].order -= i-dst;
+        ch[dst].order += i-dst;
+        temp = ch[i];
+        ch[i] = ch[dst];
+        ch[dst] = temp;
+        return [ch[i].id,ch[i].order, ch[dst].id,ch[dst].order];
+      }
+    }
+    return null;
+  }
+  handleAttributeOrderChange = (attribute, arrow, option)=>{
+    var order;
+    if((order = undefined==option ? this._attr_reorder(attribute, arrow) : this._opt_reorder(attribute, arrow, option))!=null){
+      this.state.reorder.undoStack.push({attribute, arrow, option, order});
       this.setState(this.state);
     }
   }
   handleAttributeOrderUndo = ()=>{
-    var {attribute, arrow} = this.state.reorder.undoStack.pop();
-    if(this._attr_reorder(attribute, 'forward' == arrow ? 'backward' : 'forward')){
+    var {attribute, arrow, option, order} = this.state.reorder.undoStack.pop();
+    if( (undefined == option ? this._attr_reorder : this._opt_reorder)(attribute, 'forward' == arrow ? 'backward' : 'forward', option)){
       this.setState(this.state);
     }
   }
