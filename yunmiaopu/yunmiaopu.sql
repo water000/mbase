@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS category_attribute(
 	allow_search tinyint not null default 0,
 	options_counter tinyint not null default 0, -- counter for type[Color, Enum]
 	edit_ts int unsigned not null,
+	`order` tinyint not null default 0,
 	primary key(id),
 	key(category_id)
 );

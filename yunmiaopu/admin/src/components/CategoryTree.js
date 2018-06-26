@@ -274,8 +274,10 @@ class CategoryTable extends React.Component{
   }
 
   render(){
-    var fn=(item)=>{
+    var header = true;
+    var fn=(item, idx, length)=>{
       var desc;
+      var actions = [<a onClick={()=>this.props.onEdit(item)}><Icon type="edit" /></a>];
       if(item.isLeaf){
         if('CONSTANT' == item.rawdata.type)
           desc = 'value: ' + item.rawdata.value;
@@ -298,24 +300,40 @@ class CategoryTable extends React.Component{
           });
           desc = <span>Enums:{desc}</span>
         }
+
+        if(this.props.orderable){
+          actions.splice(0, 1);
+
+          if(!header)
+            actions.push(<a onClick={e=>this.props.onAttributeOrderChange(item, 'forward')}><Icon type="arrow-up" /></a>);
+          else
+            header = false;
+          if( idx != length-1)
+            actions.push(<a onClick={e=>this.props.onAttributeOrderChange(item, 'backward')}><Icon type="arrow-down" /></a>);
+        }
       }
+
       return item.isLeaf ?
-        <List.Item.Meta
-          avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type.substr(0,3)}</Avatar>}
-          title={<div>{item.rawdata.name}
-            <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
-          description={<div>{desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
-            {item.rawdata.isRequired && <Tag>Required</Tag>}
-            {item.rawdata.allowSearch && <Tag>Allow Search</Tag>}
-            {item.rawdata.allowOverride && <Tag>Allow Override</Tag>} </div>}
-        />
+        <List.Item actions={actions}>
+          <List.Item.Meta
+            avatar={<Avatar style={{backgroundColor:'#00a2ae'}}>{item.rawdata.type.substr(0,3)}</Avatar>}
+            title={<div>{item.rawdata.name}
+              <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>edit:{new Date(item.rawdata.editTs*1000).toLocaleDateString()}</span></div>}
+            description={<div>{desc}&nbsp;&nbsp;Options: {item.rawdata.isPartOfSKU && <Tag>Part-Of-SKU</Tag>}
+              {item.rawdata.isRequired && <Tag>Required</Tag>}
+              {item.rawdata.allowSearch && <Tag>Allow Search</Tag>}
+              {item.rawdata.allowOverride && <Tag>Allow Override</Tag>} </div>}
+          />
+        </List.Item>
         :
-        <List.Item.Meta
-          avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
-          title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
-            <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
-          description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
-        />;
+        <List.Item actions={actions}>
+          <List.Item.Meta
+            avatar={<Avatar src={Global.imgUrl(item.rawdata.iconUrl)} >{item.rawdata.enName}</Avatar>}
+            title={<div><Badge text={item.rawdata.cnName} status={item.rawdata.closed ? "default" : "success"}/>
+              <span style={{color:'#aaa', fontSize:'80%', float:'right'}}>create:{new Date(item.rawdata.createTs*1000).toLocaleDateString()}</span></div>}
+            description={<div>{item.rawdata.desc} {item.rawdata.wikiUrl && <div><a href={item.rawdata.wikiUrl} style={{color:'#bbb'}}><i>{item.rawdata.wikiUrl}</i></a></div>}</div>}
+          />
+        </List.Item>;
     }
     return (
       <div>
@@ -324,11 +342,7 @@ class CategoryTable extends React.Component{
           size="small"
           style={{background:'#fff'}}
           dataSource={this.props.data}
-          renderItem={item => (
-            <List.Item actions={[<a onClick={()=>this.props.onEdit(item)}>edit</a>]}>
-              {fn(item)}
-            </List.Item>
-          )}
+          renderItem={(item, idx) => fn(item ,idx, this.props.data.length)}
         />
         <Modal visible={this.state.previewVisible} footer={null} onCancel={this.handleCancel}>
           <img style={{ width: '100%' }} src={this.state.previewImage} />
@@ -727,6 +741,11 @@ export default class CategoryTree extends React.Component{
       initValue:{
 
       }
+    },
+    reorder:{
+      steps:['reorder', 'save', 'loading...'],
+      cursor:0,
+      undoStack:[]
     }
   }
   
@@ -938,6 +957,43 @@ export default class CategoryTree extends React.Component{
     });
   }
 
+  handleReorder = (link)=>{
+    this.setState(prevStates=>{
+      prevStates.reorder.cursor++;
+      if(prevStates.reorder.cursor == prevStates.reorder.steps.length)
+        prevStates.reorder.cursor = 0;
+      return prevStates;
+    });
+  }
+  _attr_reorder(attribute, arrow){
+    var ch = this.state.curNodeData.children, i=0, dst, temp;
+    for(; i<ch.length; i++){
+      if(ch[i] == attribute){
+        dst = 'forward' == arrow ? i-1 : i+1;
+        ch[i].rawdata.order -= i-dst;
+        ch[dst].rawdata.order += i-dst;
+        temp = ch[i];
+        ch[i] = ch[dst];
+        ch[dst] = temp;
+        return true;
+      }
+    }
+    return false;
+  }
+  handleAttributeOrderChange = (attribute, arrow)=>{
+    if(this._attr_reorder(attribute, arrow)){
+      this.state.reorder.undoStack.push({attribute, arrow});
+      this.setState(this.state);
+    }
+  }
+  handleAttributeOrderUndo = ()=>{
+    var {attribute, arrow} = this.state.reorder.undoStack.pop();
+    console.log('attribute: ', attribute, ', arrow: ', arrow);
+    if(this._attr_reorder(attribute, 'forward' == arrow ? 'backward' : 'forward')){
+      this.setState(this.state);
+    }
+  }
+
   loadData(categoryId){
     this.restCgyParent.select(categoryId).then(rsp=>rsp.json())
       .then(list=>{
@@ -1027,8 +1083,24 @@ export default class CategoryTree extends React.Component{
                           onSubmit={this.handleAttributeSubmit} />
         </Col>
         <Col span={19-this.state.form.span} >
+          <a className="ant-dropdown-link" href="#"  
+            style={{position:"absolute", right:"10px"}}
+            onClick={e=>this.handleReorder(e.target)} >
+            {this.state.reorder.steps[this.state.reorder.cursor]}
+          </a>
+          {this.state.reorder.undoStack.length > 0 && <a className="ant-dropdown-link" href="#"  
+            style={{position:"absolute", right:"43px"}}
+            onClick={e=>this.handleAttributeOrderUndo()} >
+            undo<i style={{color:'#aaa'}}> | </i>
+          </a>}
           <h4 className="title">Details of category and attribute within <i>{this.state.curNodeData.title}</i></h4>
-          <div style={{background:'#fff', padding:'0 3px'}}><CategoryTable data={this.state.curNodeData.children} onEdit={this.handleEdit} /></div>
+          <div style={{background:'#fff', padding:'0 3px'}}>
+            <CategoryTable 
+              data={this.state.curNodeData.children} 
+              onEdit={this.handleEdit} 
+              orderable={this.state.reorder.cursor > 0}
+              onAttributeOrderChange={this.handleAttributeOrderChange} />
+          </div>
         </Col>
       </Row>
     );
