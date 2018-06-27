@@ -983,7 +983,7 @@ export default class CategoryTree extends React.Component{
           args[order[2]+type] = order[3];
       }
       console.log(args);
-      this.restAttr.update({json: JSON.stringify(args)})
+      new RestFetch('/category-attribute-reorder').create({json: JSON.stringify(args)})
         .then(res=>this.handleReorder());
     }
 
@@ -1000,12 +1000,12 @@ export default class CategoryTree extends React.Component{
     for(; i<ch.length; i++){
       if(ch[i] == attribute){
         dst = 'forward' == arrow ? i-1 : i+1;
-        ch[i].rawdata.order -= i-dst;
-        ch[dst].rawdata.order += i-dst;
+        ch[i].rawdata.seq -= i-dst;
+        ch[dst].rawdata.seq += i-dst;
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;
-        return [ch[i].rawdata.id,ch[i].rawdata.order, ch[dst].rawdata.id,ch[dst].rawdata.order];
+        return [ch[i].rawdata.id,ch[i].rawdata.seq, ch[dst].rawdata.id,ch[dst].rawdata.seq];
       }
     }
     return null;
@@ -1020,7 +1020,7 @@ export default class CategoryTree extends React.Component{
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;
-        return [ch[i].id,ch[i].order, ch[dst].id,ch[dst].order];
+        return [ch[i].id,ch[i].seq, ch[dst].id,ch[dst].seq];
       }
     }
     return null;

@@ -178,22 +178,25 @@ public class AttributeController {
         return 0;
     }
 
-    @PutMapping("/category-attribute")
+    @PostMapping("/category-attribute-reorder")
     public int reorder(String json){
         int res = 0;
         JSONObject obj = JSON.parseObject(json);
-        if(obj.size() > 0){
+        if(obj != null && obj.size() > 0){
             for(Map.Entry<String, Object> entry : obj.entrySet()){
-                byte order = 0;
-                try {
-                    order = Byte.parseByte(entry.getKey());
-                }catch (Exception e){
-
-                }
+                byte seq = ((Integer)entry.getValue()).byteValue();
+                seq = seq > 0 ? seq : 0;
+                long id = 0;
                 if(entry.getKey().endsWith("attr")) {
-                    res += srv.updateOrderById(order > 0 ? order : 0, (Integer)entry.getValue());
+                    try {
+                        id = Integer.parseInt(entry.getKey().substring(0, entry.getKey().length()-4));
+                    }catch (Exception e){}
+                    res += srv.updateSeqById(seq, id);
                 }else{
-                    res += optsrv.updateOrderById(order > 0 ? order : 0, (Integer)entry.getValue());
+                    try {
+                        id = Integer.parseInt(entry.getKey().substring(0, entry.getKey().length()-3));
+                    }catch (Exception e){}
+                    res += optsrv.updateSeqById(seq, id);
                 }
             }
         }

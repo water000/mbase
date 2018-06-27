@@ -11,5 +11,5 @@ import java.util.List;
 public interface IOptionService extends CrudServiceTemplete {
     Iterable<Option> findByAttributeId(long attributeId);
 
-    int updateOrderById(byte order, long id);
+    int updateSeqById(byte order, long id);
 }

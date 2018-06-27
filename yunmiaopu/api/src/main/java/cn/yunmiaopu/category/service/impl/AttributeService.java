@@ -31,7 +31,7 @@ public class AttributeService extends CrudServiceAdapter implements IAttributeSe
     }
 
     public Iterable<Attribute> findByCategoryId(long categoryId){
-        return dao.findByCategoryId(categoryId);
+        return dao.findByCategoryIdOrderBySeq(categoryId);
     }
 
     public LinkedHashMap<Category, Iterable<Attribute>> ancestors(long categoryId){
@@ -50,8 +50,8 @@ public class AttributeService extends CrudServiceAdapter implements IAttributeSe
         return map;
     }
 
-    public int updateOrderById(byte order, long id){
-        return dao.updateOrderById(order, id);
+    public int updateSeqById(byte order, long id){
+        return dao.updateSeqById(order, id);
     }
 
 }

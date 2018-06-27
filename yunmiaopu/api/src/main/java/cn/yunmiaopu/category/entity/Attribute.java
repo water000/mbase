@@ -35,7 +35,7 @@ public class Attribute {
     private boolean isRequired;
     private boolean allowSearch;
     private long editTs;
-    private byte order;
+    private byte seq;
 
     public long getId() {
         return id;
@@ -143,11 +143,11 @@ public class Attribute {
         this.editTs = editTs;
     }
 
-    public byte getOrder() {
-        return order;
+    public byte getSeq() {
+        return seq;
     }
 
-    public void setOrder(byte order) {
-        this.order = order;
+    public void setSeq(byte seq) {
+        this.seq = seq;
     }
 }

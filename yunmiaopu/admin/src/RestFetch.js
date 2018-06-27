@@ -57,7 +57,7 @@ export default class RestFetch{
 			fetch(url, {
 				method,
 				mode : this.opts.mode,
-				headers : Object.assign({"Accept" : this.opts.accept}, headers || {}),
+				headers : Object.assign({"Accept" : this.opts.accept}, headers),
 				credentials:"include",
 				body
 			})
