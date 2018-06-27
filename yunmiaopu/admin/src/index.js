@@ -96,7 +96,7 @@ class GlobalFetchCatcher{
       placement:"bottomRight",
       message: desc,
       description:<div><p><b>{method}: </b>{url}</p></div>,
-      duration:60
+      duration:30
     });
     console.error("fetching error", ctx);
   }

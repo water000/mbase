@@ -8,4 +8,5 @@ import cn.yunmiaopu.common.util.CrudServiceTemplete;
  */
 public interface ICategoryService extends CrudServiceTemplete {
     Iterable<Category> findByParentId(long parentId);
+
 }

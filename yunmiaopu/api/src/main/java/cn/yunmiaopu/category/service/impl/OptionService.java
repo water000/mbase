@@ -26,4 +26,8 @@ public class OptionService extends CrudServiceAdapter implements IOptionService 
     public Iterable<Option> findByAttributeId(long attributeId){
         return dao.findByAttributeId(attributeId);
     }
+
+    public int updateOrderById(byte order, long id){
+        return dao.updateOrderById(order, id);
+    }
 }

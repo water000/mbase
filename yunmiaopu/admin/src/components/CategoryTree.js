@@ -972,10 +972,23 @@ export default class CategoryTree extends React.Component{
     });
   }
   handleReorder = (link)=>{
+    if('save' == this.state.reorder.steps[this.state.reorder.cursor]){
+      var args = {};
+      while( this.state.reorder.undoStack.length > 0 ){
+        var {attribute, arrow, option, order} = this.state.reorder.undoStack.pop();
+        var type = undefined == option ? 'attr' : 'opt';
+        if(undefined == args[order[0]+type])
+          args[order[0]+type] = order[1];
+        if(undefined == args[order[2]+type])
+          args[order[2]+type] = order[3];
+      }
+      console.log(args);
+      this.restAttr.update({json: JSON.stringify(args)})
+        .then(res=>this.handleReorder());
+    }
+
     this.setState(prevStates=>{
       prevStates.reorder.cursor++;
-      if('loading...' == this.state.reorder.steps[this.state.reorder.cursor])
-        prevStates.reorder.undoStack.splice(0, prevStates.reorder.undoStack.length);
       if(prevStates.reorder.cursor == prevStates.reorder.steps.length){
         prevStates.reorder.cursor = 0;
       }
@@ -999,7 +1012,6 @@ export default class CategoryTree extends React.Component{
   }
   _opt_reorder(attribute, arrow, opt){
     var ch = attribute.rawdata.options||[], i=0, dst, temp;
-    console.log(ch, arrow, opt, attribute);
     for(; i<ch.length; i++){
       if(ch[i] == opt){
         dst = 'forward' == arrow ? i-1 : i+1;
@@ -1022,7 +1034,8 @@ export default class CategoryTree extends React.Component{
   }
   handleAttributeOrderUndo = ()=>{
     var {attribute, arrow, option, order} = this.state.reorder.undoStack.pop();
-    if( (undefined == option ? this._attr_reorder : this._opt_reorder)(attribute, 'forward' == arrow ? 'backward' : 'forward', option)){
+    var arrow = 'forward' == arrow ? 'backward' : 'forward';
+    if((order = undefined==option ? this._attr_reorder(attribute, arrow) : this._opt_reorder(attribute, arrow, option))!=null){
       this.setState(this.state);
     }
   }

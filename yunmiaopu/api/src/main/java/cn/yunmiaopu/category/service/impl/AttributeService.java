@@ -50,4 +50,8 @@ public class AttributeService extends CrudServiceAdapter implements IAttributeSe
         return map;
     }
 
+    public int updateOrderById(byte order, long id){
+        return dao.updateOrderById(order, id);
+    }
+
 }

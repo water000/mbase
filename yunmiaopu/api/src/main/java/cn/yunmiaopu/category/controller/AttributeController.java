@@ -178,4 +178,27 @@ public class AttributeController {
         return 0;
     }
 
+    @PutMapping("/category-attribute")
+    public int reorder(String json){
+        int res = 0;
+        JSONObject obj = JSON.parseObject(json);
+        if(obj.size() > 0){
+            for(Map.Entry<String, Object> entry : obj.entrySet()){
+                byte order = 0;
+                try {
+                    order = Byte.parseByte(entry.getKey());
+                }catch (Exception e){
+
+                }
+                if(entry.getKey().endsWith("attr")) {
+                    res += srv.updateOrderById(order > 0 ? order : 0, (Integer)entry.getValue());
+                }else{
+                    res += optsrv.updateOrderById(order > 0 ? order : 0, (Integer)entry.getValue());
+                }
+            }
+        }
+
+        return res;
+    }
+
 }
