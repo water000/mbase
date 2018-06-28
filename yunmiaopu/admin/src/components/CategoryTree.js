@@ -973,18 +973,40 @@ export default class CategoryTree extends React.Component{
   }
   handleReorder = (link)=>{
     if('save' == this.state.reorder.steps[this.state.reorder.cursor]){
-      var args = {};
+      //[category-id, children] 
+      //children=[[attribute-id, seq, children], ...]
+      //children=[[option-id, seq], ...]
+      var args = [this.state.curNodeData.rawdata.id, []], attr=[], opt=[];
       while( this.state.reorder.undoStack.length > 0 ){
         var {attribute, arrow, option, order} = this.state.reorder.undoStack.pop();
-        var type = undefined == option ? 'attr' : 'opt';
-        if(undefined == args[order[0]+type])
-          args[order[0]+type] = order[1];
-        if(undefined == args[order[2]+type])
-          args[order[2]+type] = order[3];
+        if(undefined == option){
+          if(-1 == attr.indexOf(attribute)) attr.push(attribute);
+        }
+        else{
+          if(-1 == opt.indexOf(attribute)) opt.push(attribute);
+        }
       }
+
+      for(var j=0; j<attr.length; j++){
+        for(var i=0, ch=this.state.curNodeData.children; i<ch.length; i++){
+          if(ch[i].isLeaf) args[1].push([ch[i].rawdata.id, ch[i].rawdata.seq, []]);
+        }
+      }
+
+      for(var j=0; j<opt.length; j++){
+        for(var k=0; k<args[1].length && opt[j].rawdata.id != args[1][k][0]; k++)
+          ;
+        if(k == args[1].length)
+          args[1].push([opt[j].rawdata.id, -99, []]);
+
+        for(var i=0; i<opt[j].rawdata.options.length; i++){
+          args[1][k][2].push([opt[j].rawdata.options[i].id, opt[j].rawdata.options[i].seq]);
+        }
+      }
+
       console.log(args);
       new RestFetch('/category-attribute-reorder').create({json: JSON.stringify(args)})
-        .then(res=>this.handleReorder());
+        .then(res=>this.handleReorder()); 
     }
 
     this.setState(prevStates=>{
@@ -1015,8 +1037,8 @@ export default class CategoryTree extends React.Component{
     for(; i<ch.length; i++){
       if(ch[i] == opt){
         dst = 'forward' == arrow ? i-1 : i+1;
-        ch[i].order -= i-dst;
-        ch[dst].order += i-dst;
+        ch[i].seq -= i-dst;
+        ch[dst].seq += i-dst;
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;

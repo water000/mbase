@@ -16,8 +16,8 @@ public interface IAttributeDao extends CrudRepository<Attribute, Long> {
     List<Attribute> findByCategoryIdOrderBySeq(long categoryId);
 
     @Modifying
-    @Query("UPDATE category_attribute a SET a.seq=?1 WHERE a.id=?2")
+    @Query("UPDATE category_attribute a SET a.seq=?1 , a.editTs=?3 WHERE a.id=?2")
     @Transactional
-    int updateSeqById(byte order, Long id);
+    int updateSeqById(byte order, Long id, long timestamp);
 
 }

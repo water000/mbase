@@ -181,23 +181,102 @@ public class AttributeController {
     @PostMapping("/category-attribute-reorder")
     public int reorder(String json){
         int res = 0;
-        JSONObject obj = JSON.parseObject(json);
-        if(obj != null && obj.size() > 0){
-            for(Map.Entry<String, Object> entry : obj.entrySet()){
-                byte seq = ((Integer)entry.getValue()).byteValue();
-                seq = seq > 0 ? seq : 0;
-                long id = 0;
-                if(entry.getKey().endsWith("attr")) {
-                    try {
-                        id = Integer.parseInt(entry.getKey().substring(0, entry.getKey().length()-4));
-                    }catch (Exception e){}
-                    res += srv.updateSeqById(seq, id);
-                }else{
-                    try {
-                        id = Integer.parseInt(entry.getKey().substring(0, entry.getKey().length()-3));
-                    }catch (Exception e){}
-                    res += optsrv.updateSeqById(seq, id);
+
+        JSONArray arr = JSONArray.parseArray(json);
+        if(arr != null && arr.size() > 0){
+            long categoryId = arr.getLongValue(0);
+            JSONArray attrs = arr.getJSONArray(1);
+            if(categoryId > 0 && attrs != null && attrs.size() > 0){
+                List<long[]> attrToReorder = new ArrayList();
+                List<long[][]> optToReorder  = new ArrayList();
+
+                for(int i=0; i<attrs.size(); i++){
+                    JSONArray attr = attrs.getJSONArray(i);
+                    if(attr != null && 3 == attr.size()){
+                        byte seq = attr.getByteValue(1);
+                        long attributeId = attr.getLongValue(0);
+                        if(seq != -99){
+                            attrToReorder.add(new long[]{attributeId, i+1});
+                        }
+
+                        JSONArray opts = attr.getJSONArray(2);
+                        if(opts != null && opts.size()>0){
+                            int j;
+                            long[][] seqmeta = new long[opts.size()][];
+                            for(j=0; j<opts.size(); j++){
+                                JSONArray opt = opts.getJSONArray(j);
+                                if(opt != null && 2 == opt.size()){
+                                    long optId = opt.getLongValue(0);
+                                    byte optSeq = opt.getByteValue(1);
+                                    seqmeta[j] = new long[]{attributeId, optId, j+1};
+                                }
+                            }
+                            optToReorder.add(seqmeta);
+                        }
+                    }
                 }
+
+                boolean found = false;
+
+                if(attrToReorder.size() > 0) {
+                    Iterable<Attribute> attritr = srv.findByCategoryId(categoryId);
+                    for (Attribute a : attritr) {
+                        Iterator<long[]> attrSeqItr = attrToReorder.iterator();
+                        found = false;
+                        while (attrSeqItr.hasNext()) {
+                            long[] seqmeta = attrSeqItr.next();
+                            if (a.getId() == seqmeta[0]) {
+                                found = true;
+                                if (a.getSeq() == seqmeta[1])
+                                    attrSeqItr.remove();
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            break;
+                        }
+                    }
+                }else{
+                    found = true;
+                }
+
+                if(found) {
+                    for (long[][] optseq : optToReorder) {
+                        Iterable<Option> optsitr = optsrv.findByAttributeId(optseq[0][0]);
+                        found = false;
+                        for (Option opt : optsitr) {
+                            found = false;
+                            for (long[] seqmeta : optseq) {
+                                if (opt.getId() == seqmeta[1]) {
+                                    found = true;
+                                    if (seqmeta[2] == opt.getSeq()) {
+                                        seqmeta[2] = -99;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (!found)
+                                break;
+                        }
+                        if (!found)
+                            break;
+                    }
+
+                    if(found){
+                        for(long[] a : attrToReorder){
+                            srv.updateSeqById((byte)a[1], a[0], System.currentTimeMillis()/1000);
+                        }
+                        for(long[][] o : optToReorder){
+                            for(long[] seq : o) {
+                                if(seq[2] != -99)
+                                    optsrv.updateSeqById((byte)seq[2], seq[1]);
+                            }
+                        }
+
+                        res = attrToReorder.size() + optToReorder.size();
+                    }
+                }
+
             }
         }
 

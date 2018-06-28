@@ -17,5 +17,5 @@ public interface IOptionDao extends CrudRepository<Option, Long> {
     @Modifying
     @Query("UPDATE category_attribute_option o SET o.seq=?1 WHERE o.id=?2")
     @Transactional
-    int updateSeqById(byte order, Long id);
+    int updateSeqById(byte order, long id);
 }

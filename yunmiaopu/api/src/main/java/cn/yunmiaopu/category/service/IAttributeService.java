@@ -15,5 +15,5 @@ public interface IAttributeService extends CrudServiceTemplete {
 
     LinkedHashMap<Category, Iterable<Attribute>> ancestors(long categoryId);
 
-    int updateSeqById(byte order, long id);
+    int updateSeqById(byte order, long id, long timestamp);
 }
