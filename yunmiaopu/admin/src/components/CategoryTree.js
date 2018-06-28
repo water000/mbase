@@ -315,6 +315,8 @@ class CategoryTable extends React.Component{
         }
       }
 
+      console.log(item);
+
       return item.isLeaf ?
         <List.Item actions={actions}>
           <List.Item.Meta

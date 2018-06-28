@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS category_attribute(
 	allow_search tinyint not null default 0,
 	options_counter tinyint not null default 0, -- counter for type[Color, Enum]
 	edit_ts int unsigned not null,
-	`order` tinyint not null default 0,
+	seq tinyint not null default 0,
 	primary key(id),
 	key(category_id)
 );
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS category_attribute_option(
 	attribute_id int unsigned not null default 0,
 	label varchar(127) not null default '',
 	extra varchar(255) default null, -- extra info like color(white, #fff); image token
-	`order` tinyint not null default 0,
+	seq tinyint not null default 0,
 	primary key(id),
 	key(attribute_id, `order`)
 );
