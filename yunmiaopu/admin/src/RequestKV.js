@@ -3,7 +3,7 @@ import React from 'react';
 import RestFetch from "./RestFetch"
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
-const Option = Select.Option;
+const {Option, OptGroup} = Select;
 
 let cache = {};
 export class RequestKV{}
@@ -119,4 +119,34 @@ export class RequestKVSelect extends React.Component{
       </Select>
     );
   }
+}
+
+export class RequestKVSelectGroup extends RequestKVSelect{
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    let opts = [];
+
+    //if(this.props.emptyOption !== undefined)
+    //  opts.push(<Option value={this.props.emptyOption.value}>{this.props.emptyOption.label}</Option>);
+    for(var k in this.state.kv){
+      var children = [];
+      for(var j in this.state.kv[k]){
+        children.push(<Option value={j}>{this.state.kv[k][j]}</Option>);
+        this.first = this.first || j;
+      }
+      opts.push(<OptGroup label={k}>{children}</OptGroup>);
+    }
+
+    return (
+      <Select 
+        {...this.props}
+        defaultValue={ this.props.defaultValue ||(this.props.emptyOption !== undefined ? this.props.emptyOption.value : this.first)} 
+      >
+      {opts}
+      </Select>
+    );
+  } 
 }

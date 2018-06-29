@@ -3,7 +3,7 @@ import {Tree, Row, Col,  Menu, Dropdown, Icon, Form, Input, Button, Switch, mess
 import moment from 'moment';
 import RestFetch from "../RestFetch"
 import ColPicker from "../ColPicker"
-import {RequestKVRadioGroup, RequestKVSelect} from "../RequestKV"
+import {RequestKVRadioGroup, RequestKVSelect, RequestKVSelectGroup} from "../RequestKV"
 import Global from "../Global"
 const TreeNode = Tree.TreeNode;
 const FormItem = Form.Item;
@@ -315,8 +315,6 @@ class CategoryTable extends React.Component{
         }
       }
 
-      console.log(item);
-
       return item.isLeaf ?
         <List.Item actions={actions}>
           <List.Item.Meta
@@ -381,6 +379,9 @@ class AttributeForm extends React.Component{
         inputType:{
           value:'',
         },
+        inputUnit:{
+          value:'',
+        },
         isPartOfSKU:{
           value:false,
         },
@@ -409,6 +410,7 @@ class AttributeForm extends React.Component{
   cleanValue(){
     this.state.fields.value.value = '';
     this.state.fields.inputType.value = '';
+    this.state.fields.inputUnit.value = '';
     this.state.fields.options.value = [];
   }
 
@@ -468,6 +470,13 @@ class AttributeForm extends React.Component{
   handleInputTypeChange=(value)=>{
     this.setState(prevStates=>{
       prevStates.fields.inputType.value = value;
+      return prevStates;
+    });
+  }
+
+  handleInputUnitChange=(value)=>{
+    this.setState(prevStates=>{
+      prevStates.fields.inputUnit.value = value;
       return prevStates;
     });
   }
@@ -672,14 +681,24 @@ class AttributeForm extends React.Component{
           }
           {
             'INPUT' == this.state.fields.type.value && 
-              <RequestKVSelect 
+              <span><RequestKVSelect 
                 name='inputType'
                 defaultValue={this.state.fields.inputType.value} 
                 value={this.state.fields.inputType.value} 
+                style={{width:'60%'}}
                 emptyOption={{value:'', label:'--select input type--'}}
                 url='/category/enums'
                 id='Attribute.InputType'
-                onChange={this.handleInputTypeChange} />}
+                onChange={this.handleInputTypeChange} />
+              <RequestKVSelectGroup 
+                name='inputUnit'
+                defaultValue={this.state.fields.inputUnit.value} 
+                value={this.state.fields.inputUnit.value} 
+                style={{width:'40%'}}
+                emptyOption={{value:'', label:'--select input unit--'}}
+                url='/category/enums'
+                id='Attribute.UnitFamily'
+                onChange={this.handleInputUnitChange} /></span>}
         </FormItem>
         <FormItem {...formItemLayout} {...this.state.fields.isPartOfSKU} label="Option" >
           <Checkbox 
@@ -1029,7 +1048,7 @@ export default class CategoryTree extends React.Component{
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;
-        return [ch[i].rawdata.id,ch[i].rawdata.seq, ch[dst].rawdata.id,ch[dst].rawdata.seq];
+        return ch[i];
       }
     }
     return null;
@@ -1044,15 +1063,25 @@ export default class CategoryTree extends React.Component{
         temp = ch[i];
         ch[i] = ch[dst];
         ch[dst] = temp;
-        return [ch[i].id,ch[i].seq, ch[dst].id,ch[dst].seq];
+        return ch[i];
       }
     }
     return null;
   }
   handleAttributeOrderChange = (attribute, arrow, option)=>{
-    var order;
-    if((order = undefined==option ? this._attr_reorder(attribute, arrow) : this._opt_reorder(attribute, arrow, option))!=null){
-      this.state.reorder.undoStack.push({attribute, arrow, option, order});
+    var swap;
+    if((swap = undefined==option ? this._attr_reorder(attribute, arrow) : this._opt_reorder(attribute, arrow, option))!=null){
+      if(this.state.reorder.undoStack.length > 0){
+        var prev = this.state.reorder.undoStack.pop();
+        if((undefined == option && attribute == prev.swap && arrow == prev.arrow) 
+          || (option != undefined && attribute == prev.attribute && option == prev.swap && arrow == prev.arrow))
+        {
+          this.setState(this.state);
+          return;
+        }
+        this.state.reorder.undoStack.push(prev);
+      }
+      this.state.reorder.undoStack.push({attribute, arrow, option, swap});
       this.setState(this.state);
     }
   }

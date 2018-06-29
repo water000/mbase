@@ -14,7 +14,12 @@ import javax.persistence.Id;
 @Entity(name = "category_attribute")
 public class Attribute {
 
-    public enum InputType {STRING, BYTE, INT, LONG, FLOAT, DOUBLE, TIMESTAMP, TIME}
+    public enum InputType {BYTE, INT, LONG, FLOAT, DOUBLE}
+    public enum UnitFamily{LENGTH, AREA, VOLUME, WEIGHT}
+    public enum UFLength{M, DM, CM, MM}
+    public enum UFArea{M2, DM2, CM2, MM2}
+    public enum UFVolume{M3, DM3, CM3, MM3}
+    public enum UFWeight{KG, G, MG}
 
     public enum Type {INPUT, ENUM, COLOR, CONSTANT}
 
@@ -27,6 +32,7 @@ public class Attribute {
     private String name;
     private String value; // constant value, non-constant saved to class Option
     private InputType inputType;
+    private String inputUnit; // UnitFamily + . + UF*
     private Type type;
     private byte optionsCounter; // counter for type[enum, color]
     private long overrideAttributeId; /* true to override the id(not appear) */
@@ -149,5 +155,13 @@ public class Attribute {
 
     public void setSeq(byte seq) {
         this.seq = seq;
+    }
+
+    public String getInputUnit() {
+        return inputUnit;
+    }
+
+    public void setInputUnit(String inputUnit) {
+        this.inputUnit = inputUnit;
     }
 }

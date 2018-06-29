@@ -100,7 +100,7 @@ public class CategoryController {
     private void initEnum(){
         for(Enum[] values : enums){
             Map<String, String> dict = new LinkedHashMap();
-            String msg = appctx.getMessage(values[0].getClass().getCanonicalName(), null, Locale.getDefault());
+            String msg = appctx.getMessage(values[0].getClass().getCanonicalName(), null, null);
             String[] arr = null;
             if(msg != null && msg.length() > 0){
                 arr = msg.split(",");
@@ -110,6 +110,36 @@ public class CategoryController {
             }
             String en = values[0].getClass().getEnclosingClass().getSimpleName();
             enumsMap.put(null == en ? "" : en+'.' + values[0].getClass().getSimpleName() , dict);
+        }
+
+        Enum[][] group = {
+                Attribute.UnitFamily.values()
+        };
+        Enum[][][] items = {
+                {
+                        Attribute.UFLength.values(),
+                        Attribute.UFArea.values(),
+                        Attribute.UFVolume.values(),
+                        Attribute.UFWeight.values()
+                }
+        };
+        for(int i=0; i<group.length; i++){
+            Map<String, Map> gmap = new LinkedHashMap<String, Map>();
+            String msg = appctx.getMessage(group[i][0].getClass().getCanonicalName(), null, null);
+            String[] arr = msg !=null && msg.length() > 0 ? msg.split(",") : null;
+            for(int j=0; j<group[i].length; j++){
+                Map<String, String> imap = new LinkedHashMap();
+                gmap.put(arr!=null && j<arr.length ? arr[j] : group[i][j].name(), imap);
+
+                String msgitem = appctx.getMessage(items[i][j][0].getClass().getCanonicalName(), null, null);
+                String[] msgarr = msgitem != null && msgitem.length() > 0 ? msgitem.split(",") : null;
+                for(int k=0; k<items[i][j].length; k++){
+                    imap.put(group[i][j].name()+'.'+items[i][j][k].name(),
+                            msgarr!=null && k<msgarr.length ? msgarr[k] : items[i][j][k].name());
+                }
+            }
+            String en = group[i][0].getClass().getEnclosingClass().getSimpleName();
+            enumsMap.put(null == en ? "" : en+'.' + group[i][0].getClass().getSimpleName() , gmap);
         }
     }
     @RequestMapping("/category/enums")
