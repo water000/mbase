@@ -37,7 +37,8 @@ public class AttributeService extends CrudServiceAdapter implements IAttributeSe
     public LinkedHashMap<Category, Iterable<Attribute>> ancestors(long categoryId){
         LinkedHashMap<Category, Iterable<Attribute>> map = new LinkedHashMap<Category, Iterable<Attribute>>();
 
-        while( categoryId != 0 ){
+        int loopLimit = 10;
+        while( categoryId != 0 && loopLimit-- > 0 ){
             Optional<Category> cgy = cgysrv.findById(categoryId);
             if(cgy.isPresent()){
                 map.put(cgy.get(), findByCategoryId(cgy.get().getId()));
